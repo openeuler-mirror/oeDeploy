@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0.0
+Type=Application
+Name=oeDeploy
+Exec=xdg-open /root/oeDeploy.pdf
+Icon=/usr/share/applications/oeDeploy.png
+Comment=Tool suite for software deployment
+Terminal=false

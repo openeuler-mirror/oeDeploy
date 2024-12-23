@@ -1,0 +1,7 @@
+{
+  "host": "ansible_host",
+  "port": "ansible_port",
+  "user": "ansible_user",
+  "password": "ansible_password",
+  "private_key": "ansible_private_key_file"
+}
