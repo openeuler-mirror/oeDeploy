@@ -1,0 +1,22 @@
+name: kubeflow
+version: 1.9.1
+description: install kubeflow
+action:
+  install:
+    description: install kubeflow
+    tasks:
+      - name: install kubeflow
+        playbook: init-kubeflow.yml
+        scope: all
+  delete:
+    description: delete kubeflow
+    tasks:
+      - name: delete kubeflow
+        playbook: delete-kubeflow.yml
+        scope: all
+  clean:
+    description: clean cache files
+    tasks:
+      - name: clean cache files
+        playbook: clean-kubeflow.yml
+        scope: all

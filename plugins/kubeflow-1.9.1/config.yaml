@@ -1,0 +1,20 @@
+all:
+  children:
+    masters:
+      hosts:
+        192.168.137.229:
+          ansible_host: 192.168.137.238
+          ansible_port: 22
+          ansible_user: root
+          ansible_password:
+          architecture: arm64
+          oe_version: 22.03-LTS
+  vars:
+    kubeflow_version: 1.9.1
+    kustomize_version: v5.4.2
+    kubeflow_image: swr.cn-north-4.myhuaweicloud.com/openeuler-hangzhou/
+    local_port: 80
+    local_address: 192.168.137.238
+    kubeflow_install_path: /tmp/kubeflow-install
+    nfs_path: /data/kubeflow
+    default_storageclass_name: default-storageclass

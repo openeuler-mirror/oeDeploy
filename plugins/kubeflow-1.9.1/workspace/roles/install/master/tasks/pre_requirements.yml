@@ -1,0 +1,62 @@
+- name: Check if Kubernetes is installed
+  command: kubectl get nodes
+  register: kubectl_check
+  ignore_errors: yes
+
+- name: Fail if Kubernetes is not installed
+  fail:
+    msg: "Kubernetes is not installed or kubectl is not configured correctly."
+  when: kubectl_check.rc != 0
+
+- name: Prepare kubeflow-install directory
+  file:
+    path: "{{ kubeflow_install_path }}"
+    state: directory
+    mode: "0644"
+
+- name: Copy kubeflow install file to master
+  copy:
+    src: "{{ playbook_dir }}/"
+    dest: "{{ kubeflow_install_path }}"
+    mode: "0644"
+
+- name: Download kustomize binary
+  block:
+    - name: Determine architecture
+      set_fact:
+        arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+    
+    - name: Unarchive kustomize
+      unarchive:
+        src: "{{ kubeflow_install_path }}/requires/22.03-LTS/{{ ansible_architecture }}/kustomize_{{ kustomize_version }}_linux_{{ arch }}.tar.gz"
+        dest: "{{ kubeflow_install_path }}"
+        remote_src: yes
+
+    - name: Find kustomize binary
+      find:
+        paths: "{{ kubeflow_install_path }}"
+        patterns: "kustomize"
+        file_type: file
+      register: kustomize_binary_path
+
+    - name: Fail if kustomize binary is note found
+      fail:
+        msg: "kustomize binary not found in the download archive"
+      when: kustomize_binary_path.files | length == 0
+
+    - name: Copy kustomize binary to /usr/bin
+      copy:
+        src: "{{ kustomize_binary_path.files[0].path }}"
+        dest: /usr/bin
+        mode: '0755'
+        remote_src: yes
+
+- name: Unarchive manifests
+  unarchive:
+    src: "{{ kubeflow_install_path }}/requires/22.03-LTS/{{ ansible_architecture }}/manifests-{{ kubeflow_version }}.tar.gz"
+    dest: "{{ kubeflow_install_path }}"
+    remote_src: yes
+
+- name: Set the extracted manifests directory path as a fact
+  set_fact:
+    manifests_path: "{{ kubeflow_install_path }}/manifests-{{ kubeflow_version }}/"

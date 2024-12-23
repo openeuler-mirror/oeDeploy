@@ -1,0 +1,4 @@
+- name: Clean cache files
+  file:
+    path: "{{ kubeflow_install_path }}"
+    state: absent

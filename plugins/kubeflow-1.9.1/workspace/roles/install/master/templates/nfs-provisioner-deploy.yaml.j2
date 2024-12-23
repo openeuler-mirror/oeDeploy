@@ -1,0 +1,39 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nfs-client-provisioner
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccountName: nfs-client-provisioner
+      containers:
+        - name: nfs-client-provisioner
+          # image: registry.cn-beijing.aliyuncs.com/mydlq/nfs-subdir-external-provisioner:v4.0.0
+          image: quay.io/vbouchaud/nfs-client-provisioner:latest
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: {{ default_storageclass_name }}
+            - name: NFS_SERVER
+              value: {{ local_address }}
+            - name: NFS_PATH
+              value: {{ nfs_path }}
+            - name: ENABLE_LEADER_ELECTION
+              value: "true"
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: {{ local_address }}
+            path: {{ nfs_path }}

@@ -1,0 +1,4 @@
+- hosts: masters
+  ignore_errors: yes
+  roles:
+    - clean/master
