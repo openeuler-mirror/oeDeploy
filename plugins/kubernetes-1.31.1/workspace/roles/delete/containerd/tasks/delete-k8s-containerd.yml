@@ -1,0 +1,21 @@
+- block:
+  - name: stop containerd service
+    shell: systemctl stop containerd && systemctl disable containerd
+  - name: delete containerd related file
+    shell: >
+      rm -rf /etc/systemd/system/containerd.service
+      rm -rf /usr/local/bin/containerd
+      rm -rf /usr/local/bin/containerd-shim-runc-v1
+      rm -rf /usr/local/bin/containerd-stress
+      rm -rf /usr/local/bin/runc
+      rm -rf /usr/local/bin/containerd-shim
+      rm -rf /usr/local/bin/containerd-shim-runc-v2
+      rm -rf /usr/local/bin/containerd-shim
+      rm -rf /usr/local/bin/ctr
+      rm -rf /etc/containerd/
+      rm -rf /var/lib/containerd
+      rm -rf /run/containerd
+      rm -rf /opt/containerd
+      rm -rf /var/log/containers
+  ignore_errors: true
+

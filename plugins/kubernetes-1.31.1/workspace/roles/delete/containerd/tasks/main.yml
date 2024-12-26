@@ -1,0 +1,8 @@
+- name: delete containerd
+  include_tasks: delete-containerd.yml
+  when: has_deployed_containerd == "true"
+
+- name: delete k8s images and task
+  include_tasks: delete-k8s-containerd.yml
+  when: has_deployed_containerd == "false"
+

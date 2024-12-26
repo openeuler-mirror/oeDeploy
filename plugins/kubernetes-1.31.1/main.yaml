@@ -1,0 +1,24 @@
+name: kubernetes
+version: 1.31.1
+description: install kubernetes 1.31.1
+action:
+  install:
+    description: install kubernetes
+    tasks:
+      - name: install kubernetes
+        playbook: init-k8s.yml
+        vars: variables.yml
+        scope: all
+  delete:
+    description: delete kubernetes
+    tasks:
+      - name: delete kubernetes
+        playbook: delete-k8s.yml
+        vars: variables.yml
+        scope: all
+  clean:
+    description: clean cache files
+    tasks:
+      - name: clean cache files
+        playbook: clean-k8s.yml
+        scope: all

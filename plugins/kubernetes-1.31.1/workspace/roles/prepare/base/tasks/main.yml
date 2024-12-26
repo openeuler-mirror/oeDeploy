@@ -1,0 +1,99 @@
+- name: Check architecture
+  set_fact:
+    arch: "{{ ansible_architecture }}"
+
+- name: Prepare rpm directory
+  file: name=/k8s-install/rpm/ state=directory
+
+- name: Install base package
+  yum:
+    name:
+      - python3-libselinux
+      - tar
+      - socat
+      - conntrack-tools
+      - libnetfilter_cttimeout
+      - libnetfilter_cthelper
+      - libnetfilter_queue
+    state: present
+
+- name: Disable swap
+  shell: >
+    swapoff -a && sysctl -w vm.swappiness=0;
+    sed -i '/swap/s/^/#/' /etc/fstab
+  ignore_errors: true
+
+- name: Status firewalld
+  shell: >
+    systemctl status firewalld | grep active || echo "not be found"
+  register: firewalld_already_installed
+
+- name: Disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+  when: '"active" in firewalld_already_installed.stdout'
+
+- name: Load kernel module
+  modprobe: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - sunrpc
+  - ip_vs
+  - ip_vs_rr
+  - ip_vs_sh
+  - ip_vs_wrr
+  - br_netfilter
+  - nf_conntrack
+  ignore_errors: true
+
+- name: Setup systemd-modules-load config
+  template: 
+    src: 10-k8s-modules.conf.j2
+    dest: /etc/modules-load.d/10-k8s-modules.conf
+
+- name: Restart systemd-modules-load
+  service:
+    name: systemd-modules-load
+    state: restarted
+    enabled: yes
+
+- name: Temp stop selinux
+  shell: setenforce 0
+  failed_when: false
+
+- name: Read selinux config file stat info
+  stat: 
+    path: /etc/selinux/config
+  register: stat_selinux_config
+
+- name: Disable selinux
+  template:
+    src: selinux-config.j2
+    dest: "/etc/selinux/config"
+    owner: root
+    mode: 0644
+  when: not stat_selinux_config.stat.exists
+
+- name: Disable selinux
+  shell: >
+    sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
+  when: stat_selinux_config.stat.exists
+
+- name: Delete the default system parameters
+  shell: > 
+    sed -i '/^net.ipv4.ip_forward=/d' /etc/sysctl.conf;
+    sed -i '/^net.ipv6.bindv6only=/d' /etc/sysctl.conf;
+    sed -i '/^vm.max_map_count=/d' /etc/sysctl.conf;
+    sed -i '/^net.ipv4.ip_local_port_range/d' /etc/sysctl.conf
+
+- name: Setup system parameters for kubernetes
+  template: 
+    src: 99-sysctl-k8s.conf.j2
+    dest: /etc/sysctl.d/99-sysctl-k8s.conf
+
+- name: Effective system parameters
+  shell: "sysctl -p /etc/sysctl.d/99-sysctl-k8s.conf"
+  ignore_errors: true

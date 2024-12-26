@@ -1,0 +1,17 @@
+- block:
+  - name: delete Tunl0
+    shell: modprobe -r ipip
+
+  - name: delete calico nic
+    shell: >
+      ip link show | grep -o 'cali[^:]*' | xargs -I {} ifconfig {} down
+      ip link show | grep -o 'cali[^:]*' | awk -F@ '{print $1}' | xargs -I {} ip link delete {}
+
+  - name: delete cni directory
+    shell: >
+      rm -rf /var/lib/cni
+      rm -rf /etc/cni/net.d
+  ignore_errors: true
+    
+    
+

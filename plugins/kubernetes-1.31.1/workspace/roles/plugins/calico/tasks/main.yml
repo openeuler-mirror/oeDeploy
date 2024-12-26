@@ -1,0 +1,33 @@
+- name: Prepare images directories
+  file: name={{ images_dir }}/plugin/calico state=directory
+
+- name: Copy calico images to all nodes
+  copy:
+    src: "{{ architecture }}/{{ item }}"
+    dest: "{{ images_dir }}/plugin/calico"
+  with_items:
+  - cni.tar
+  - kube-controllers.tar
+  - node.tar
+
+- name: Load calico images on all nodes
+  command: "ctr -n k8s.io images import {{ images_dir }}/plugin/calico/{{ item }}"
+  with_items:
+  - cni.tar
+  - kube-controllers.tar
+  - node.tar
+
+- name: Create calico directory
+  file: name=/etc/kubernetes/plugins/calico state=directory
+  when: inventory_hostname == groups['masters'][0]
+
+- name: Create calico yaml file
+  copy:
+    src: "calico-v{{ calico_version }}.yaml"
+    dest: "/etc/kubernetes/plugins/calico/calico-v{{ calico_version }}.yaml"
+    mode: "0644"
+  when: inventory_hostname == groups['masters'][0]
+
+- name: Apply calico plugin
+  shell: kubectl --kubeconfig /etc/kubernetes/admin.conf apply -f /etc/kubernetes/plugins/calico/
+  when: inventory_hostname == groups['masters'][0]

@@ -1,0 +1,26 @@
+- hosts:
+  - masters
+  - workers
+  roles:
+  - prepare/base
+  - prepare/containerd
+  - prepare/kubernetes
+  - prepare/images
+
+- hosts: masters
+  roles:
+  - master
+
+- hosts: workers
+  roles:
+  - worker
+
+- hosts:
+  - masters
+  - workers
+  roles:
+  - plugins/calico
+
+- hosts: workers
+  roles:
+  - plugins/rpcbind

@@ -1,0 +1,27 @@
+- block:
+  - name: stop all k8s containerd task
+    shell: ctr -n k8s.io  tasks ls -q | xargs -I {} ctr  -n k8s.io tasks kill {}
+  - name: delete all k8s containers
+    shell: ctr -n k8s.io  containers ls -q | xargs -I {} ctr  -n k8s.io containers rm {}
+  - name: delete all k8s images
+    shell: ctr -n k8s.io images ls -q | xargs -I {} ctr -n k8s.io images rm {}
+
+  - name: search snapshots in k8s.io
+    shell: ctr -n k8s.io snapshots ls | wc -l
+    register: snapshots_res
+  - name: umount all mount point
+    shell: mount |grep -E 'containerd|kube' | awk '{print $3}' | xargs umount
+  - name: delete all snapshots
+    shell: ctr -n k8s.io snapshots ls | awk -F" " 'NR>1{print $1}' |xargs -I {}  ctr -n k8s.io snapshots rm {}
+    when: snapshots_res.stdout != "1"
+    register: containerd_status
+    until: containerd_status.failed == "true"
+    retries: 8
+    delay: 2
+
+  - name: wait for 30 seconds
+    shell: sleep 30
+
+  - name: delete k8s.io namespace
+    shell: ctr namespaces rm k8s.io
+  ignore_errors: true

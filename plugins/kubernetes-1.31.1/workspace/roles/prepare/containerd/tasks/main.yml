@@ -1,0 +1,35 @@
+- name: Copy containerd binaries to /usr/bin
+  copy:
+    src: "{{ architecture }}/{{ item }}"
+    dest: /usr/local/bin/
+    mode: "0755"
+  with_items:
+  - containerd
+  - containerd-shim
+  - containerd-shim-runc-v1
+  - containerd-shim-runc-v2
+  - containerd-stress
+  - ctr
+  - runc
+
+- name: Prepare containerd directory
+  file: name=/etc/containerd state=directory
+
+- name: Generate containerd conf file
+  shell: >
+    containerd config default > /etc/containerd/config.toml;
+    sed -i -E 's|^(\s*)sandbox_image =.*|\1sandbox_image = \"{{ pause_image }}\"|g' /etc/containerd/config.toml;
+    sed -i -E 's|^(\s*)SystemdCgroup =.*|\1SystemdCgroup = true|g' /etc/containerd/config.toml
+
+- name: Create containerd systemd unit file
+  template: src=containerd.service.j2 dest=/etc/systemd/system/containerd.service
+
+- name: Enable and start containerd service
+  shell: systemctl daemon-reload && systemctl enable --now containerd
+
+- name: Waiting for containerd to running
+  shell: "systemctl status containerd | grep Active"
+  register: containerd_status
+  until: '"running" in containerd_status.stdout'
+  retries: 8
+  delay: 2
