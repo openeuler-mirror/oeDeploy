@@ -1,0 +1,9 @@
+- name: Read kubelet.conf file stat info
+  stat: 
+    path: /etc/kubernetes/kubelet.conf
+  register: stat_kubelet_conf
+
+- include_tasks: master-init.yml
+  when: 
+  - init_cluster_force == "true" or not stat_kubelet_conf.stat.exists
+  - inventory_hostname == groups['masters'][0]

@@ -1,0 +1,33 @@
+- name: Reset first if init_cluster_force == "true"
+  shell: kubeadm reset -f
+  when: 
+  - init_cluster_force == "true"
+
+- name: Prepare kubernetes directory
+  file: name=/etc/kubernetes state=directory
+
+- name: Create kubeadm configuration file
+  template:
+    src: kubeadm-init.yaml.j2
+    dest: "/etc/kubernetes/kubeadm-config.yaml"
+    owner: root
+    mode: 0644
+
+- name: Initial the first master node
+  shell: kubeadm init --config=/etc/kubernetes/kubeadm-config.yaml
+
+- name: Create kubeconfig directory
+  file: name={{ ansible_env.HOME | default('/root') }}/.kube state=directory
+
+- name: Master node copy kubeconfig file to .kube directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME | default('/root') }}/.kube/config"
+    mode: 0600
+    remote_src: yes
+
+- name: Set the permissions for the kubeconfig file
+  file:
+    path: "{{ ansible_env.PWD | default('/root') }}/.kube/config"
+    owner: "{{ ansible_env.SUDO_USER | default('root') }}"
+    mode: '0600'

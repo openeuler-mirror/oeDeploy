@@ -1,0 +1,31 @@
+all:
+  children:
+    masters:
+      hosts:
+        192.168.10.1:
+          ansible_host: 192.168.10.1
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: password
+          architecture: amd64
+          oeversion: 24.03-LTS
+    workers:
+      hosts:
+        192.168.10.2:
+          ansible_host: 192.168.10.2
+          ansible_port: 22
+          ansible_user: root
+          architecture: arm64
+          oeversion: 22.03-LTS
+        192.168.10.3:
+          ansible_host: 192.168.10.3
+          ansible_port: 22
+          ansible_user: root
+          architecture: amd64
+          oeversion: 22.03-LTS
+  vars:
+    init_cluster_force: "true"
+    service_cidr: 10.96.0.0/16
+    pod_cidr: 10.244.0.0/16
+    certs_expired: 3650
+    has_deployed_containerd: "false"

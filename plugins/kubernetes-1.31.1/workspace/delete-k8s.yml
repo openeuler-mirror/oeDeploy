@@ -1,0 +1,31 @@
+- hosts: workers
+  roles:
+    - delete/plugins/rpcbind
+
+- hosts: workers
+  tasks:
+    - name: worker reset sources
+      shell: kubeadm reset -f
+      ignore_errors: true
+
+- hosts: masters
+  tasks:
+    - block:
+      - name: delete workers
+        shell: kubectl delete node {{ item }}
+        with_items:
+          - "{{ groups['workers'] }}"
+      - name: masters reset sources
+        shell: kubeadm reset -f
+      ignore_errors: true
+
+- hosts:
+  - workers
+  - masters
+  roles:
+  - delete/plugins/calico
+  - delete/kubernetes
+  - delete/containerd
+
+
+

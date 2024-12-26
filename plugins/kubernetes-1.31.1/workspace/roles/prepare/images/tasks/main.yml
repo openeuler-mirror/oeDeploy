@@ -1,0 +1,38 @@
+- name: Prepare images directories
+  file: name={{ images_dir }}/kubernetes state=directory
+
+- name: Copy kubernetes images to all nodes
+  copy:
+    src: "{{ architecture }}/{{ item }}"
+    dest: "{{ images_dir }}/kubernetes"
+  with_items:
+  - pause.tar
+  - kube-proxy.tar
+  - coredns.tar
+
+- name: Copy control-plane images to masters
+  copy:
+    src: "{{ architecture }}/{{ item }}"
+    dest: "{{ images_dir }}/kubernetes"
+  with_items:
+  - kube-apiserver.tar
+  - kube-controller-manager.tar
+  - kube-scheduler.tar
+  - etcd.tar
+  when: inventory_hostname in groups['masters']
+
+- name: Load kubernetes images on all nodes
+  command: "ctr -n k8s.io images import {{ images_dir }}/kubernetes/{{ item }}"
+  with_items:
+  - pause.tar
+  - kube-proxy.tar
+  - coredns.tar
+
+- name: Load control-plane images on masters
+  command: "ctr -n k8s.io images import {{ images_dir }}/kubernetes/{{ item }}"
+  with_items:
+  - kube-apiserver.tar
+  - kube-controller-manager.tar
+  - kube-scheduler.tar
+  - etcd.tar
+  when: inventory_hostname in groups['masters']

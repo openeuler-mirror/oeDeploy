@@ -1,0 +1,25 @@
+- name: Copy the kubernetes to /usr/bin
+  copy:
+    src: "{{ architecture }}/{{ item }}"
+    dest: /usr/bin/
+    mode: "0755"
+  with_items:
+    - kubeadm
+    - kubelet
+    - kubectl
+    - crictl
+
+- name: Create kubelet systemd unit file
+  template: src=kubelet.service.j2 dest=/etc/systemd/system/kubelet.service
+
+- name: Create kubelet service directory
+  file:
+    name: /etc/systemd/system/kubelet.service.d
+    state: directory
+
+- name: Create kubeadm config file for kubelet
+  template: src=10-kubeadm.conf.j2 dest=/etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+- name: Start kubelet service
+  shell: >
+    systemctl daemon-reload && systemctl enable --now kubelet

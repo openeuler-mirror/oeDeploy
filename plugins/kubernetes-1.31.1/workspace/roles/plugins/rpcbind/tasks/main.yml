@@ -1,0 +1,10 @@
+- name: Install packages
+  yum:
+    name:
+      - nfs-utils
+      - rpcbind
+    state: present
+
+- name: Start rpcbind service
+  shell: >
+    systemctl enable --now rpcbind

@@ -1,0 +1,4 @@
+images_dir: "/k8s-install/images"
+kubernetes_version: 1.31.1
+pause_image: registry.k8s.io/pause:3.10
+calico_version: 3.28.2

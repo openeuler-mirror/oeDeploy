@@ -1,0 +1,8 @@
+- name: Clean cache files
+  hosts: all
+  become: yes
+  tasks:
+    - name: Clean cache files
+      file:
+        path: /k8s-install/
+        state: absent
