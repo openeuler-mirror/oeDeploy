@@ -1,0 +1,80 @@
+- name: Set the extracted manifests directory path as a fact
+  set_fact:
+    manifests_path: "{{ kubeflow_install_path }}/manifests-{{ kubeflow_version }}/"
+
+- name: Delete Volumes Web Application
+  shell: kustomize build {{ manifests_path }}common/user-namespace/base | kubectl delete -f -
+
+- name: Delete Training Operator
+  shell: kustomize build {{ manifests_path }}apps/training-operator/upstream/overlays/kubeflow  | kubectl delete -f -
+
+- name: Delete Tensorboard
+  shell: |
+    kustomize build {{ manifests_path }}apps/tensorboard/tensorboard-controller/upstream/overlays/kubeflow | kubectl delete -f -
+    kustomize build {{ manifests_path }}apps/tensorboard/tensorboards-web-app/upstream/overlays/istio | kubectl delete -f -
+
+- name: Delete Volumes Web Application
+  shell: kustomize build {{ manifests_path }}apps/volumes-web-app/upstream/overlays/istio | kubectl delete -f -
+
+- name: Delete Profiles + KFAM
+  shell: kustomize build {{ manifests_path }}apps/profiles/upstream/overlays/kubeflow | kubectl delete -f -
+
+- name: Delete PVC Viewer Controller
+  shell: kustomize build {{ manifests_path }}apps/pvcviewer-controller/upstream/default | kubectl delete -f -
+
+- name: Delete Admission Webhook
+  shell: kustomize build {{ manifests_path }}apps/admission-webhook/upstream/overlays/cert-manager | kubectl delete -f -
+
+- name: Delete Network Policies
+  shell: kustomize build {{ manifests_path }}common/networkpolicies/base | kubectl delete -f -
+
+- name: Delete Notebooks 1.0
+  shell: |
+    kustomize build {{ manifests_path }}apps/jupyter/jupyter-web-app/upstream/overlays/istio | kubectl delete -f -
+    kustomize build {{ manifests_path }}apps/jupyter/notebook-controller/upstream/overlays/kubeflow | kubectl delete -f -
+
+- name: Delete Central Dashboard
+  shell: kustomize build {{ manifests_path }}apps/centraldashboard/overlays/oauth2-proxy | kubectl delete -f -
+
+- name: Delete katib
+  shell: |
+    kustomize build  {{ manifests_path }}apps/katib/upstream/installs/katib-with-kubeflow | kubectl delete -f -
+
+- name: Delete KServe
+  shell: |
+    kustomize build {{ manifests_path }}contrib/kserve/models-web-app/overlays/kubeflow | kubectl delete -f -
+    kustomize build {{ manifests_path }}contrib/kserve/kserve | kubectl delete -f -
+
+- name: Delete Kubeflow Istio Resources
+  shell: kustomize build {{ manifests_path }}common/istio-1-22/kubeflow-istio-resources/base | kubectl delete -f -
+
+- name: Delete Kubeflow Roles
+  shell: kustomize build {{ manifests_path }}common/kubeflow-roles/base | kubectl delete -f -
+
+- name: Delete Kubeflow Namespace
+  shell: kustomize build {{ manifests_path }}common/kubeflow-namespace/base | kubectl delete -f -
+
+- name: Delete Knative Eventing
+  shell: kustomize build {{ manifests_path }}common/knative/knative-eventing/base | kubectl delete -f -
+
+- name: Delete Knative Serving
+  shell: |
+    kustomize build {{ manifests_path }}common/istio-1-22/cluster-local-gateway/base | kubectl delete -f -
+    kustomize build {{ manifests_path }}common/knative/knative-serving/overlays/gateways | kubectl delete -f -
+
+- name: Delete Dex
+  shell: kustomize build {{ manifests_path }}common/dex/overlays/oauth2-proxy | kubectl delete -f -
+
+- name: Delete Oauth2-proxy
+  shell: kustomize build {{ manifests_path }}common/oauth2-proxy/overlays/m2m-dex-only/ | kubectl delete -f -
+
+- name: Delete istio
+  shell: |
+    kustomize build {{ manifests_path }}common/istio-1-22/istio-install/overlays/oauth2-proxy | kubectl delete -f -
+    kustomize build {{ manifests_path }}common/istio-1-22/istio-namespace/base | kubectl delete -f -
+    kustomize build {{ manifests_path }}common/istio-1-22/istio-crds/base | kubectl delete -f -  
+
+- name: Delete cert-manager
+  shell: | 
+    kustomize build {{ manifests_path }}common/cert-manager/cert-manager/base | kubectl delete -f -
+    kustomize build {{ manifests_path }}common/cert-manager/kubeflow-issuer/base | kubectl delete -f -

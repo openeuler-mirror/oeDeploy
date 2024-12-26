@@ -1,0 +1,52 @@
+- name: Create shared folder /data/kubeflow and set permissions
+  file:
+    path: "{{ nfs_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure nfs-utils and rpcbind are installed
+  yum:
+    name:
+      - nfs-utils
+      - rpcbind
+    state: present
+
+- name: Modify /etc/exports file to include the new share
+  lineinfile:
+    dest: /etc/exports
+    line: "{{ nfs_path }} *(rw,sync,insecure,no_subtree_check,no_root_squash)"
+    insertafter: EOF  # 在文件末尾添加
+
+- name: Export NFS shares
+  command: exportfs -r
+  changed_when: false  # 这个命令通常不会改变任何东西，只是重新导出配置
+
+- name: Start rpcbind and nfs services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - rpcbind
+    - nfs
+
+- name: Copy files from templates to target path
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - { src: 'nfs-rbac.yaml.j2', dest: '{{ kubeflow_install_path }}/nfs-rbac.yaml' }
+    - { src: 'nfs-storageclass.yaml.j2', dest: '{{ kubeflow_install_path }}/nfs-storageclass.yaml' }
+    - { src: 'nfs-provisioner-deploy.yaml.j2', dest: '{{ kubeflow_install_path }}/nfs-provisioner-deploy.yaml' }
+
+- name: Apply Kubeflow/Kubernetes configurations using kubectl
+  command: kubectl apply -f "{{ item }}"
+  loop:
+    - '{{ kubeflow_install_path }}/nfs-rbac.yaml'
+    - '{{ kubeflow_install_path }}/nfs-storageclass.yaml'
+    - '{{ kubeflow_install_path }}/nfs-provisioner-deploy.yaml'
+
+- name: Set the created StorageClass as default
+  command: |
+    kubectl patch storageclass {{ default_storageclass_name }} -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+  changed_when: true

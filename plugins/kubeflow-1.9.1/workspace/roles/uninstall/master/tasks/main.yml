@@ -1,0 +1,6 @@
+- name: Check architecture
+  set_fact:
+    arch: "{{ ansible_architecture }}"
+
+- name: Include Delete Kubeflow tasks
+  include_tasks: delete_kubeflow.yml
