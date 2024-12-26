@@ -146,9 +146,9 @@ for arch in "${SUPPORTED_ARCH[@]}"; do
     prepare_plugins_calico $arch
 done
 
-sed -i "s|^kubernetes_version:|kubernetes_version: $KUBERNETES_VERSION|" variables.yml
-sed -i "s|^pause_image:|pause_image: $PAUSE_IMAGE|" variables.yml
-sed -i "s|^calico_version:|calico_version: $CALICO_VERSION|" variables.yml
+sed -i "s|^kubernetes_version:.*|kubernetes_version: $KUBERNETES_VERSION|" variables.yml
+sed -i "s|^pause_image:.*|pause_image: $PAUSE_IMAGE|" variables.yml
+sed -i "s|^calico_version:.*|calico_version: $CALICO_VERSION|" variables.yml
 
 # needed: ansible roles init-k8s.yml delete-k8s.yml clean-k8s.yml variables.yml build.sh
 
