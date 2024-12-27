@@ -1,7 +1,7 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
 Version:            1.0.0
-Release:            1
+Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
 Source0:            %{name}-%{version}.tar.gz
