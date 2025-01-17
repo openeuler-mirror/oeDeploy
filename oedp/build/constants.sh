@@ -24,8 +24,8 @@ PYTHON_THIRD_LIBS_DIR=${BACKUP_DIR}/python_third_libs
 # RPM 归档地址
 STORAGE_DIR="${WORKSPACE_DIR}"/storages
 
-# 项目仓库目录
-PROJECT_DIR="${WORKSPACE_DIR}"/oeDeploy
+# 项目仓库目录 - oedp 命令行相关代码所在目录
+PROJECT_DIR="${WORKSPACE_DIR}"/oeDeploy/oedp
 # 构建脚本所在目录
 BUILD_SCRIPT_DIR="${PROJECT_DIR}"/build
 # 存放构建中间产物的暂存目录
@@ -33,14 +33,3 @@ TEMP_DIR="${PROJECT_DIR}"/temp
 # 打包目录
 PACKING_DIR_NAME=oedp-1.0.0
 PACKING_DIR="${TEMP_DIR}/${PACKING_DIR_NAME}"
-
-# 系统架构
-if [[ "$(arch)" == "x86_64" ]]; then
-    ARCH="x86"
-elif [[ "$(arch)" == "aarch64" ]]; then
-    ARCH="arm"
-fi
-# 构建环境 CPU 核心数
-CPU_COUNT=$(grep -c processor /proc/cpuinfo)
-# pip 源 URL
-PIP_SOURCE_URL='https://mirrors.aliyun.com/pypi/simple/'
