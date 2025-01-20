@@ -21,9 +21,9 @@ class CustomPageNumberPagination(PageNumberPagination):
     # 每页的最大项目数限制
     max_page_size = 100
     # 通过 URL 参数指定的每页显示项数
-    page_size_query_param = 'page_size'
+    page_size_query_param = 'pageSize'
     # 通过 URL 参数指定的当前页数
-    page_query_param = 'cur_page'
+    page_query_param = 'curPage'
 
     def get_paginated_response(self, data):
         return Response({
