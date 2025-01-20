@@ -8,7 +8,7 @@ action:
       - name: install helm
         playbook: install.yml
         scope: all
-  delete:
+  uninstall:
     description: uninstall helm
     tasks:
       - name: uninstall helm

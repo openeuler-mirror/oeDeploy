@@ -4,6 +4,7 @@ all:
       ansible_host: HOST1_IP       # example: 1.1.1.1
       ansible_port: 22
       ansible_user: root
+      ansible_password: PASSWORD
       architecture: amd64
   vars:
     version: 3.9.0

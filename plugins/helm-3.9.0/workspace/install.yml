@@ -34,7 +34,8 @@
       copy:
         src: "{{ temp_dir }}/linux-{{ architecture }}/helm"
         dest: "{{ install_path }}/helm"
-        mode: '0644'
+        mode: '0755'
+        remote_src: yes
         force: "{{ force_install }}"
       when: extract_result is succeeded
       register: copy_result
@@ -47,7 +48,9 @@
       ignore_errors: yes
 
     - name: Exit when failed
-      failed_when: copy_result is not succeeded
+      fail:
+        msg: "Error: Helm installation failed"
+      when: copy_result is not succeeded
 
     - name: Varify Helm installation
       command: helm version --short
