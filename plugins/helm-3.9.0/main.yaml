@@ -1,0 +1,16 @@
+name: helm
+version: 3.9.0
+description: deploy helm-v3.9.0
+action:
+  install:
+    description: install helm
+    tasks:
+      - name: install helm
+        playbook: install.yml
+        scope: all
+  delete:
+    description: uninstall helm
+    tasks:
+      - name: uninstall helm
+        playbook: uninstall.yml
+        scope: all
