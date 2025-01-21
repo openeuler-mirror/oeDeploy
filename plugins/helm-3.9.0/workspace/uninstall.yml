@@ -1,0 +1,9 @@
+- name: Install Helm
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Delete Helm binary
+      file:
+        path: "{{ install_path }}/helm"
+        state: absent

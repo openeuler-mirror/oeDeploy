@@ -1,0 +1,14 @@
+all:
+  hosts:
+    host1:
+      ansible_host: HOST1_IP       # example: 1.1.1.1
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: PASSWORD
+      architecture: amd64
+  vars:
+    version: 3.9.0
+    download_url: https://get.helm.sh/
+    temp_path: /tmp
+    install_path: /usr/local/bin
+    force_install: yes
