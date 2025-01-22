@@ -4,12 +4,15 @@
   vars:
     ray_cluster_values_items: |
       {% set result = [] %}
-      {% macro flatten(d, prefix='') %}
+      {% set prefix = [] %}
+      {% macro flatten(d) %}
         {% for key, value in d.items() %}
           {% if value is mapping %}
-            {{ flatten(value, prefix=prefix + key + '.') }}
+            {% set prefix = prefix + [prefix[-1] + key + '.'] %} 
+            {{ flatten(value) }}
+            {% set prefix = prefix[:-1] %}
           {% else %}
-            {% set result = result + [prefix + key + '=' + value] %}
+            {% set result = result + [prefix[-1] + key + '=' + value] %}
           {% endif %}
         {% endfor %}
       {% endmacro %}
@@ -19,15 +22,12 @@
 
   tasks:
     - name: Create namespace
-      k8s:
-        name: "{{ namespace }}"
-        api_version: v1
-        kind: Namespace
-        state: present
+      command: kubectl create namespace {{ namespace }}
+      ignore_errors: yes
 
     - name: Remove Helm repo if exists
       command: helm repo remove {{ helm_repo_name }}
-      when: force_install == "yes"
+      when: force_install == "true"
       ignore_errors: yes
 
     - name: Add Helm repo
@@ -40,7 +40,7 @@
 
     - name: Uninstall kuberay-operator if exists
       command: helm uninstall kuberay-operator -n {{ namespace }}
-      when: force_install == "yes"
+      when: force_install == "true"
       ignore_errors: yes
 
     - name: Install kuberay-operator
@@ -50,7 +50,7 @@
 
     - name: Uninstall ray-cluster if exists
       command: helm uninstall ray-cluster -n {{ namespace }}
-      when: force_install == "yes"
+      when: force_install == "true"
       ignore_errors: yes
 
     - name: Install ray-cluster

@@ -6,7 +6,7 @@ all:
       ansible_user: root
       ansible_password: PASSWORD
   vars:
-    force_install: yes
+    force_install: "true"
     kuberay_version: 1.2.2
     helm_repo_name: "kuberay"
     helm_repo_url: "https://ray-project.github.io/kuberay-helm"
