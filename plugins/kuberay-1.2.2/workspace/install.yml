@@ -1,24 +1,6 @@
 - name: Install Helm
   hosts: all
   become: yes
-  vars:
-    ray_cluster_values_items: |
-      {% set result = [] %}
-      {% set prefix = [] %}
-      {% macro flatten(d) %}
-        {% for key, value in d.items() %}
-          {% if value is mapping %}
-            {% set prefix = prefix + [prefix[-1] + key + '.'] %} 
-            {{ flatten(value) }}
-            {% set prefix = prefix[:-1] %}
-          {% else %}
-            {% set result = result + [prefix[-1] + key + '=' + value] %}
-          {% endif %}
-        {% endfor %}
-      {% endmacro %}
-      {% call flatten(ray_cluster_values) %}
-      {% endcall %}
-      {{ result | join(',') }}
 
   tasks:
     - name: Create namespace
@@ -57,7 +39,21 @@
       command: |
         helm install ray-cluster {{ helm_repo_name }}/ray-cluster
         -n {{ namespace }} --version {{ kuberay_version }}
-        --set {{ ray_cluster_values_items }}
+        --set image.repository={{ ray_cluster_values.ray_cluster_values_items }}
+        --set image.tag={{ ray_cluster_values.ray_version }}
+        --set head.resources.limits.cpu={{ ray_cluster_values.head.cpu }}
+        --set head.resources.requests.cpu={{ ray_cluster_values.head.cpu }}
+        --set head.resources.limits.memory={{ ray_cluster_values.head.memory }}
+        --set head.resources.requests.memory={{ ray_cluster_values.head.memory }}
+        --set worker.replicas={{ ray_cluster_values.worker.num }}
+        --set worker.minReplicas={{ ray_cluster_values.worker.num }}
+        --set worker.maxReplicas={{ ray_cluster_values.worker.num }}
+        --set worker.resources.limits.cpu={{ ray_cluster_values.worker.cpu }}
+        --set worker.resources.requests.cpu={{ ray_cluster_values.worker.cpu }}
+        --set worker.resources.limits.memory={{ ray_cluster_values.worker.memory }}
+        --set worker.resources.requests.memory={{ ray_cluster_values.worker.memory }}
+        --set worker.resources.limits.gpu={{ ray_cluster_values.worker.gpu }}
+        --set worker.resources.requests.gpu={{ ray_cluster_values.worker.gpu }}
 
     - name: Dashboard port-forward
       command: |

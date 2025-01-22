@@ -15,26 +15,13 @@ all:
     dashboard_address: 0.0.0.0
 
     ray_cluster_values:
-      image:
-        repository: "m.daocloud.io/docker.io/rayproject/ray"
-        tag: 2.9.0
+      repository: "m.daocloud.io/docker.io/rayproject/ray"
+      ray_version: 2.9.0
       head:
-        resources:
-          limits:
-            cpu: "1"
-            memory: "2G"
-          requests:
-            cpu: "1"
-            memory: "2G"
+        cpu: "1"
+        memory: "2G"
       worker:
-        replicas: 1
-        minReplicas: 1
-        maxReplicas: 3
-        resources:
-          limits:
-            cpu: "1"
-            memory: "1G"
-          requests:
-            cpu: "1"
-            memory: "1G"
-
+        num: 1
+        cpu: "1"
+        memory: "1G"
+        gpu: "0"
