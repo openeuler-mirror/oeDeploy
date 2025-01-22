@@ -1,6 +1,21 @@
 - name: Install Helm
   hosts: all
   become: yes
+  vars:
+    ray_cluster_values_items: |
+      {% set result = [] %}
+      {% macro flatten(d, prefix='') %}
+        {% for key, value in d.items() %}
+          {% if value is mapping %}
+            {{ flatten(value, prefix=prefix + key + '.') }}
+          {% else %}
+            {% set result = result + [prefix + key + '=' + value] %}
+          {% endif %}
+        {% endfor %}
+      {% endmacro %}
+      {% call flatten(ray_cluster_values) %}
+      {% endcall %}
+      {{ result | join(',') }}
 
   tasks:
     - name: Create namespace
@@ -12,7 +27,7 @@
 
     - name: Remove Helm repo if exists
       command: helm repo remove {{ helm_repo_name }}
-      when: "{{ force_install }}" == "yes"
+      when: force_install == "yes"
       ignore_errors: yes
 
     - name: Add Helm repo
@@ -25,7 +40,7 @@
 
     - name: Uninstall kuberay-operator if exists
       command: helm uninstall kuberay-operator -n {{ namespace }}
-      when: "{{ force_install }}" == "yes"
+      when: force_install == "yes"
       ignore_errors: yes
 
     - name: Install kuberay-operator
@@ -35,14 +50,14 @@
 
     - name: Uninstall ray-cluster if exists
       command: helm uninstall ray-cluster -n {{ namespace }}
-      when: "{{ force_install }}" == "yes"
+      when: force_install == "yes"
       ignore_errors: yes
 
     - name: Install ray-cluster
       command: |
         helm install ray-cluster {{ helm_repo_name }}/ray-cluster
         -n {{ namespace }} --version {{ kuberay_version }}
-        --set {{ ray_cluster_values | dict2items | map('join', '=') | join(',') }}
+        --set {{ ray_cluster_values_items }}
 
     - name: Dashboard port-forward
       command: |
@@ -55,7 +70,11 @@
         -o custom-columns=POD:metadata.name --noheaders -n {{ namespace }}
       register: head_pod
 
+    - name: Fail if no head
+      fail:
+        msg: "Error: KubeRay installation failed"
+      when: head_pod.stdout == ""
+
     - name: Show head pod
       debug:
         msg: "Head pod: {{ head_pod.stdout }}"
-      fail_when: {{ head_pod.stdout }} == ""
