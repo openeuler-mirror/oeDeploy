@@ -1,0 +1,40 @@
+all:
+  hosts:
+    host1:
+      ansible_host: HOST_IP1      # example: 1.1.1.1
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: PASSWORD
+  vars:
+    force_install: yes
+    kuberay_version: 1.2.2
+    helm_repo_name: "kuberay"
+    helm_repo_url: "https://ray-project.github.io/kuberay-helm"
+    namespace: kuberay
+    dashboard_port: 8265
+    dashboard_address: 0.0.0.0
+
+    ray_cluster_values:
+      image:
+        repository: "m.daocloud.io/docker.io/rayproject/ray"
+        tag: 2.9.0
+      head:
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2G"
+          requests:
+            cpu: "1"
+            memory: "2G"
+      worker:
+        replicas: 1
+        minReplicas: 1
+        maxReplicas: 3
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1G"
+          requests:
+            cpu: "1"
+            memory: "1G"
+

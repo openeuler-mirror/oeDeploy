@@ -1,0 +1,61 @@
+- name: Install Helm
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Create namespace
+      k8s:
+        name: "{{ namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Remove Helm repo if exists
+      command: helm repo remove {{ helm_repo_name }}
+      when: "{{ force_install }}" == "yes"
+      ignore_errors: yes
+
+    - name: Add Helm repo
+      command: helm repo add {{ helm_repo_name }} {{ helm_repo_url }}
+      args:
+        creates: "{{ ansible_user_dir }} /.helm/repository/{{ helm_repo_name }}.yaml"
+
+    - name: Update Helm repo
+      command: helm repo update
+
+    - name: Uninstall kuberay-operator if exists
+      command: helm uninstall kuberay-operator -n {{ namespace }}
+      when: "{{ force_install }}" == "yes"
+      ignore_errors: yes
+
+    - name: Install kuberay-operator
+      command: |
+        helm install kuberay-operator {{ helm_repo_name }}/kuberay-operator
+        -n {{ namespace }} --version {{ kuberay_version }}
+
+    - name: Uninstall ray-cluster if exists
+      command: helm uninstall ray-cluster -n {{ namespace }}
+      when: "{{ force_install }}" == "yes"
+      ignore_errors: yes
+
+    - name: Install ray-cluster
+      command: |
+        helm install ray-cluster {{ helm_repo_name }}/ray-cluster
+        -n {{ namespace }} --version {{ kuberay_version }}
+        --set {{ ray_cluster_values | dict2items | map('join', '=') | join(',') }}
+
+    - name: Dashboard port-forward
+      command: |
+        kubectl port-forward svc/ray-cluster-kuberay-head-svc
+        -n {{ namespace }} {{ dashboard_port }}:8265 --address {{ dashboard_address }}
+
+    - name: Get head pod
+      command: |
+        kubectl get pods --selector=ray.io/node-type=head
+        -o custom-columns=POD:metadata.name --noheaders -n {{ namespace }}
+      register: head_pod
+
+    - name: Show head pod
+      debug:
+        msg: "Head pod: {{ head_pod.stdout }}"
+      fail_when: {{ head_pod.stdout }} == ""
