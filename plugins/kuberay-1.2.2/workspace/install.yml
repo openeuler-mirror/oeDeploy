@@ -39,7 +39,7 @@
       command: |
         helm install ray-cluster {{ helm_repo_name }}/ray-cluster
         -n {{ namespace }} --version {{ kuberay_version }}
-        --set image.repository={{ ray_cluster_values.ray_cluster_values_items }}
+        --set image.repository={{ ray_cluster_values.repository }}
         --set image.tag={{ ray_cluster_values.ray_version }}
         --set head.resources.limits.cpu={{ ray_cluster_values.head.cpu }}
         --set head.resources.requests.cpu={{ ray_cluster_values.head.cpu }}
@@ -52,13 +52,15 @@
         --set worker.resources.requests.cpu={{ ray_cluster_values.worker.cpu }}
         --set worker.resources.limits.memory={{ ray_cluster_values.worker.memory }}
         --set worker.resources.requests.memory={{ ray_cluster_values.worker.memory }}
-        --set worker.resources.limits.gpu={{ ray_cluster_values.worker.gpu }}
-        --set worker.resources.requests.gpu={{ ray_cluster_values.worker.gpu }}
 
     - name: Dashboard port-forward
       command: |
         kubectl port-forward svc/ray-cluster-kuberay-head-svc
         -n {{ namespace }} {{ dashboard_port }}:8265 --address {{ dashboard_address }}
+      register: dashboard_result
+      retries: {{ retry }}
+      delay: 10
+      until: dashboard_result.rc == 0
 
     - name: Get head pod
       command: |
@@ -71,6 +73,6 @@
         msg: "Error: KubeRay installation failed"
       when: head_pod.stdout == ""
 
-    - name: Show head pod
+    - name: Show result
       debug:
-        msg: "Head pod: {{ head_pod.stdout }}"
+        msg: "Head pod: {{ head_pod.stdout }}\nDashboard is running at {{ ansible_host }}:{{ dashboard_port }}"
