@@ -221,7 +221,7 @@ if [[ "${status}" == "active" ]]; then
 fi
 
 # 输入或获取 oedp 密码
-#stty -echo
+stty -echo
 if [ "${is_silent_installation}" == "false" ]; then
   should_break=false
   for i in {1..5}; do
@@ -241,7 +241,7 @@ if [ "${is_silent_installation}" == "false" ]; then
 else
   oedp_passwd=$(read_config_value "oedp_password")
 fi
-#stty echo
+stty echo
 echo ""
 
 # 检查 oedp 用户密码的复杂度
@@ -249,7 +249,7 @@ while true
 do
   check_password_complexity ${oedp_passwd}
   if [[ $? -ne 0 ]]; then
-#    stty -echo
+    stty -echo
     if [ "${is_silent_installation}" == "false" ]; then
       echo -e "\e[1;34mThe password must contain at least eight characters, including uppercase lowercase digits and special characters.\e[0m"
       echo -e "\e[1;31mThe password of the oedp user for MariaDB is invalid. Please input again.\e[0m"
