@@ -47,10 +47,12 @@ class RunAction:
             else:
                 self.log.info(f'Running task: No Name Task')
             if 'playbook' in task:
-                return self._run_playbook(task, self.project)
+                if not self._run_playbook(task, self.project):
+                    return False
             else:
                 self.log.error(f'Unrecognized task: {task}')
                 return False
+        return True
 
     def _run_playbook(self, task: dict, project: str) -> bool:
         workspace = os.path.join(project, 'workspace')
