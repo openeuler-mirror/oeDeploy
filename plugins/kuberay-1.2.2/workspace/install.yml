@@ -1,4 +1,4 @@
-- name: Install Helm
+- name: Install KubeRay
   hosts: all
   become: yes
 
@@ -7,34 +7,16 @@
       command: kubectl create namespace {{ namespace }}
       ignore_errors: yes
 
-    - name: Remove Helm repo if exists
-      command: helm repo remove {{ helm_repo_name }}
-      when: force_install == "true"
-      ignore_errors: yes
-
     - name: Add Helm repo
       command: helm repo add {{ helm_repo_name }} {{ helm_repo_url }}
       args:
-        creates: "{{ ansible_user_dir }} /.helm/repository/{{ helm_repo_name }}.yaml"
-
-    - name: Update Helm repo
-      command: helm repo update
-
-    - name: Uninstall kuberay-operator if exists
-      command: helm uninstall kuberay-operator -n {{ namespace }}
-      when: force_install == "true"
-      ignore_errors: yes
+        creates: "{{ ansible_user_dir }}/.helm/repository/{{ helm_repo_name }}.yaml"
 
     - name: Install kuberay-operator
       command: |
         helm install kuberay-operator {{ helm_repo_name }}/kuberay-operator
         -n {{ namespace }} --version {{ kuberay_version }}
       retries: 5
-
-    - name: Uninstall ray-cluster if exists
-      command: helm uninstall ray-cluster -n {{ namespace }}
-      when: force_install == "true"
-      ignore_errors: yes
 
     - name: Install ray-cluster
       command: |
@@ -55,18 +37,6 @@
         --set worker.resources.requests.memory={{ ray_cluster_values.worker.memory }}
       retries: 5
 
-    - name: Wait until service running
-      command: |
-        kubectl get svc ray-cluster-kuberay-head-svc
-        -o custom-columns=POD:metadata.name --no-headers -n {{ namespace }}
-      register: service_result
-      retries: "{{ retry }}"
-      delay: 10
-      until: service_result.stdout != ""
-
-    - name: Dashboard port-forward
-      shell: "nohup kubectl port-forward svc/ray-cluster-kuberay-head-svc -n {{ namespace }} {{ dashboard_port }}:8265 --address {{ dashboard_address }} > /dev/null 2>&1 &"
-
     - name: Get head pod
       command: |
         kubectl get pods --selector=ray.io/node-type=head
@@ -80,4 +50,4 @@
 
     - name: Show result
       debug:
-        msg: "Head pod: {{ head_pod.stdout }}  Dashboard url: {{ ansible_host }}:{{ dashboard_port }}"
+        msg: "Head pod: {{ head_pod.stdout }}"
