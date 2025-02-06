@@ -12,7 +12,6 @@ all:
     namespace: kuberay
     dashboard_port: 8265
     dashboard_address: 0.0.0.0
-    retry: 180
 
     ray_cluster_values:
       repository: "m.daocloud.io/docker.io/rayproject/ray"
