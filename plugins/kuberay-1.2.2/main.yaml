@@ -17,9 +17,3 @@ action:
       - name: uninstall KubeRay
         playbook: uninstall.yml
         scope: all
-  port-forward:
-    description: enable dashboard port-forwarding
-    tasks:
-      - name: port-forwarding
-        playbook: port-forward.yml
-        scope: all

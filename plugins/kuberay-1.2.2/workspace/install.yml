@@ -60,6 +60,7 @@
             --set worker.resources.requests.cpu={{ ray_cluster_values.worker.cpu }}
             --set worker.resources.limits.memory={{ ray_cluster_values.worker.memory }}
             --set worker.resources.requests.memory={{ ray_cluster_values.worker.memory }}
+            --set service.type=NodePort
           retries: 5
       when: values == ""
 
