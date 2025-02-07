@@ -35,6 +35,11 @@
           command: |
             helm install ray-cluster {{ helm_repo_name }}/ray-cluster
             -n {{ namespace }} --version {{ kuberay_version }} -f {{ temp_dir }}/{{ values | basename }}
+        - name: Delete temporary directory
+          file:
+            path: "{{ temp_dir }}"
+            state: absent
+          ignore_errors: yes
       when: values != ""
 
     - block:
