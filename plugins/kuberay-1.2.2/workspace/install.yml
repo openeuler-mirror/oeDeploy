@@ -29,7 +29,7 @@
             mode: '0644'
         - name: Copy values to master
           copy:
-            stc: "{{ values }}"
+            src: "{{ values }}"
             dest: "{{ temp_dir }}"
         - name: Install ray-cluster
           command: |
