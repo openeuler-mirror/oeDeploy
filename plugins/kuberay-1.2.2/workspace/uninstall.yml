@@ -1,0 +1,16 @@
+- name: Uninstall KubeRay
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Uninstall ray-cluster
+      command: helm uninstall ray-cluster -n {{ namespace }}
+      ignore_errors: yes
+
+    - name: Uninstall kuberay-operator
+      command: helm uninstall kuberay-operator -n {{ namespace }}
+      ignore_errors: yes
+
+    - name: Remove Helm repo
+      command: helm repo remove {{ helm_repo_name }}
+      ignore_errors: yes

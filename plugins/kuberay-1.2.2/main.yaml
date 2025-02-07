@@ -1,0 +1,19 @@
+name: kuberay
+version: 1.2.2
+description: kuberay 1.2.2
+action:
+  install:
+    description: install KubeRay
+    tasks:
+      - name: uninstall KubeRay
+        playbook: uninstall.yml
+        scope: all
+      - name: install KubeRay
+        playbook: install.yml
+        scope: all
+  uninstall:
+    description: uninstall KubeRay
+    tasks:
+      - name: uninstall KubeRay
+        playbook: uninstall.yml
+        scope: all
