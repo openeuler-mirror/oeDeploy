@@ -12,7 +12,9 @@ all:
     namespace: kuberay
     dashboard_port: 8265
     dashboard_address: 0.0.0.0
+    temp_path: /tmp
 
+    values: ""
     ray_cluster_values:
       repository: "m.daocloud.io/docker.io/rayproject/ray"
       ray_version: 2.9.0
