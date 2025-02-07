@@ -70,7 +70,7 @@
         -o custom-columns=POD:metadata.name --no-headers -n {{ namespace }}
       register: head_pod
       until: head_pod.stdout != ""
-      retry: 10
+      retries: 10
       delay: 5
 
     - name: Fail if no head

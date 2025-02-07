@@ -10,8 +10,6 @@ all:
     helm_repo_name: "kuberay"
     helm_repo_url: "https://ray-project.github.io/kuberay-helm"
     namespace: kuberay
-    dashboard_port: 8265
-    dashboard_address: 0.0.0.0
     temp_path: /tmp
 
     values: ""
