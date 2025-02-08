@@ -44,9 +44,8 @@ class JWTManager:
         """
         username_field = get_user_model().USERNAME_FIELD
         username = self._get_username(user)
-        uuid_ = str(uuid.uuid1())
         expiration_time = datetime.now(tz=pytz.timezone(get_time_zone())) + timedelta(days=JWT_EXPIRY_DAYS)
-        return {'user_id': user.pk, username_field: username, 'uuid': uuid_, 'exp': expiration_time}
+        return {'user_id': user.pk, username_field: username, 'exp': expiration_time}
 
     def decode_token(self, token):
         options = {'verify_exp': False}
