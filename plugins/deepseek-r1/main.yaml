@@ -1,0 +1,11 @@
+name: deepseek-r1
+version: 1.0.0
+description: deepseek-r1 1.0.0
+action:
+  install:
+    description: install DeepSeek-R1
+    tasks:
+      - name: install DeepSeek-R1
+        playbook: install.yaml
+        scope: all
+ 

@@ -1,0 +1,18 @@
+FROM ./DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
+
+TEMPLATE """{{- if .System }}{{ .System }}{{ end }}
+{{- range $i, $_ := .Messages }}
+{{- $last := eq (len (slice $.Messages $i)) 1}}
+{{- if eq .Role "user" }}<｜User｜>{{ .Content }}
+{{- else if eq .Role "assistant" }}<｜Assistant｜>{{ .Content }}{{- if not $last }}<｜end▁of▁sentence｜>{{- end }}
+{{- end }}
+{{- if and $last (ne .Role "assistant") }}<｜Assistant｜>{{- end }}
+{{- end }}"""
+
+SYSTEM ""
+PARAMETER temperature 0.7
+PARAMETER top_p 0.7
+PARAMETER top_k 30
+PARAMETER num_ctx 4096
+PARAMETER num_thread 12
+PARAMETER num_gpu -1
