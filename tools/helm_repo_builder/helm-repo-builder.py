@@ -26,6 +26,7 @@ def get_parser():
     # 可选参数
     parser.add_argument(
         '--url',
+        metavar='URL',
         dest='mirror_url',
         default='',
         help='镜像仓库基础URL（默认：空，生成相对路径的index.yaml）'
@@ -138,7 +139,7 @@ def get_index(repo_url, retry):
 
 def get_prefix(index_yaml):
     urls = []
-    for entry in index_yaml['entries']:
+    for entry in index_yaml['entries'].values():
         urls.extend([i['urls'][0] for i in entry])
     if len(urls) == 0:
         return ''
@@ -159,22 +160,26 @@ def get_prefix(index_yaml):
     return prefix[1:]
 
 
+def get_file_path(url, prefix, path):
+    if url.startswith('http'):
+        url = re.sub(r'^https?://', '', url)
+    if not url.startswith(prefix):
+        raise Exception(f'URL匹配前缀失败：{url}')
+    file_path = os.path.join(path, url[len(prefix) + 1:])
+    return file_path
+
+
 def work(repo_url, mirror_url, path, prefix, re_download, no_index, only_index, new_index, retry):
     if not only_index:
         index_yaml = get_index(repo_url, retry)
         if prefix is None:
             prefix = get_prefix(index_yaml)
-        for entry in index_yaml['entries']:
+        for entry in index_yaml['entries'].values():
             for item in entry:
-                url = item['urls'][0]
-                if url.startswith('http'):
-                    url = re.sub(r'^https?://', '', url)
-                if not url.startswith(prefix):
-                    raise Exception(f'URL匹配前缀失败：{url}')
-                file_path = os.path.join(path, url[len(prefix + 1):])
+                file_path = get_file_path(item['urls'][0], prefix, path)
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 if re_download or not os.path.exists(file_path) or not check_sum(file_path, item['digest']):
-                    download_file(url, file_path, retry, item['digest'])
+                    download_file(item['urls'][0], file_path, retry, item['digest'])
     if not no_index:
         index_path = os.path.join(path, 'index.yaml')
         if new_index and os.path.exists(index_path):
