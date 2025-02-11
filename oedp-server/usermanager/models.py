@@ -54,6 +54,10 @@ class User(AbstractBaseUser):
     role = models.IntegerField('用户角色', choices=RoleChoices.choices)
     has_reset = models.BooleanField('用户是否重设密码', default=False, blank=True, null=True)
     last_login = models.DateTimeField('上次登陆时间', blank=True, null=True)
+
+    csrf_token = models.CharField('CSRF token', max_length=255, blank=True, null=True)
+    expires_at = models.DateTimeField('CSRF token 失效时间', blank=True, null=True)
+
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField('更新时间', auto_now=True)
 

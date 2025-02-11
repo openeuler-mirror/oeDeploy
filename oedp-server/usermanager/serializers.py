@@ -13,10 +13,12 @@
 # ======================================================================================================================
 
 import re
+from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
+from constants.auth import JWT_EXPIRY_DAYS
 from constants.configs.account_config import ADMIN_ID, USERNAME_MIN_LEN, USERNAME_MAX_LEN
 from usermanager.models import User
 from utils.cipher import get_salt
@@ -71,7 +73,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
-class CreateUserSerializer(serializers.ModelSerializer):
+class UserSerializerForCreate(serializers.ModelSerializer):
     password = serializers.CharField(max_length=32, min_length=8, validators=[validate_password_valid])
     confirmed_password = serializers.CharField(max_length=32, min_length=8)
 
@@ -96,7 +98,6 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return False
 
     def validate(self, data):
-        # TODO 判断管理源用户是否登陆
         # 校验两次输入的密码是否相等
         confirm_password(data)
         # 校验是否把用户名作为密码
@@ -138,7 +139,7 @@ class UserSerializerForResetPW(serializers.ModelSerializer):
 
     def validate(self, data):
         # 校验用户 id 是否和管理员 id 相同。
-        if int(self.context.get('request').get('id')[0]) != ADMIN_ID:
+        if int(data.get('id')[0]) != ADMIN_ID:
             raise serializers.ValidationError({'id': 'This id is not the id of the administrator user.'})
         # 判断用户是否存在
         if not User.objects.filter(id=ADMIN_ID).exists():
@@ -146,9 +147,9 @@ class UserSerializerForResetPW(serializers.ModelSerializer):
         # 判断用户是否是管理员
         if User.objects.get(id=ADMIN_ID).role != User.RoleChoices.ADMIN:
             raise serializers.ValidationError('The role of user is not administrator.')
-        # # 判断是否重置过密码
-        # if User.objects.get(id=ADMIN_ID).has_reset:
-        #     raise serializers.ValidationError('The Admin user has reset password.')
+        # 判断是否重置过密码
+        if User.objects.get(id=ADMIN_ID).has_reset:
+            raise serializers.ValidationError('The Admin user has reset password.')
         # 校验两次输入的密码是否相等
         confirm_password(data)
         # 校验是否把用户名作为密码
@@ -193,6 +194,8 @@ class UserSerializerForLogin(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        pass
-
-
+        instance.csrf_token = validated_data.get('csrf_token')
+        instance.expires_at = datetime.now() + timedelta(days=JWT_EXPIRY_DAYS)
+        instance.last_login = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        instance.save()
+        return instance

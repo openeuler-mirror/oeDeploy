@@ -43,7 +43,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -112,5 +111,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Rest Framework
 REST_FRAMEWORK = {
+    # 分页
     'DEFAULT_PAGINATION_CLASS': 'utils.pagination.CustomPageNumberPagination',
+    # 身份认证
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'usermanager.jwt_auth.authentication.TokenAuthentication',
+    ),
 }
