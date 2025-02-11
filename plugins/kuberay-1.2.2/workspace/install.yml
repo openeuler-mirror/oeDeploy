@@ -3,6 +3,10 @@
   become: yes
 
   tasks:
+    - name: Set temp directory name
+      set_fact:
+        temp_dir: "{{ temp_path }}/kuberay_temp_{{ ansible_date_time.iso8601 }}"
+
     - name: Create namespace
       command: kubectl create namespace {{ namespace }}
       ignore_errors: yes
@@ -12,16 +16,7 @@
       args:
         creates: "{{ ansible_user_dir }}/.helm/repository/{{ helm_repo_name }}.yaml"
 
-    - name: Install kuberay-operator
-      command: |
-        helm install kuberay-operator {{ helm_repo_name }}/kuberay-operator
-        -n {{ namespace }} --version {{ kuberay_version }}
-      retries: 5
-
     - block:
-        - name: Set temp directory name
-          set_fact:
-            temp_dir: "{{ temp_path }}/kuberay_temp_{{ ansible_date_time.iso8601 }}"
         - name: Create temporary directory
           file:
             path: "{{ temp_dir }}"
@@ -29,40 +24,67 @@
             mode: '0644'
         - name: Copy values to master
           copy:
-            src: "{{ values }}"
+            src: "{{ kuberay_operator_values_file }}"
+            dest: "{{ temp_dir }}"
+        - name: Install kuberay_operator
+          command: |
+            helm install kuberay_operator {{ helm_repo_name }}/kuberay_operator
+            -n {{ namespace }} --version {{ version }} -f {{ temp_dir }}/{{ kuberay_operator_values_file | basename }}
+          retries: 5
+      when: kuberay_operator_values_file != ""
+
+    - name: Install kuberay-operator
+      command: |
+        helm install kuberay-operator {{ helm_repo_name }}/kuberay-operator
+        -n {{ namespace }} --version {{ version }}
+        --set image.repository={{ kuberay_operator_values.repository }}
+        --set image.tag={{ kuberay_operator_values.tag }}
+      retries: 5
+      when: kuberay_operator_values_file == ""
+
+    - block:
+        - name: Create temporary directory
+          file:
+            path: "{{ temp_dir }}"
+            state: directory
+            mode: '0644'
+        - name: Copy values to master
+          copy:
+            src: "{{ ray_cluster_values_file }}"
             dest: "{{ temp_dir }}"
         - name: Install ray-cluster
           command: |
             helm install ray-cluster {{ helm_repo_name }}/ray-cluster
-            -n {{ namespace }} --version {{ kuberay_version }} -f {{ temp_dir }}/{{ values | basename }}
-        - name: Delete temporary directory
-          file:
-            path: "{{ temp_dir }}"
-            state: absent
-          ignore_errors: yes
-      when: values != ""
-
-    - block:
-        - name: Install ray-cluster
-          command: |
-            helm install ray-cluster {{ helm_repo_name }}/ray-cluster
-            -n {{ namespace }} --version {{ kuberay_version }}
-            --set image.repository={{ ray_cluster_values.repository }}
-            --set image.tag={{ ray_cluster_values.ray_version }}
-            --set head.resources.limits.cpu={{ ray_cluster_values.head.cpu }}
-            --set head.resources.requests.cpu={{ ray_cluster_values.head.cpu }}
-            --set head.resources.limits.memory={{ ray_cluster_values.head.memory }}
-            --set head.resources.requests.memory={{ ray_cluster_values.head.memory }}
-            --set worker.replicas={{ ray_cluster_values.worker.num }}
-            --set worker.minReplicas={{ ray_cluster_values.worker.num }}
-            --set worker.maxReplicas={{ ray_cluster_values.worker.num }}
-            --set worker.resources.limits.cpu={{ ray_cluster_values.worker.cpu }}
-            --set worker.resources.requests.cpu={{ ray_cluster_values.worker.cpu }}
-            --set worker.resources.limits.memory={{ ray_cluster_values.worker.memory }}
-            --set worker.resources.requests.memory={{ ray_cluster_values.worker.memory }}
-            --set service.type=NodePort
+            -n {{ namespace }} --version {{ version }} -f {{ temp_dir }}/{{ ray_cluster_values_file | basename }}
           retries: 5
-      when: values == ""
+      when: ray_cluster_values_file != ""
+
+    - name: Install ray-cluster
+      command: |
+        helm install ray-cluster {{ helm_repo_name }}/ray-cluster
+        -n {{ namespace }} --version {{ version }}
+        --set image.repository={{ ray_cluster_values.repository }}
+        --set image.tag={{ ray_cluster_values.tag }}
+        --set head.resources.limits.cpu={{ ray_cluster_values.head.cpu }}
+        --set head.resources.requests.cpu={{ ray_cluster_values.head.cpu }}
+        --set head.resources.limits.memory={{ ray_cluster_values.head.memory }}
+        --set head.resources.requests.memory={{ ray_cluster_values.head.memory }}
+        --set worker.replicas={{ ray_cluster_values.worker.num }}
+        --set worker.minReplicas={{ ray_cluster_values.worker.num }}
+        --set worker.maxReplicas={{ ray_cluster_values.worker.num }}
+        --set worker.resources.limits.cpu={{ ray_cluster_values.worker.cpu }}
+        --set worker.resources.requests.cpu={{ ray_cluster_values.worker.cpu }}
+        --set worker.resources.limits.memory={{ ray_cluster_values.worker.memory }}
+        --set worker.resources.requests.memory={{ ray_cluster_values.worker.memory }}
+        --set service.type=NodePort
+      retries: 5
+      when: ray_cluster_values_file == ""
+
+    - name: Delete temporary directory
+      file:
+        path: "{{ temp_dir }}"
+        state: absent
+      ignore_errors: yes
 
     - name: Get head pod
       command: |

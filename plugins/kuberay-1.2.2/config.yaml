@@ -1,21 +1,27 @@
 all:
   hosts:
     host1:
-      ansible_host: HOST_IP1      # example: 1.1.1.1
+      ansible_host: HOST_IP
       ansible_port: 22
       ansible_user: root
       ansible_password: PASSWORD
   vars:
-    kuberay_version: 1.2.2
+    temp_path: /tmp
+    namespace: kuberay
+    version: 1.2.2
+
     helm_repo_name: "kuberay"
     helm_repo_url: "https://ray-project.github.io/kuberay-helm"
-    namespace: kuberay
-    temp_path: /tmp
 
-    values: ""
+    kuberay_operator_values_file: ""
+    kuberay_operator_values:
+      repository: "hub.oepkgs.net/oedeploy/quay.io/kuberay/operator"
+      tag: v1.2.2
+
+    ray_cluster_values_file: ""
     ray_cluster_values:
       repository: "m.daocloud.io/docker.io/rayproject/ray"
-      ray_version: 2.9.0
+      tag: 2.9.0
       head:
         cpu: "1"
         memory: "2G"
