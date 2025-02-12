@@ -1,0 +1,162 @@
+---
+- name: Install Ollama and run Deepseek
+  hosts: all
+  tasks:
+    # ================ start ollama =====================
+
+    - name: Ensure SELinux Python bindings are installed
+      yum:
+        name: python3-libselinux
+        state: present
+
+    - name: Ensure tar is installed
+      yum:
+        name: tar
+        state: present
+    
+    - name: Check if Ollama is installed
+      command: ollama --version
+      register: ollama_version
+      ignore_errors: yes
+
+    - name: Download Ollama if not installed
+      when: ollama_version.rc != 0
+      block:
+        - name: Ensure ollama download path exists
+          file:
+            path: "{{ ollama_download_path }}"
+            state: directory
+            mode: '0755'
+        
+        - name: Download Ollama package
+          get_url:
+            url: "{{ ollama_download }}/ollama-linux-{{ ollama_architecture }}.tgz"
+            dest: "{{ ollama_download_path }}/ollama-linux-{{ ollama_architecture }}.tgz"
+            timeout: 300
+          register: download_result
+          when: ollama_download is not none
+
+        - name: Check if download succeeded
+          stat:
+            path: "{{ ollama_download_path }}/ollama-linux-{{ ollama_architecture }}.tgz"
+          register: download_check
+
+        - name: Fail if download failed
+          fail:
+            msg: "Download failed."
+          when: not download_check.stat.exists
+
+        - name: Extract Ollama package
+          unarchive:
+            src: "{{ ollama_download_path }}/ollama-linux-{{ ollama_architecture }}.tgz"
+            dest: /usr
+            remote_src: yes
+
+    - name: Create ollama system user and group
+      block:
+        - name: Ensure ollama group exists
+          group:
+            name: ollama
+            state: present
+
+        - name: Ensure ollama user exists
+          user:
+            name: ollama
+            group: ollama
+            shell: /bin/false
+            system: yes
+            create_home: yes
+            home: /usr/share/ollama
+
+        - name: Add ollama user to ollama group
+          user:
+            name: ollama
+            groups: ollama
+            append: yes
+    
+    - name: Copy Ollama service file to systemd
+      copy:
+        src: ollama.service
+        dest: /etc/systemd/system/ollama.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+
+    - name: Enable Ollama service to start on boot
+      systemd:
+        name: ollama
+        enabled: true
+
+    - name: Start Ollama service
+      systemd:
+        name: ollama
+        state: started
+
+    # ================ modify modelfile =====================
+
+    - name: Download modelfile
+      block:
+        - name: Ensure modelfile download path exists
+          file:
+            path: "{{ modelfile_download_path }}"
+            state: directory
+            mode: '0755'
+
+        - name: Download modelfile from primary URL
+          get_url:
+            url: "{{ modelfile_download }}/{{ modelfile_name }}"
+            dest: "{{ modelfile_download_path }}/{{ modelfile_name }}"
+            timeout: 900
+          register: primary_download_result
+          when: modelfile_download is defined and modelfile_download != ""
+          ignore_errors: yes
+
+        - name: Check if download succeeded
+          stat:
+            path: "{{ modelfile_download_path }}/{{ modelfile_name }}"
+          register: download_check
+
+        - name: Fail if download failed
+          fail:
+            msg: >
+              Failed to download modelfile from primary URL.
+              URL: {{ modelfile_download }}/{{ modelfile_name }}
+          when: not download_check.stat.exists
+    
+    - name: Copy Modelfile to destination
+      copy:
+        src: Modelfile
+        dest: "{{ modelfile_download_path }}/Modelfile"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Modify Modelfile parameters
+      lineinfile:
+        path: "{{ modelfile_download_path }}/Modelfile"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backrefs: yes
+      loop:
+        - { regexp: '^PARAMETER temperature .*$', line: 'PARAMETER temperature {{ parameter.temperature }}' }
+        - { regexp: '^PARAMETER top_p .*$', line: 'PARAMETER top_p {{ parameter.top_p }}' }
+        - { regexp: '^PARAMETER top_k .*$', line: 'PARAMETER top_k {{ parameter.top_k }}' }
+        - { regexp: '^PARAMETER num_ctx .*$', line: 'PARAMETER num_ctx {{ parameter.num_ctx }}' }
+        - { regexp: '^PARAMETER num_thread .*$', line: 'PARAMETER num_thread {{ parameter.num_thread }}' }
+        - { regexp: '^PARAMETER num_gpu .*$', line: 'PARAMETER num_gpu {{ parameter.num_gpu }}' }
+
+    - name: Verify Modelfile content
+      shell: cat "{{ modelfile_download_path }}/Modelfile"
+      register: modelfile_content
+
+    - name: Display modified Modelfile content
+      debug:
+        msg: "{{ modelfile_content.stdout }}"
+    
+    # ================ start deepseek =====================
+
+    - name: Create Deepseek
+      command: ollama create -f {{ modelfile_download_path }}/Modelfile deepseek-r1:{{ deepseek_version }}
