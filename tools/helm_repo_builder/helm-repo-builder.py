@@ -93,7 +93,7 @@ def download_file(url, path, retry, checksum):
             total_size = int(response.headers.get('content-length', 0))
             block_size = 1024
 
-            with open(path, 'wb') as f, tqdm(
+            with os.fdopen(os.open(path, os.O_RDWR), 'wb') as f, tqdm(
                     total=total_size, unit='B', unit_scale=True, unit_divisor=1024,
                     desc=os.path.basename(path)) as pbar:
                 for chunk in response.iter_content(block_size):
@@ -140,21 +140,22 @@ def get_index(repo_url, retry):
 def get_prefix(index_yaml):
     urls = []
     for entry in index_yaml['entries'].values():
-        urls.extend([i['urls'][0] for i in entry])
+        for item in entry:
+            urls.extend(item['urls'][0])
     if len(urls) == 0:
         return ''
     for i, url in enumerate(urls):
         if url.startswith('http'):
             urls[i] = re.sub(r'^https?://', '', url)
-    split_urls = [i.split('/') for i in urls]
+        urls[i] = urls[i].split('/')
     prefix = ''
-    for i in range(len(split_urls[0])):
+    for i in range(len(urls[0])):
         check = True
-        for split_url in split_urls:
-            if len(split_url[i]) <= i or split_url[i] != split_urls[0][i]:
+        for url in urls:
+            if len(url[i]) <= i or url[i] != urls[0][i]:
                 check = False
         if check:
-            prefix += '/' + split_urls[0][i]
+            prefix += '/' + urls[0][i]
         else:
             break
     return prefix[1:]
@@ -169,25 +170,33 @@ def get_file_path(url, prefix, path):
     return file_path
 
 
+def get_files(repo_url, path, prefix, re_download, retry):
+    index_yaml = get_index(repo_url, retry)
+    if prefix is None:
+        prefix = get_prefix(index_yaml)
+    for entry in index_yaml['entries'].values():
+        for item in entry:
+            file_path = get_file_path(item['urls'][0], prefix, path)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            if re_download or not os.path.exists(file_path) or not check_sum(file_path, item['digest']):
+                download_file(item['urls'][0], file_path, retry, item['digest'])
+
+
+def build_index(mirror_url, path, new_index):
+    index_path = os.path.join(path, 'index.yaml')
+    if new_index and os.path.exists(index_path):
+        os.remove(index_path)
+    cmd = ['helm', 'repo', 'index', path]
+    if mirror_url:
+        cmd.extend(['--url', mirror_url])
+    subprocess.run(cmd)
+
+
 def work(repo_url, mirror_url, path, prefix, re_download, no_index, only_index, new_index, retry):
     if not only_index:
-        index_yaml = get_index(repo_url, retry)
-        if prefix is None:
-            prefix = get_prefix(index_yaml)
-        for entry in index_yaml['entries'].values():
-            for item in entry:
-                file_path = get_file_path(item['urls'][0], prefix, path)
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                if re_download or not os.path.exists(file_path) or not check_sum(file_path, item['digest']):
-                    download_file(item['urls'][0], file_path, retry, item['digest'])
+        get_files(repo_url, path, prefix, re_download, retry)
     if not no_index:
-        index_path = os.path.join(path, 'index.yaml')
-        if new_index and os.path.exists(index_path):
-            os.remove(index_path)
-        cmd = ['helm', 'repo', 'index', path]
-        if mirror_url:
-            cmd.extend(['--url', mirror_url])
-        subprocess.run(cmd)
+        build_index(mirror_url, path, new_index)
 
 
 def main():
