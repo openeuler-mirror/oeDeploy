@@ -43,19 +43,18 @@ class InfoCmd:
             action = main.get_action()
         except ConfigException as e:
             self.log.error(f'Failed to get project main info: {e}')
-            print('Failed to show project info.')
             return False
         action_list = []
         for action_name, detail in action.items():
             description = detail.get('description', '')
             action_list.append([len(action_list) + 1, action_name, description])
 
-        print(f'name: {name}')
-        print(f'version: {version}')
-        print(f'description: {description}')
-        print(f'action:')
         headers = ['#', 'Action', 'Description']
         table = PrettyTable(headers)
         table.add_rows(action_list)
-        print(table)
+
+        self.log.info(f'name: {name}\n'
+                      f'version: {version}\n'
+                      f'description: {description}\n'
+                      f'action:\n{table.get_string()}')
         return True

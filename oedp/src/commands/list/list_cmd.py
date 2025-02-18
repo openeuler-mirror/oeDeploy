@@ -39,7 +39,6 @@ class ListCmd:
         self.log.info(f'Running cmd list: source={self.source}')
         if not os.path.isdir(self.source):
             self.log.error(f'{self.source} is not a directory')
-            print('Failed to show available plugins.')
             return False
         plugin_list = []
         for item in os.listdir(self.source):
@@ -59,5 +58,5 @@ class ListCmd:
         headers = ['#', 'Plugin', 'Version', 'Description']
         table = PrettyTable(headers)
         table.add_rows(plugin_list)
-        print(table)
+        self.log.info(table.get_string())
         return True
