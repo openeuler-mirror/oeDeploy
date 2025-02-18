@@ -6,7 +6,7 @@ Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
 Source0:            %{name}-%{version}.tar.gz
 
-Requires: python3, ansible, python3-prettytable
+Requires: python3, ansible
 
 %description
 openEuler deploy tool
@@ -45,6 +45,9 @@ set -e
 pushd %{_var}/oedp/python/venv
 python3 -m venv oedp
 source oedp/bin/activate
+for python_third_lib in $(ls %{_var}/oedp/python/third_libs); do
+    pip install %{_var}/oedp/python/third_libs/${python_third_lib}
+done
 
 # 创建软连接
 python_version_info=$(python3 --version)
