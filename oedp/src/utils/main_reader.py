@@ -73,7 +73,7 @@ class MainReader:
         :return: 当前项目的版本
         """
         if 'version' not in self.main:
-            raise ConfigException(f'Key "version" not found')
+            return ''
         return str(self.main['version'])
 
     def get_description(self):
@@ -95,9 +95,9 @@ class MainReader:
         :return: 当前项目的可用方法
         """
         if 'action' not in self.main:
-            raise ConfigException(f'Key "action" not found')
+            return {}
         if not isinstance(self.main['action'], dict):
-            raise ConfigException(f'Key "action" must be a dict')
+            return {}
         return self.main['action']
 
     def get_action_detail(self, action: str):
@@ -108,9 +108,11 @@ class MainReader:
         :return: 方法详情
         """
         if 'action' not in self.main:
-            raise ConfigException(f'Key "action" not found')
+            return []
         if not isinstance(self.main['action'], dict):
-            raise ConfigException(f'Key "action" must be a dict')
+            return []
         if action not in self.main['action']:
-            raise ConfigException(f'Action "{action}" not found')
+            return []
+        if not isinstance(self.main['action'][action], list):
+            return []
         return self.main['action'][action]
