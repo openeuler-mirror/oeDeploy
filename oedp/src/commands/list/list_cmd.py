@@ -13,7 +13,7 @@
 
 import os
 
-from tabulate import tabulate
+from prettytable import PrettyTable
 
 from src.exceptions.config_exception import ConfigException
 from src.utils.log.logger_generator import LoggerGenerator
@@ -57,5 +57,7 @@ class ListCmd:
                 continue
             plugin_list.append([len(plugin_list) + 1, name, version, description])
         headers = ['#', 'Plugin', 'Version', 'Description']
-        print(tabulate(plugin_list, headers=headers, tablefmt='grid'))
+        table = PrettyTable(headers)
+        table.add_rows(plugin_list)
+        print(table)
         return True

@@ -11,7 +11,7 @@
 # Create: 2024-12-23
 # ======================================================================================================================
 
-from tabulate import tabulate
+from prettytable import PrettyTable
 
 from src.exceptions.config_exception import ConfigException
 from src.utils.log.logger_generator import LoggerGenerator
@@ -55,5 +55,7 @@ class InfoCmd:
         print(f'description: {description}')
         print(f'action:')
         headers = ['#', 'Action', 'Description']
-        print(tabulate(action_list, headers=headers, tablefmt='grid'))
+        table = PrettyTable(headers)
+        table.add_rows(action_list)
+        print(table)
         return True
