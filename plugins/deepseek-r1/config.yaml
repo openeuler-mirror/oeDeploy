@@ -1,23 +1,32 @@
 all:
   hosts:
-    host1:
-      ansible_host: 127.0.0.1       # [important]
-      ansible_port: 22              # [important]
-      ansible_user: root            # [important]
-      ansible_password: PASSWORD    # [important]
+    # 本地部署 或 远端部署 二选一
+    # ================ 本地部署 =====================
+    localhost:
+      ansible_connection: local
+    # ================ 远端部署 =====================
+    # host1:
+    #   ansible_host: 127.0.0.1      # 远端IP
+    #   ansible_port: 22             # 端口号
+    #   ansible_user: root           # 用户名
+    #   ansible_password: PASSWORD   # 密码
   vars:
-    deepseek_version: 8b            # only 8b is supported, for now
-    ollama_architecture: amd64      # [important] amd64 or arm64
-    ollama_download: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/
-    ollama_download_path: /tmp
-    modelfile_name: DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
-    modelfile_download: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/
-    modelfile_download_path: /tmp
+    deepseek_version: 8b
+    # ollama官方下载地址: https://ollama.com/download/ollama-linux-amd64.tgz，注意区分amd64和arm64
+    # 为提高下载速度，已暂存在OEPKGS服务器上
+    ollama_download: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/ollama-linux-amd64.tgz
+    ollama_download_path: /tmp     # 下载的目标路径
+    # 模型文件下载地址: https://www.modelscope.cn/models/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF/resolve/master/DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
+    # 为提高下载速度，已暂存在OEPKGS服务器上
+    modelfile_download: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
+    modelfile_download_path: /tmp  # 下载的目标路径
+    # 模型参数
     parameter:
       temperature: 0.7
       top_p: 0.7
       top_k: 30
       num_ctx: 4096
-      num_thread: 16                # [important] num of thread
-      num_gpu: 0                    # [important] num of GPU. 0 for none, -1 for all.
+      num_thread: 8    # 线程数，建议不超过CPU核数
+      num_gpu: 0       # GPU数  0 for none, -1 for all.
+    
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

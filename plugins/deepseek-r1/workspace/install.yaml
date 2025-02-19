@@ -1,6 +1,10 @@
 ---
 - name: Install Ollama and run Deepseek
   hosts: all
+  vars:
+    ollama_file: "{{ ollama_download | basename }}"
+    modelfile_file: "{{ modelfile_download | basename }}"
+
   tasks:
     # ================ start ollama =====================
 
@@ -30,15 +34,15 @@
         
         - name: Download Ollama package
           get_url:
-            url: "{{ ollama_download }}/ollama-linux-{{ ollama_architecture }}.tgz"
-            dest: "{{ ollama_download_path }}/ollama-linux-{{ ollama_architecture }}.tgz"
-            timeout: 300
+            url: "{{ ollama_download }}"
+            dest: "{{ ollama_download_path }}/{{ ollama_file }}"
+            timeout: 1800
           register: download_result
           when: ollama_download is not none
 
         - name: Check if download succeeded
           stat:
-            path: "{{ ollama_download_path }}/ollama-linux-{{ ollama_architecture }}.tgz"
+            path: "{{ ollama_download_path }}/{{ ollama_file }}"
           register: download_check
 
         - name: Fail if download failed
@@ -48,9 +52,16 @@
 
         - name: Extract Ollama package
           unarchive:
-            src: "{{ ollama_download_path }}/ollama-linux-{{ ollama_architecture }}.tgz"
+            src: "{{ ollama_download_path }}/{{ ollama_file }}"
             dest: /usr
             remote_src: yes
+
+    - name: Verify Ollama installation before creating system user and group
+      command: ollama --version
+      register: ollama_version_check
+      failed_when: ollama_version_check.rc != 0
+      changed_when: false
+      ignore_errors: no
 
     - name: Create ollama system user and group
       block:
@@ -105,27 +116,38 @@
             state: directory
             mode: '0755'
 
-        - name: Download modelfile from primary URL
+        - name: Download modelfile from URL
           get_url:
-            url: "{{ modelfile_download }}/{{ modelfile_name }}"
-            dest: "{{ modelfile_download_path }}/{{ modelfile_name }}"
-            timeout: 900
-          register: primary_download_result
+            url: "{{ modelfile_download }}"
+            dest: "{{ modelfile_download_path }}/{{ modelfile_file }}"
+            timeout: 1800
           when: modelfile_download is defined and modelfile_download != ""
           ignore_errors: yes
 
         - name: Check if download succeeded
           stat:
-            path: "{{ modelfile_download_path }}/{{ modelfile_name }}"
+            path: "{{ modelfile_download_path }}/{{ modelfile_file }}"
           register: download_check
 
         - name: Fail if download failed
           fail:
             msg: >
-              Failed to download modelfile from primary URL.
-              URL: {{ modelfile_download }}/{{ modelfile_name }}
+              Failed to download modelfile from URL.
+              URL: {{ modelfile_download }}
           when: not download_check.stat.exists
-    
+
+      rescue:
+        - name: Print error message of downloading modelfile
+          debug:
+            msg: "Unable to download modelfile, parameter tuning will not take effect."
+
+        - name: Print manual execution message
+          debug:
+            msg: "Please manually execute: ollama run deepseek-r1:{{ deepseek_version }}"
+
+        - name: Mark playbook as successful
+          meta: end_play
+
     - name: Copy Modelfile to destination
       copy:
         src: Modelfile
@@ -141,6 +163,7 @@
         line: "{{ item.line }}"
         backrefs: yes
       loop:
+        - { regexp: '^FROM .*$', line: 'FROM {{ modelfile_download_path }}/{{ modelfile_file }}' }
         - { regexp: '^PARAMETER temperature .*$', line: 'PARAMETER temperature {{ parameter.temperature }}' }
         - { regexp: '^PARAMETER top_p .*$', line: 'PARAMETER top_p {{ parameter.top_p }}' }
         - { regexp: '^PARAMETER top_k .*$', line: 'PARAMETER top_k {{ parameter.top_k }}' }
@@ -160,3 +183,7 @@
 
     - name: Create Deepseek
       command: ollama create -f {{ modelfile_download_path }}/Modelfile deepseek-r1:{{ deepseek_version }}
+
+    - name: Print manual execution message after success
+      debug:
+        msg: "Please manually execute: ollama run deepseek-r1:{{ deepseek_version }}"
