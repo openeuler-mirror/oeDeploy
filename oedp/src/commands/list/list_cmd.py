@@ -53,8 +53,6 @@ class ListCmd:
                 description = main.get_description()
             except ConfigException:
                 continue
-            if item != f'{name}-{version}.tar.gz' and not item.startswith(f'{name}-{version}-'):
-                continue
             plugin_list.append([len(plugin_list) + 1, name, version, description])
         headers = ['#', 'Plugin', 'Version', 'Description']
         print(tabulate(plugin_list, headers=headers, tablefmt='grid'))

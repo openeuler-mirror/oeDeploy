@@ -47,8 +47,8 @@ class InfoCmd:
             return False
         action_list = []
         for action_name, detail in action.items():
-            description = detail.get('description', '')
-            action_list.append([len(action_list) + 1, action_name, description])
+            action_description = detail.get('description', '')
+            action_list.append([len(action_list) + 1, action_name, action_description])
 
         print(f'name: {name}')
         print(f'version: {version}')
