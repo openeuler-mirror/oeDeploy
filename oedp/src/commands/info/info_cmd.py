@@ -11,7 +11,7 @@
 # Create: 2024-12-23
 # ======================================================================================================================
 
-from tabulate import tabulate
+from prettytable import PrettyTable
 
 from src.exceptions.config_exception import ConfigException
 from src.utils.log.logger_generator import LoggerGenerator
@@ -43,17 +43,18 @@ class InfoCmd:
             action = main.get_action()
         except ConfigException as e:
             self.log.error(f'Failed to get project main info: {e}')
-            print('Failed to show project info.')
             return False
         action_list = []
         for action_name, detail in action.items():
             action_description = detail.get('description', '')
             action_list.append([len(action_list) + 1, action_name, action_description])
 
-        print(f'name: {name}')
-        print(f'version: {version}')
-        print(f'description: {description}')
-        print(f'action:')
         headers = ['#', 'Action', 'Description']
-        print(tabulate(action_list, headers=headers, tablefmt='grid'))
+        table = PrettyTable(headers)
+        table.add_rows(action_list)
+
+        self.log.info(f'name: {name}\n'
+                      f'version: {version}\n'
+                      f'description: {description}\n'
+                      f'action:\n{table.get_string()}')
         return True
