@@ -1,0 +1,19 @@
+---
+- name: Deploy TensorFlow Jupyter on Kubernetes
+  hosts: all
+  tasks:
+    - name: Ensure /tmp exists
+      file:
+        path: /tmp
+        state: directory
+
+    - name: Copy and render the kubectl_apply file with variables from config.yaml
+      template:
+        src: "{{ kubectl_apply }}"
+        dest: "/tmp/{{ kubectl_apply }}"
+        mode: '0644'
+
+    - name: Apply the Kubernetes deployment using kubectl
+      command:
+        cmd: kubectl apply -f "/tmp/{{ kubectl_apply }}"
+        warn: false

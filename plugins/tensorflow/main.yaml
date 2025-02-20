@@ -1,0 +1,11 @@
+name: tensorflow
+version: 1.0.0
+description: tensorflow
+action:
+  install:
+    description: install tensorflow
+    tasks:
+      - name: install tensorflow
+        playbook: install.yaml
+        scope: all
+ 
