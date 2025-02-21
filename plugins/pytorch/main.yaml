@@ -1,0 +1,16 @@
+name: pytorch
+version: 1.0.0
+description: pytorch
+action:
+  install:
+    description: install pytorch
+    tasks:
+      - name: install pytorch
+        playbook: install.yaml
+        scope: all
+  uninstall:
+    description: uninstall pytorch
+    tasks:
+    - name: uninstall pytorch
+      playbook: uninstall.yaml
+      scope: all

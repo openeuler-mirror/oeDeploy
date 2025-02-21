@@ -1,0 +1,8 @@
+---
+- name: Uninstall Pytorch on Kubernetes
+  hosts: all
+  tasks:
+    - name: uninstall the Pytorch using kubectl
+      command:
+        cmd: kubectl delete -f "/tmp/{{ kubectl_apply }}"
+        warn: false
