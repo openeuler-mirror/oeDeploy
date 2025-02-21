@@ -1,0 +1,8 @@
+---
+- name: Uninstall TensorFlow on Kubernetes
+  hosts: all
+  tasks:
+    - name: uninstall the TensorFlow using kubectl
+      command:
+        cmd: kubectl delete -f "/tmp/{{ kubectl_apply }}"
+        warn: false

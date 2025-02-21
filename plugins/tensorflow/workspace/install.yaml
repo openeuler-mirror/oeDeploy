@@ -1,5 +1,5 @@
 ---
-- name: Deploy TensorFlow Jupyter on Kubernetes
+- name: Deploy TensorFlow on Kubernetes
   hosts: all
   tasks:
     - name: Ensure /tmp exists

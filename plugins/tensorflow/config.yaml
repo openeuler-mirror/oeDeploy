@@ -15,33 +15,31 @@ all:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
     
     # ================ demo1: tensorflow with jupyter =====================
-    # amd64 only
     kubectl_apply: tensorflow-deployment.yaml
     namespace: tensorflow-namespace
     replicas: 1
     containers:
       name: tensorflow-jupyter
-      image: docker.m.daocloud.io/tensorflow/tensorflow:latest-jupyter
+      image: docker.m.daocloud.io/tensorflow/tensorflow:latest-jupyter  # amd64 only
       command: ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
     service:
       name: tensorflow-service
       nodePort: 30088
     
     # # ================ demo2: 分布式部署训练集群 =====================
-    # # amd64 only
     # kubectl_apply: tensorflow-distributed.yaml
     # namespace: tensorflow-namespace
     # ps:
     #   replicas: 2
     #   containers:
     #     name: tensorflow-ps
-    #     image: docker.m.daocloud.io/tensorflow/tensorflow:latest
+    #     image: docker.m.daocloud.io/tensorflow/tensorflow:latest  # amd64 only
     #   service:
     #     name: tensorflow-ps-service
     # worker:
     #   replicas: 2
     #   containers:
     #     name: tensorflow-worker
-    #     image: docker.m.daocloud.io/tensorflow/tensorflow:latest
+    #     image: docker.m.daocloud.io/tensorflow/tensorflow:latest  # amd64 only
     #   service:
     #     name: tensorflow-worker-service
