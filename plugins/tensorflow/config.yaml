@@ -20,7 +20,7 @@ all:
     replicas: 1
     containers:
       name: tensorflow-jupyter
-      image: docker.m.daocloud.io/tensorflow/tensorflow:latest-jupyter  # amd64 only
+      image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest-jupyter  # amd64
       command: ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
     service:
       name: tensorflow-service
@@ -33,13 +33,15 @@ all:
     #   replicas: 2
     #   containers:
     #     name: tensorflow-ps
-    #     image: docker.m.daocloud.io/tensorflow/tensorflow:latest  # amd64 only
+    #     image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest  # arm64
+    #     # image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
     #   service:
     #     name: tensorflow-ps-service
     # worker:
     #   replicas: 2
     #   containers:
     #     name: tensorflow-worker
-    #     image: docker.m.daocloud.io/tensorflow/tensorflow:latest  # amd64 only
+    #     image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest  # arm64
+    #     # image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
     #   service:
     #     name: tensorflow-worker-service
