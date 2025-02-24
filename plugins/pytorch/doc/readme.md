@@ -38,21 +38,24 @@
     hosts:
       localhost:
         ansible_connection: local
-    
     vars:
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+      # ================ demo1: pytorch with http.server =====================
       kubectl_apply: pytorch-deployment.yaml
       namespace: pytorch-namespace
       replicas: 1
       containers:
         http:
           name: http-container
-          image: hub.oepkgs.net/oedeploy/pytorch/pytorch:latest  # amd64 only
+          image: hub.oepkgs.net/oedeploy/pytorch/pytorch:latest  # amd64
+          # image: hub.oepkgs.net/oedeploy/pytorch/torchserve:latest-arm64  # arm64
         workspace_mount: /tmp
       service:
-        http_port: 30699
+        port: 8080
+        target_port: 8080
+        node_port: 30699
   ````
-
+  
 - 查看pod
 
     ````bash

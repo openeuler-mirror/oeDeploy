@@ -25,12 +25,12 @@ spec:
       - name: {{ containers.http.name }}
         image: {{ containers.http.image }}
         ports:
-        - containerPort: 8080
+        - containerPort: {{ service.port }}
         volumeMounts:
         - mountPath: /workspace
           name: pytorch-workspace
         command: ["python"]
-        args: ["-m", "http.server", "8080"]
+        args: ["-m", "http.server", "{{ service.port }}"]
         resources:
           requests:
             cpu: "500m"
@@ -56,6 +56,6 @@ spec:
   ports:
   - name: http-port
     protocol: TCP
-    port: 8080
-    targetPort: 8080
-    nodePort: {{ service.http_port }}
+    port: {{ service.port }}
+    targetPort: {{ service.target_port }}
+    nodePort: {{ service.node_port }}

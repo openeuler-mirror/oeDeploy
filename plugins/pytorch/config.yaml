@@ -25,4 +25,6 @@ all:
         # image: hub.oepkgs.net/oedeploy/pytorch/torchserve:latest-arm64  # arm64
       workspace_mount: /tmp
     service:
-      http_port: 30699
+      port: 8080
+      target_port: 8080
+      node_port: 30699
