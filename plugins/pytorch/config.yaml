@@ -1,0 +1,30 @@
+all:
+  hosts:
+    # k8s master 节点
+    # ================ 本地部署 =====================
+    localhost:
+      ansible_connection: local
+    # ================ 远端部署 =====================
+    # host1:
+    #   ansible_host: 127.0.0.1      # 远端IP
+    #   ansible_port: 22             # 端口号
+    #   ansible_user: root           # 用户名
+    #   ansible_password: PASSWORD   # 密码
+  
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # ================ demo1: pytorch with http.server =====================
+    kubectl_apply: pytorch-deployment.yaml
+    namespace: pytorch-namespace
+    replicas: 1
+    containers:
+      http:
+        name: http-container
+        image: hub.oepkgs.net/oedeploy/pytorch/pytorch:latest  # amd64
+        # image: hub.oepkgs.net/oedeploy/pytorch/torchserve:latest-arm64  # arm64
+      workspace_mount: /tmp
+    service:
+      port: 8080
+      target_port: 8080
+      node_port: 30699
