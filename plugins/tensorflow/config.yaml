@@ -1,0 +1,53 @@
+all:
+  hosts:
+    # k8s master 节点
+    # ================ 本地部署 =====================
+    localhost:
+      ansible_connection: local
+    # ================ 远端部署 =====================
+    # host1:
+    #   ansible_host: 127.0.0.1      # 远端IP
+    #   ansible_port: 22             # 端口号
+    #   ansible_user: root           # 用户名
+    #   ansible_password: PASSWORD   # 密码
+  
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # ================ demo1: tensorflow with jupyter =====================
+    kubectl_apply: tensorflow-deployment.yaml
+    namespace: tensorflow-namespace
+    replicas: 1
+    containers:
+      name: tensorflow-jupyter
+      image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest-jupyter  # amd64
+      command: ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
+    service:
+      name: tensorflow-service
+      port: 80
+      target_port: 8888
+      node_port: 30088
+    
+    # # ================ demo2: 分布式部署训练集群 =====================
+    # kubectl_apply: tensorflow-distributed.yaml
+    # namespace: tensorflow-namespace
+    # ps:
+    #   replicas: 2
+    #   containers:
+    #     name: tensorflow-ps
+    #     image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
+    #     # image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest-arm64  # arm64
+    #   service:
+    #     name: tensorflow-ps-service
+    #     port: 2222
+    #     target_port: 2222
+    # worker:
+    #   replicas: 2
+    #   containers:
+    #     name: tensorflow-worker
+    #     image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
+    #     # image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest-arm64  # arm64
+    #   service:
+    #     name: tensorflow-worker-service
+    #     port: 2222
+    #     target_port: 2222

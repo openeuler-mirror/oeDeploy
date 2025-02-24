@@ -1,0 +1,139 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tensorflow-ps
+  namespace: {{ namespace }}
+spec:
+  replicas: {{ ps.replicas }}
+  selector:
+    matchLabels:
+      app: tensorflow
+      role: ps
+  template:
+    metadata:
+      labels:
+        app: tensorflow
+        role: ps
+    spec:
+      containers:
+      - name: {{ ps.containers.name }}
+        image: {{ ps.containers.image }}
+        command: ["python", "-u", "-c"]
+        args:
+        - |
+          import tensorflow as tf
+          import os
+          import time
+          from datetime import datetime
+          print("TensorFlow version:", tf.__version__)
+          print("Environment variables:", os.environ)
+          print("This is the parameter server.")
+          while True:
+              print(f"[{datetime.now()}] Parameter server is running...", flush=True)
+              time.sleep(60)
+        ports:
+        - containerPort: {{ ps.service.port }}
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        env:
+        - name: TF_CONFIG
+          value: |
+            {
+              "cluster": {
+                "ps": ["tensorflow-ps:{{ ps.service.port }}"],
+                "worker": ["tensorflow-worker-0:{{ worker.service.port }}", "tensorflow-worker-1:{{ worker.service.port }}"]
+              },
+              "task": {"type": "ps", "index": 0}
+            }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tensorflow-worker
+  namespace: {{ namespace }}
+spec:
+  replicas: {{ worker.replicas }}
+  selector:
+    matchLabels:
+      app: tensorflow
+      role: worker
+  template:
+    metadata:
+      labels:
+        app: tensorflow
+        role: worker
+    spec:
+      containers:
+      - name: {{ worker.containers.name }}
+        image: {{ worker.containers.image }}
+        command: ["python", "-u", "-c"]
+        args:
+        - |
+          import tensorflow as tf
+          import os
+          import time
+          from datetime import datetime
+          print("TensorFlow version:", tf.__version__)
+          print("Environment variables:", os.environ)
+          print("This is a worker node.")
+          while True:
+              print(f"[{datetime.now()}] Worker node is running...", flush=True)
+              time.sleep(60)
+        ports:
+        - containerPort: {{ worker.service.port }}
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        env:
+        - name: TF_CONFIG
+          value: |
+            {
+              "cluster": {
+                "ps": ["tensorflow-ps:{{ ps.service.port }}"],
+                "worker": ["tensorflow-worker-0:{{ worker.service.port }}", "tensorflow-worker-1:{{ worker.service.port }}"]
+              },
+              "task": {"type": "worker", "index": 0}
+            }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ ps.service.name }}
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: tensorflow
+    role: ps
+  ports:
+  - protocol: TCP
+    port: {{ ps.service.port }}
+    targetPort: {{ ps.service.target_port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ worker.service.name }}
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: tensorflow
+    role: worker
+  ports:
+  - protocol: TCP
+    port: {{ worker.service.port }}
+    targetPort: {{ worker.service.target_port }}
