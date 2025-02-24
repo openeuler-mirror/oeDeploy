@@ -54,9 +54,11 @@
         command: ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
       service:
         name: tensorflow-service
-        nodePort: 30088
+        port: 80
+        target_port: 8888
+        node_port: 30088
   ````
-
+  
 - 查看pod状态
 
     ````bash
@@ -109,6 +111,8 @@
           image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64 only
         service:
           name: tensorflow-ps-service
+          port: 2222
+          target_port: 2222
       worker:
         replicas: 2
         containers:
@@ -116,14 +120,16 @@
           image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64 only
         service:
           name: tensorflow-worker-service
+          port: 2222
+          target_port: 2222
   ````
-
+  
   - 查看pod状态
 
   ````bash
   kubectl get pods -n tensorflow-namespace
   ````
-
+  
   ````
   NAME                                 READY   STATUS    RESTARTS   AGE
   tensorflow-ps-fdddfdb5f-8fc98        1/1     Running   0          2m59s
@@ -135,7 +141,7 @@
   ````bash
   kubectl logs tensorflow-ps-fdddfdb5f-8fc98 -n tensorflow-namespace
   ````
-
+  
   ````
   2025-02-07 09:25:24.882206: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
   2025-02-07 09:25:24.915813: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
@@ -148,12 +154,12 @@
   [2025-02-07 09:27:26.288358] Parameter server is running...
   [2025-02-07 09:28:26.288519] Parameter server is running...
   ````
-
+  
   - 卸载pod
 
   ````bash
   kubectl delete -f tensorflow-distributed.yaml
   ````
-
+  
   
 

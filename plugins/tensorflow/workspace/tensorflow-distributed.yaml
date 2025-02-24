@@ -38,7 +38,7 @@ spec:
               print(f"[{datetime.now()}] Parameter server is running...", flush=True)
               time.sleep(60)
         ports:
-        - containerPort: 2222
+        - containerPort: {{ ps.service.port }}
         resources:
           requests:
             memory: "1Gi"
@@ -51,8 +51,8 @@ spec:
           value: |
             {
               "cluster": {
-                "ps": ["tensorflow-ps:2222"],
-                "worker": ["tensorflow-worker-0:2222", "tensorflow-worker-1:2222"]
+                "ps": ["tensorflow-ps:{{ ps.service.port }}"],
+                "worker": ["tensorflow-worker-0:{{ worker.service.port }}", "tensorflow-worker-1:{{ worker.service.port }}"]
               },
               "task": {"type": "ps", "index": 0}
             }
@@ -91,7 +91,7 @@ spec:
               print(f"[{datetime.now()}] Worker node is running...", flush=True)
               time.sleep(60)
         ports:
-        - containerPort: 2222
+        - containerPort: {{ worker.service.port }}
         resources:
           requests:
             memory: "1Gi"
@@ -104,8 +104,8 @@ spec:
           value: |
             {
               "cluster": {
-                "ps": ["tensorflow-ps:2222"],
-                "worker": ["tensorflow-worker-0:2222", "tensorflow-worker-1:2222"]
+                "ps": ["tensorflow-ps:{{ ps.service.port }}"],
+                "worker": ["tensorflow-worker-0:{{ worker.service.port }}", "tensorflow-worker-1:{{ worker.service.port }}"]
               },
               "task": {"type": "worker", "index": 0}
             }
@@ -121,8 +121,8 @@ spec:
     role: ps
   ports:
   - protocol: TCP
-    port: 2222
-    targetPort: 2222
+    port: {{ ps.service.port }}
+    targetPort: {{ ps.service.target_port }}
 ---
 apiVersion: v1
 kind: Service
@@ -135,5 +135,5 @@ spec:
     role: worker
   ports:
   - protocol: TCP
-    port: 2222
-    targetPort: 2222
+    port: {{ worker.service.port }}
+    targetPort: {{ worker.service.target_port }}

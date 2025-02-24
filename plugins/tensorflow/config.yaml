@@ -24,7 +24,9 @@ all:
       command: ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
     service:
       name: tensorflow-service
-      nodePort: 30088
+      port: 80
+      target_port: 8888
+      node_port: 30088
     
     # # ================ demo2: 分布式部署训练集群 =====================
     # kubectl_apply: tensorflow-distributed.yaml
@@ -33,15 +35,19 @@ all:
     #   replicas: 2
     #   containers:
     #     name: tensorflow-ps
-    #     image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest  # arm64
-    #     # image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
+    #     image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
+    #     # image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest-arm64  # arm64
     #   service:
     #     name: tensorflow-ps-service
+    #     port: 2222
+    #     target_port: 2222
     # worker:
     #   replicas: 2
     #   containers:
     #     name: tensorflow-worker
-    #     image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest  # arm64
-    #     # image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
+    #     image: hub.oepkgs.net/oedeploy/tensorflow/tensorflow:latest  # amd64
+    #     # image: hub.oepkgs.net/oedeploy/bitnami/tensorflow:latest-arm64  # arm64
     #   service:
     #     name: tensorflow-worker-service
+    #     port: 2222
+    #     target_port: 2222
