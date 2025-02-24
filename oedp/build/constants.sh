@@ -16,11 +16,6 @@ set -e
 # 工作空间目录
 WORKSPACE_DIR=$(pwd)
 
-# 备份目录
-BACKUP_DIR="${WORKSPACE_DIR}"/backup
-# Python 第三方库目录
-PYTHON_THIRD_LIBS_DIR=${BACKUP_DIR}/python_third_libs
-
 # RPM 归档地址
 STORAGE_DIR="${WORKSPACE_DIR}"/storages
 
