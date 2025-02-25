@@ -11,26 +11,51 @@
 # See the Mulan PSL v2 for more details.
 # Create: 2025-01-16
 # ======================================================================================================================
+import configparser
+import json
 
-from enum import Enum
+from constants.paths import MARIADB_CONFIG_FILE, MARIADB_JSON_FILE
+from utils.cipher import OEDPCipher
+from utils.file_handler.base_handler import FileError
+from utils.file_handler.conf_handler import ConfHandler
 
-from constants.paths import MARIADB_CONFIG_FILE, SECRET_KEY_FILE
-from utils.cipher import decrypt_mariadb_passwd
-from utils.config_parser import ConfParser
+__all__ = ['MariaDBConfig', 'get_settings_mariadb_config']
 
-config_parser = ConfParser(MARIADB_CONFIG_FILE)
+DEFAULT_NAME = 'oedp_db'
+DEFAULT_HOST = '127.0.0.1'
+DEFAULT_PORT = 3306
+DEFAULT_USER = 'oedp'
+DEFAULT_PASSWORD = ''
 
 
-class MariaDBConfig(Enum):
-    NAME = config_parser.get('mariadb', 'name', default='oedp_db')
-    HOST = config_parser.get('mariadb', 'host', default='127.0.0.1')
-    PORT = config_parser.get('mariadb', 'port', default=3306)
-    USER = config_parser.get('mariadb', 'user', default='oedp')
-    PASSWORD = config_parser.get('mariadb', 'password', default='')
+class MariaDBConfig:
+    NAME = DEFAULT_NAME
+    HOST = DEFAULT_HOST
+    PORT = DEFAULT_PORT
+    USER = DEFAULT_USER
+    PASSWORD = DEFAULT_PASSWORD
+
+
+try:
+    conf_handler = ConfHandler(file_path=MARIADB_CONFIG_FILE)
+except (FileError, configparser.MissingSectionHeaderError, configparser.ParsingError):
+    pass
+else:
+    MariaDBConfig.NAME = conf_handler.get('mariadb', 'name', default=DEFAULT_NAME)
+    MariaDBConfig.HOST = conf_handler.get('mariadb', 'host', default=DEFAULT_HOST)
+    try:
+        MariaDBConfig.PORT = conf_handler.getint('mariadb', 'port', default=DEFAULT_PORT)
+    except ValueError:
+        pass
+    MariaDBConfig.USER = conf_handler.get('mariadb', 'user', default=DEFAULT_USER)
+    MariaDBConfig.PASSWORD = conf_handler.get('mariadb', 'password', default=DEFAULT_PASSWORD)
 
 
 def get_settings_mariadb_config():
-    plaintext = decrypt_mariadb_passwd(SECRET_KEY_FILE, MariaDBConfig.PASSWORD)
+    with open(MARIADB_JSON_FILE, mode='r') as fr_handle:
+        ciphertext_data = json.load(fr_handle)
+    oedp_cipher = OEDPCipher()
+    plaintext = oedp_cipher.decrypt_ciphertext_data(ciphertext_data)
     database_config = {
         'NAME': MariaDBConfig.NAME,
         'HOST': MariaDBConfig.HOST,
