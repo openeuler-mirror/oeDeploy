@@ -55,6 +55,10 @@ class RunAction:
         return True
 
     def _run_playbook(self, task: dict, project: str) -> bool:
+        if 'disabled' in task and task['disabled'] == True:
+            self.log.info(f'Skipping task {task.get("name", "")}')
+            return True
+        self.log.info(f'Running task {task.get("name", "")}')
         workspace = os.path.join(project, 'workspace')
         playbook = os.path.join(workspace, task['playbook'])
         if not os.path.exists(playbook):
