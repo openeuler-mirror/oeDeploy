@@ -35,7 +35,7 @@ class RunCmd:
 
         :return: 是否执行成功
         """
-        self.log.info(f'Running cmd run: action={self.action}, project={self.project}')
+        self.log.debug(f'Running cmd run: action={self.action}, project={self.project}')
         try:
             main = MainReader(self.project)
             action = main.get_action_detail(self.action)

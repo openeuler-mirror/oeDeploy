@@ -34,7 +34,7 @@ class InfoCmd:
 
         :return: 是否执行成功
         """
-        self.log.info(f'Running cmd info: project={self.project}')
+        self.log.debug(f'Running cmd info: project={self.project}')  # 将日志等级调整为debug
         try:
             main = MainReader(self.project)
             name = main.get_name()
