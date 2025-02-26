@@ -1,0 +1,34 @@
+name: eulermaker
+version:
+description: auto deploy eulermaker
+action:
+  install:
+    description: auto deploy eulermaker
+    tasks:
+      - name: prepare env-requirements
+        playbook: 0-env-setup/prepare.yml
+        vars: 0-env-setup/variables.yml
+        scope: all
+      - name: deploy kubernetes
+        playbook: 1-k8s-install/init-k8s.yml
+        vars: 1-k8s-install/variables.yml
+        scope: kubernetes
+      - name: deploy eulermaker
+        playbook: 2-ebs-deploy/deploy-ebs.yml
+        vars: 2-ebs-deploy/variables.yml
+        scope: eulermaker
+  add-testbox:
+    description: add a testbox to existing eulermaker
+    tasks:
+      - name: prepare env-requirements
+        playbook: 0-env-setup/prepare.yml
+        vars: 0-env-setup/variables.yml
+        scope: all
+      - name: add kubernetes node
+        playbook: 1-k8s-install/add-node.yml
+        vars: 1-k8s-install/variables.yml
+        scope: kubernetes
+      - name: add eulermaker testbox
+        playbook: 2-ebs-deploy/add-testbox.yml
+        vars: 2-ebs-deploy/variables.yml
+        scope: eulermaker

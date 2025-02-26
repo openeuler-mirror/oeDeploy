@@ -1,0 +1,96 @@
+all:
+  hosts:
+    ebs-master-1:
+      ansible_host: HOST_IP1
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+      architecture: amd64
+      oeversion: 22.03-LTS
+      runtime: docker
+    ebs-master-2:
+      ansible_host: HOST_IP2
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+      architecture: amd64
+      oeversion: 22.03-LTS
+      runtime: docker
+    x86-testbox-1:
+      ansible_host: HOST_IP3
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+      architecture: amd64
+      oeversion: 22.03-LTS
+      runtime: docker
+    arm-testbox-1:
+      ansible_host: HOST_IP4
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+      architecture: arm64
+      oeversion: 22.03-LTS
+      runtime: docker
+
+  children:
+    kubernetes:
+      children:
+        masters:
+          hosts:
+            ebs-master-1:
+        workers:
+          hosts:
+            ebs-master-2:
+            x86-testbox-1:
+            arm-testbox-1:
+        new-workers:
+          hosts: {}
+      vars:
+        init_cluster_force: true
+        remove_master_no_schedule_taints: true
+        service_cidr: 10.96.0.0/16
+        pod_cidr: 10.244.0.0/16
+        certs_expired: 3650
+        kubernetes_version: 1.31.1
+        calico_version: 3.28.2
+        containerd_version: 1.7.22
+        docker_version: 27.3.1
+        pause_image: registry.k8s.io/pause:3.10
+
+    eulermaker:
+      children:
+        kubectl:
+          hosts:
+            ebs-master-1:
+        masters:
+          hosts:
+            ebs-master-1:
+            ebs-master-2:
+        testboxs:
+          hosts:
+            x86-testbox-1:
+            arm-testbox-1:
+        new-testboxs:
+          hosts: {}
+      vars:
+        es_nodes:
+          - ebs-master-1
+          - ebs-master-2
+          - ebs-master-1
+        etcd_nodes:
+          - ebs-master-1
+          - ebs-master-2
+          - ebs-master-1
+        redis_nodes:
+          - ebs-master-1
+          - ebs-master-2
+          - ebs-master-1
+          - ebs-master-2
+          - ebs-master-1
+          - ebs-master-2
+        rabbitmq_nodes:
+          - ebs-master-2
+        ebs_master_nodes:
+          - ebs-master-1
+        yum_repo_is_reachable: true
