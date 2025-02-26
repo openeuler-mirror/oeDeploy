@@ -108,11 +108,11 @@ class MainReader:
         :return: 方法详情
         """
         if 'action' not in self.main:
-            return []
+            return {}
         if not isinstance(self.main['action'], dict):
-            return []
+            return {}
         if action not in self.main['action']:
-            return []
-        if not isinstance(self.main['action'][action], list):
-            return []
+            return {}
+        if not isinstance(self.main['action'][action], dict):
+            return {}
         return self.main['action'][action]
