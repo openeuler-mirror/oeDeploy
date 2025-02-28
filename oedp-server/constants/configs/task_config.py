@@ -12,21 +12,54 @@
 # Create: 2025-01-15
 # ======================================================================================================================
 
-from enum import Enum
+from configparser import MissingSectionHeaderError, ParsingError
 
 from constants.paths import TASK_CONFIG_FILE
-from utils.config_parser import ConfParser
+from utils.file_handler.base_handler import FileError
+from utils.file_handler.conf_handler import ConfHandler
 from utils.logger import init_log
-
-task_logger = init_log("taskmanager.log")
-config_parser = ConfParser(task_logger, TASK_CONFIG_FILE)
 
 __all__ = ['TaskConfig']
 
+run_logger = init_log("run.log")
 
-class TaskConfig(Enum):
-    MAX_TASK_NUMBER = config_parser.get('scheduler', 'max_task_number', default=1000)
-    MAX_REPO_NUMBER = config_parser.get('scheduler', 'max_repo_number', default=50)
-    MAX_USER_TASK_NUMBER = config_parser.get('scheduler', 'max_user_task_number', default=50)
-    MAX_TASK_NODE = config_parser.get('scheduler', 'max_task_node', default=1000)
-    THREAD_TIMEOUT = config_parser.get('scheduler', 'thread_timeout', default=30)
+DEFAULT_MAX_TASK_NUMBER = 1000
+DEFAULT_MAX_REPO_NUMBER = 50
+DEFAULT_MAX_USER_TASK_NUMBER = 50
+DEFAULT_MAX_TASK_NODE = 1000
+DEFAULT_THREAD_TIMEOUT = 30
+
+
+class TaskConfig:
+    MAX_TASK_NUMBER = DEFAULT_MAX_TASK_NUMBER
+    MAX_REPO_NUMBER = DEFAULT_MAX_REPO_NUMBER
+    MAX_USER_TASK_NUMBER = DEFAULT_MAX_USER_TASK_NUMBER
+    MAX_TASK_NODE = DEFAULT_MAX_TASK_NODE
+    THREAD_TIMEOUT = DEFAULT_THREAD_TIMEOUT
+
+
+try:
+    conf_handler = ConfHandler(file_path=TASK_CONFIG_FILE, logger=run_logger)
+except (FileError, MissingSectionHeaderError, ParsingError):
+    pass
+else:
+    try:
+        TaskConfig.MAX_TASK_NUMBER = conf_handler.getint(
+            'scheduler', 'max_task_number', default=DEFAULT_MAX_TASK_NUMBER)
+    except ValueError:
+        pass
+    try:
+        TaskConfig.MAX_REPO_NUMBER = conf_handler.getint(
+            'scheduler', 'max_repo_number', default=DEFAULT_MAX_REPO_NUMBER)
+    except ValueError:
+        pass
+        TaskConfig.MAX_USER_TASK_NUMBER = conf_handler.getint(
+            'scheduler', 'max_user_task_number', default=DEFAULT_MAX_USER_TASK_NUMBER)
+    try:
+        TaskConfig.MAX_TASK_NODE = conf_handler.getint('scheduler', 'max_task_node', default=DEFAULT_MAX_TASK_NODE)
+    except ValueError:
+        pass
+    try:
+        TaskConfig.THREAD_TIMEOUT = conf_handler.getint('scheduler', 'thread_timeout', default=DEFAULT_THREAD_TIMEOUT)
+    except ValueError:
+        pass

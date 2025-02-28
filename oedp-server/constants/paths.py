@@ -29,7 +29,11 @@ LIBCRYPTO_SO_FILE = os.path.join(OPENSSL_DIR, 'libcrypto.so')
 OEDP_SERVER_CONFIG_DIR = '/etc/oedp-server'
 # task.conf 配置文件路径
 TASK_CONFIG_FILE = os.path.join(OEDP_SERVER_CONFIG_DIR, 'task.conf')
+# ssh.conf 配置文件路径
+SSH_CONFIG_FILE = os.path.join(OEDP_SERVER_CONFIG_DIR, 'ssh', 'ssh.conf')
+# SSH 提示符配置文件
+SSH_PROMPTS_JSON_FILE = os.path.join(OEDP_SERVER_CONFIG_DIR, 'ssh', 'ssh_prompts.json')
 # mariadb.conf 配置文件路径
 MARIADB_CONFIG_FILE = os.path.join(OEDP_SERVER_CONFIG_DIR, 'mariadb', 'mariadb.conf')
-# 密钥文件路径
-SECRET_KEY_FILE = os.path.join(OEDP_SERVER_CONFIG_DIR, 'mariadb', 'mariadb.json')
+# MariaDB 密文数据 json 文件
+MARIADB_JSON_FILE = os.path.join(OEDP_SERVER_CONFIG_DIR, 'mariadb', 'mariadb.json')
