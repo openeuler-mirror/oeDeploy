@@ -40,7 +40,7 @@ class InitCmd:
 
         :return: 是否执行成功
         """
-        self.log.info(
+        self.log.debug(
             f'Running cmd init: plugin={self.plugin}, source={self.source}, project={self.project}, force={self.force}')
         if not os.path.exists(self.source):
             self.log.error(f'Source path {self.source} does not exist')
@@ -48,7 +48,7 @@ class InitCmd:
         tar_name = self.plugin + '.tar.gz'
         tar_path = os.path.join(self.source, tar_name)
         if not os.path.exists(tar_path):
-            self.log.info(f'Plugin {tar_name} does not exist in source {self.source}')
+            self.log.debug(f'Plugin {tar_name} does not exist in source {self.source}')
             # download
             download_success = False
             if not download_success:

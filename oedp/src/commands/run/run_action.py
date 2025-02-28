@@ -37,15 +37,15 @@ class RunAction:
 
         :return: 是否执行成功
         """
-        self.log.info(f'Running {self.action} action for {self.project}')
+        self.log.debug(f'Running {self.action} action for {self.project}')
         for task in self.tasks:
             if not isinstance(task, dict):
                 self.log.error(f'Unrecognized task: {task}')
                 return False
             if 'name' in task:
-                self.log.info(f'Running task: {task["name"]}')
+                self.log.debug(f'Running task: {task["name"]}')
             else:
-                self.log.info(f'Running task: No Name Task')
+                self.log.debug(f'Running task: No Name Task')
             if 'playbook' in task:
                 if not self._run_playbook(task, self.project):
                     return False
@@ -74,7 +74,7 @@ class RunAction:
             cmd.extend(['-e', f'@{variables}'])
         if 'scope' in task and task['scope'] != 'all':
             cmd.extend(['--limit', task['scope']])
-        self.log.info(f'Executing cmd: {cmd}')
+        self.log.debug(f'Executing cmd: {cmd}')
         out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True)
         if ret:
             if err:

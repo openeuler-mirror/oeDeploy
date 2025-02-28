@@ -36,7 +36,7 @@ class ListCmd:
 
         :return: 是否执行成功
         """
-        self.log.info(f'Running cmd list: source={self.source}')
+        self.log.debug(f'Running cmd list: source={self.source}')
         if not os.path.isdir(self.source):
             self.log.error(f'{self.source} is not a directory')
             return False
