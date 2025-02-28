@@ -1,17 +1,17 @@
 all:
   hosts:
     host1:
-      ansible_host: HOST_IP
+      ansible_host: HOST_IP     # e.g. 192.168.1.101
       ansible_port: 22
       ansible_user: root
-      ansible_password: PASSWORD
+      ansible_password: ""
   vars:
     temp_path: /tmp
     namespace: kuberay
     version: 1.2.2
 
     helm_repo_name: "kuberay"
-    helm_repo_url: "https://ray-project.github.io/kuberay-helm"
+    helm_repo_url: "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/kuberay-helm"
 
     kuberay_operator_values_file: ""
     kuberay_operator_values:
@@ -20,12 +20,12 @@ all:
 
     ray_cluster_values_file: ""
     ray_cluster_values:
-      repository: "m.daocloud.io/docker.io/rayproject/ray"
+      repository: "hub.oepkgs.net/oedeploy/rayproject/ray"
       tag: 2.9.0
       head:
         cpu: "1"
         memory: "2G"
       worker:
-        num: 1
+        num: 2
         cpu: "1"
         memory: "1G"
