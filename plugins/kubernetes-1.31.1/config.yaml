@@ -2,30 +2,32 @@ all:
   children:
     masters:
       hosts:
-        HOST_IP1:                          # example: 192.168.10.1
-          ansible_host: HOST_IP1
+        HOST_IP1:                          # e.g. 192.168.10.1
+          ansible_host: HOST_IP1           # e.g. 192.168.10.1
           ansible_port: 22
           ansible_user: root
-          ansible_password: PASSWORD
-          architecture: amd64
-          oeversion: 24.03-LTS
+          ansible_password: ""
+          architecture: amd64              # e.g. [ amd64, arm64 ]
+          oeversion: 22.03-LTS             # e.g. [ 22.03-LTS, 24.03-LTS ]
     workers:
       hosts:
         HOST_IP2:
           ansible_host: HOST_IP2
           ansible_port: 22
           ansible_user: root
-          architecture: arm64
+          ansible_password: ""
+          architecture: amd64
           oeversion: 22.03-LTS
         HOST_IP3:
           ansible_host: HOST_IP3
           ansible_port: 22
           ansible_user: root
+          ansible_password: ""
           architecture: amd64
           oeversion: 22.03-LTS
   vars:
-    init_cluster_force: "true"
-    service_cidr: 10.96.0.0/16
-    pod_cidr: 10.244.0.0/16
-    certs_expired: 3650
-    has_deployed_containerd: "false"
+    init_cluster_force: "true"             # e.g. [ "true", "false" ]  强制初始化集群
+    service_cidr: 10.96.0.0/16             # 服务网段
+    pod_cidr: 10.244.0.0/16                # pod ip 网段
+    certs_expired: 3650                    # 证书过期时间
+    has_deployed_containerd: "false"       # e.g. [ "true", "false" ]  是否已有 containerd
