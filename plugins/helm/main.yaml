@@ -1,6 +1,5 @@
 name: helm
-version: 3.9.0
-description: deploy helm-v3.9.0
+description: auto deploy helm (default v3.9.0)
 action:
   install:
     description: install helm
