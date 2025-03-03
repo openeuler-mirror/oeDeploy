@@ -36,23 +36,7 @@ install -c -m 0400 %{_builddir}/%{name}-%{version}/static/* %{buildroot}%{_usr}/
 install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir}/oedp
 
 
-%post
-set -e
-
-# 创建 Python 虚拟环境
-cd %{_var}/oedp/python/venv
-python3 -m venv oedp
-
-# 创建软连接
-python_version_info=$(python3 --version)
-major_minor_version=$(echo ${python_version_info} | awk '{split($2, v, "."); print "python" v[1] "." v[2]}')
-site_packages_dir=%{_var}/oedp/python/venv/oedp/lib/${major_minor_version}/site-packages
-ln -s %{_usr}/lib/oedp/src %{_var}/oedp/python/venv/oedp/lib/${major_minor_version}/site-packages/src
-
-
 %postun
-set -e
-
 # 删除可能会残留的目录
 rm -rf /var/oedp
 rm -rf /usr/lib/oedp
