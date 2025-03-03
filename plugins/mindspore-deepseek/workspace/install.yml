@@ -1,0 +1,5 @@
+- hosts:
+    - masters
+    - workers
+  roles:
+    - install
