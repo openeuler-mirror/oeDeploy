@@ -9,24 +9,24 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
 # PURPOSE.
 # See the Mulan PSL v2 for more details.
-# Create: 2025-01-14
+# Create: 2025-02-25
 # ======================================================================================================================
 
-from django.contrib import admin
-from django.urls import path, include
-from rest_framework import routers
+from rest_framework.test import APITestCase, APIClient
 
-from plugins.views import PluginViewSet
-from taskmanager.views import TaskViewSet, NodeViewSet
-from usermanager.views import UserViewSet
+from usermanager.models import User
 
-router = routers.DefaultRouter()
-router.register(r'v1.0/tasks', TaskViewSet, basename='tasks')
-router.register(r'v1.0/nodes', NodeViewSet, basename='nodes')
-router.register(r'v1.0/users', UserViewSet, basename='users')
-router.register(r'v1.0/plugins', PluginViewSet, basename='plugins')
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include(router.urls)),
-]
+class CustomTestCase(APITestCase):
+
+    @property
+    def anonymous_client(self):
+        if hasattr(self, '_anonymous_client'):
+            return self._anonymous_client
+        self._anonymous_client = APIClient()
+        return self._anonymous_client
+
+    def create_user(self, username, password=None, role=User.Role.ADMIN):
+        if password is None:
+            password = "TestPW_123"
+        return User.objects.create_user(username, password=password, role=role)
