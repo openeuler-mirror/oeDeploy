@@ -28,12 +28,14 @@ all:
 
   vars:
     # 容器镜像
-    image_name: abc
-    image_tag: cba
+    image_name: hub.oepkgs.net/oedeploy/openeuler/aarch64/mindspore
+    image_tag: v1.0
     # 推理服务所在容器的名称
     container_name: openeuler_ds
     # 模型权重路径
-    model_path: ""
+    model_path: /workspace/deepseekv3
+    # 模型权重路径
+    model_weight_path: "/path/to/weight"
     # ray 开放的端口
     ray_port: 6379
     # 节点个数

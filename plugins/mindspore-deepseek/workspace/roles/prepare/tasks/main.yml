@@ -4,20 +4,20 @@
 
 - name: Create directory
   file:
-    path: {{ dir_path }}
+    path: "{{ dir_path }}"
     state: directory
     mode: '0644'
 
 - name: Copy deploy.sh to hosts
   copy:
     src: deploy.sh
-    dest: {{ dir_path }}
+    dest: "{{ dir_path }}"
     mode: '0755'
 
-- name: Copy lib/ to hosts
+- name: Copy lib to hosts
   copy:
-    path: lib/
-    dest: {{ dir_path }}
+    src: lib
+    dest: "{{ dir_path }}"
     mode: '0644'
 
 - name: Copy config.cfg to hosts
@@ -26,5 +26,5 @@
     dest: "{{ dir_path }}/lib/config.cfg"
     mode: '0644'
 
-- name: Execute deploy.sh
-  shell: sh {{ dir_path }}/deploy.sh
+- name: Execute prepare.sh
+  shell: sh {{ dir_path }}/prepare.sh
