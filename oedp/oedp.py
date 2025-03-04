@@ -14,12 +14,9 @@
 
 import sys
 
-if f'/var/oedp/python/venv/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages' not in sys.path:
-    sys.path.insert(
-        0,
-        f'/var/oedp/python/venv/oedp/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages'
-    )
-    sys.executable = '/var/oedp/python/venv/oedp/bin/python'
+if '/usr/lib/oedp' not in sys.path:
+    sys.path.append('/usr/lib/oedp')
+    sys.executable = '/usr/bin/python3'
 
 from src.constants.const import FAILED, OK
 from src.parsers.oedp_parser import OeDeployParser
