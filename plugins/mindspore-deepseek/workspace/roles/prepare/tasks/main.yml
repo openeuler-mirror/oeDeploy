@@ -8,9 +8,9 @@
     state: directory
     mode: '0644'
 
-- name: Copy deploy.sh to hosts
+- name: Copy prepare.sh to hosts
   copy:
-    src: deploy.sh
+    src: prepare.sh
     dest: "{{ dir_path }}"
     mode: '0755'
 

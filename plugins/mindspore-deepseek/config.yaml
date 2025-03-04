@@ -32,7 +32,7 @@ all:
     image_tag: v1.0
     # 推理服务所在容器的名称
     container_name: openeuler_ds
-    # 模型权重路径
+    # 模型路径
     model_path: /workspace/deepseekv3
     # 模型权重路径
     model_weight_path: "/path/to/weight"
