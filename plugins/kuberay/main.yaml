@@ -1,6 +1,5 @@
 name: kuberay
-version: 1.2.2
-description: kuberay 1.2.2
+description: auto deploy kuberay (default kuberay-1.2.2 & ray-2.9.0)
 action:
   install:
     description: install KubeRay

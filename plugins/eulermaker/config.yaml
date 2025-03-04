@@ -1,57 +1,58 @@
 all:
   hosts:
-    ebs-master-1:
-      ansible_host: HOST_IP1
+    ebs-master-1:                     # k8s master  eulermaker 管理面
+      ansible_host: HOST_IP1          # e.g. 192.168.1.101
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+      architecture: amd64             # e.g. [ amd64, arm64 ]
+      oeversion: 22.03-LTS            # e.g. [ 22.03-LTS, 24.03-LTS ]
+      runtime: docker                 # e.g. [ docker, containerd ]
+    ebs-master-2:                     # k8s worker  eulermaker 管理面
+      ansible_host: HOST_IP2          # e.g. 192.168.1.102
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+      architecture: amd64             # e.g. [ amd64, arm64 ]
+      oeversion: 22.03-LTS            # e.g. [ 22.03-LTS, 24.03-LTS ]
+      runtime: docker                 # e.g. [ docker, containerd ]
+    x86-testbox-1:                    # k8s worker  eulermaker 执行机
+      ansible_host: HOST_IP3          # e.g. 192.168.1.201
       ansible_port: 22
       ansible_user: root
       ansible_password: ""
       architecture: amd64
-      oeversion: 22.03-LTS
-      runtime: docker
-    ebs-master-2:
-      ansible_host: HOST_IP2
-      ansible_port: 22
-      ansible_user: root
-      ansible_password: ""
-      architecture: amd64
-      oeversion: 22.03-LTS
-      runtime: docker
-    x86-testbox-1:
-      ansible_host: HOST_IP3
-      ansible_port: 22
-      ansible_user: root
-      ansible_password: ""
-      architecture: amd64
-      oeversion: 22.03-LTS
-      runtime: docker
-    arm-testbox-1:
-      ansible_host: HOST_IP4
+      oeversion: 22.03-LTS            # e.g. [ 22.03-LTS, 24.03-LTS ]
+      runtime: docker                 # 必须是 docker
+    arm-testbox-1:                    # k8s worker  eulermaker 执行机
+      ansible_host: HOST_IP4          # e.g. 192.168.1.202
       ansible_port: 22
       ansible_user: root
       ansible_password: ""
       architecture: arm64
-      oeversion: 22.03-LTS
-      runtime: docker
+      oeversion: 22.03-LTS            # e.g. [ 22.03-LTS, 24.03-LTS ]
+      runtime: docker                 # 必须是 docker
 
   children:
     kubernetes:
       children:
-        masters:
+        masters:                      # k8s master 节点（当前只支持单 master 集群）
           hosts:
             ebs-master-1:
-        workers:
+        workers:                      # k8s worker 节点
           hosts:
             ebs-master-2:
             x86-testbox-1:
             arm-testbox-1:
-        new-workers:
+        new-workers:                  # 需加入新机器时在此添加 host，加入集群后移动到 workers
           hosts: {}
       vars:
-        init_cluster_force: true
-        remove_master_no_schedule_taints: true
-        service_cidr: 10.96.0.0/16
+        init_cluster_force: true                  # true: 无论之前集群是否创建成功，都会尝试初始化集群
+        remove_master_no_schedule_taints: true    # true: 移除 master 不可调度的污点，使业务容器可以调度到 master 节点上
+        service_cidr: 10.96.0.0/16                # 容器网段要合理划分，尽可能不与虚机网段冲突
         pod_cidr: 10.244.0.0/16
-        certs_expired: 3650
+        certs_expired: 3650                       # ca根证书为10年，故证书过期时间不应超过10年
+        # 请勿修改以下参数
         kubernetes_version: 1.31.1
         calico_version: 3.28.2
         containerd_version: 1.7.22
@@ -60,20 +61,22 @@ all:
 
     eulermaker:
       children:
-        kubectl:
+        kubectl:                    # 一台配置了 kubectl 对接 k8s 集群的节点
           hosts:
             ebs-master-1:
-        masters:
+        masters:                    # eulermaker 管理面
           hosts:
             ebs-master-1:
             ebs-master-2:
-        testboxs:
+        testboxs:                   # eulermaker 执行机，容器运行时 runtime 必须是 docker
           hosts:
             x86-testbox-1:
             arm-testbox-1:
-        new-testboxs:
+        new-testboxs:               # 需加入新执行机时在此添加 host，加入集群后移动到 testboxs
           hosts: {}
       vars:
+        # 指定中间件的分布
+        # es: 3, etcd: 3, redis: 6, rabbitmq: 1
         es_nodes:
           - ebs-master-1
           - ebs-master-2
@@ -93,4 +96,5 @@ all:
           - ebs-master-2
         ebs_master_nodes:
           - ebs-master-1
+        # 执行机需安装一些rpm包，若执行机上的系统配置的repo源可用，则配置为true，否则配置为false
         yum_repo_is_reachable: true
