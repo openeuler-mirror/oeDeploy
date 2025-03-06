@@ -18,13 +18,25 @@ action:
     description: install Katib based on Kubeflow
     tasks:
       - name: install Katib
-        playbook: install-knative-serving.yml
+        playbook: install-katib.yml
         scope: all
   uninstall:
     description: uninstall Kubeflow
     tasks:
       - name: uninstall kubeflow
         playbook: uninstall.yml
+        scope: all
+  uninstall-kserve:
+    description: uninstall KServe
+    tasks:
+      - name: uninstall KServe
+        playbook: uninstall-kserve.yml
+        scope: all
+  uninstall-katib:
+    description: uninstall Katib
+    tasks:
+      - name: uninstall Katib
+        playbook: uninstall-katib.yml
         scope: all
   clean:
     description: clean cache files

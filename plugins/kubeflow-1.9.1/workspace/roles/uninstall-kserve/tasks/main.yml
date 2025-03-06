@@ -1,0 +1,13 @@
+- name: Set the extracted manifests directory path as a fact
+  set_fact:
+    manifests_path: "{{ kubeflow_install_path }}/manifests-{{ kubeflow_version }}"
+
+- name: Delete KServe
+  shell: |
+    kustomize build {{ manifests_path }}/contrib/kserve/models-web-app/overlays/kubeflow | kubectl delete -f -
+    kustomize build {{ manifests_path }}/contrib/kserve/kserve | kubectl delete -f -
+
+- name: Delete Knative Serving
+  shell: |
+    kustomize build {{ manifests_path }}/common/istio-1-22/cluster-local-gateway/base | kubectl delete -f -
+    kustomize build {{ manifests_path }}/common/knative/knative-serving/overlays/gateways | kubectl delete -f -

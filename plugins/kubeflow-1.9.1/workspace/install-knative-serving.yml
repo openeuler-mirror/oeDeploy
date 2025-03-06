@@ -1,3 +1,0 @@
-- hosts: masters
-  roles:
-    - install-knative-serving
