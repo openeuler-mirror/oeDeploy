@@ -1,3 +1,7 @@
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
 - name: Set dir_path as a fact
   set_fact:
     dir_path: "/home/mindspore-deepseek"
