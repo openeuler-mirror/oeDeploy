@@ -1,9 +1,13 @@
+- name: Set the extracted manifests directory path as a fact
+  set_fact:
+    manifests_path: "{{ kubeflow_install_path }}/manifests-{{ kubeflow_version }}"
+
 - name: Install the Katib official Kubeflow component
   shell: |
-    kustomize build  {{ manifests_path }}apps/katib/upstream/installs/katib-with-kubeflow | kubectl apply -f -
+    kustomize build  {{ manifests_path }}/apps/katib/upstream/installs/katib-with-kubeflow | kubectl apply -f -
 
 - name: Install Admission Webhook
-  shell: kustomize build {{ manifests_path }}apps/admission-webhook/upstream/overlays/cert-manager | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/apps/admission-webhook/upstream/overlays/cert-manager | kubectl apply -f -
 
 - name: Install Training Operator
-  shell: kustomize build {{ manifests_path }}apps/training-operator/upstream/overlays/kubeflow  | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/apps/training-operator/upstream/overlays/kubeflow  | kubectl apply -f -

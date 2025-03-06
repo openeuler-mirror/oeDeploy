@@ -56,7 +56,3 @@
     src: "{{ kubeflow_install_path }}/requires/22.03-LTS/{{ ansible_architecture }}/manifests-{{ kubeflow_version }}.tar.gz"
     dest: "{{ kubeflow_install_path }}"
     remote_src: yes
-
-- name: Set the extracted manifests directory path as a fact
-  set_fact:
-    manifests_path: "{{ kubeflow_install_path }}/manifests-{{ kubeflow_version }}/"

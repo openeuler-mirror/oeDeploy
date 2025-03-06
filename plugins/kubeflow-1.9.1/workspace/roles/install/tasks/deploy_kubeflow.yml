@@ -1,7 +1,11 @@
+- name: Set the extracted manifests directory path as a fact
+  set_fact:
+    manifests_path: "{{ kubeflow_install_path }}/manifests-{{ kubeflow_version }}"
+
 - name: Install cert-manager
   shell: | 
-    kustomize build {{ manifests_path }}common/cert-manager/kubeflow-issuer/base | kubectl apply -f - 
-    kustomize build {{ manifests_path }}common/cert-manager/cert-manager/base | kubectl apply -f -
+    kustomize build {{ manifests_path }}/common/cert-manager/kubeflow-issuer/base | kubectl apply -f - 
+    kustomize build {{ manifests_path }}/common/cert-manager/cert-manager/base | kubectl apply -f -
     kubectl wait --for=condition=ready pod -l 'app in (cert-manager,webhook)' --timeout=180s -n cert-manager
     kubectl wait --for=jsonpath='{.subsets[0].addresses[0].targetRef.kind}'=Pod endpoints -l 'app in (cert-manager,webhook)' --timeout=180s -n cert-manager
 
@@ -17,9 +21,9 @@
 
 - name: Install istio
   shell: |
-    kustomize build {{ manifests_path }}common/istio-1-22/istio-crds/base | kubectl apply -f -
-    kustomize build {{ manifests_path }}common/istio-1-22/istio-namespace/base | kubectl apply -f -
-    kustomize build {{ manifests_path }}common/istio-1-22/istio-install/overlays/oauth2-proxy | kubectl apply -f -
+    kustomize build {{ manifests_path }}/common/istio-1-22/istio-crds/base | kubectl apply -f -
+    kustomize build {{ manifests_path }}/common/istio-1-22/istio-namespace/base | kubectl apply -f -
+    kustomize build {{ manifests_path }}/common/istio-1-22/istio-install/overlays/oauth2-proxy | kubectl apply -f -
 
 - name: Edit istio-sidecar-injector yaml file
   block:
@@ -41,44 +45,44 @@
       shell: kubectl wait --for=condition=Ready pods --all -n istio-system --timeout 300s
 
 - name: Install Oauth2-proxy
-  shell: kustomize build {{ manifests_path }}common/oauth2-proxy/overlays/m2m-dex-only/ | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/oauth2-proxy/overlays/m2m-dex-only/ | kubectl apply -f -
 
 - name: Install Dex
-  shell: kustomize build {{ manifests_path }}common/dex/overlays/oauth2-proxy | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/dex/overlays/oauth2-proxy | kubectl apply -f -
 
 - name: Kubeflow Namespace
-  shell: kustomize build {{ manifests_path }}common/kubeflow-namespace/base | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/kubeflow-namespace/base | kubectl apply -f -
 
 - name: Install Kubeflow Roles
-  shell: kustomize build {{ manifests_path }}common/kubeflow-roles/base | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/kubeflow-roles/base | kubectl apply -f -
 
 - name: Install Kubeflow Istio Resources
-  shell: kustomize build {{ manifests_path }}common/istio-1-22/kubeflow-istio-resources/base | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/istio-1-22/kubeflow-istio-resources/base | kubectl apply -f -
 
 - name: Install Central Dashboard
-  shell: kustomize build {{ manifests_path }}apps/centraldashboard/overlays/oauth2-proxy | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/apps/centraldashboard/overlays/oauth2-proxy | kubectl apply -f -
 
 - name: Install Notebooks 1.0
   shell: |
-    kustomize build {{ manifests_path }}apps/jupyter/notebook-controller/upstream/overlays/kubeflow | kubectl apply -f -
-    kustomize build {{ manifests_path }}apps/jupyter/jupyter-web-app/upstream/overlays/istio | kubectl apply -f -
+    kustomize build {{ manifests_path }}/apps/jupyter/notebook-controller/upstream/overlays/kubeflow | kubectl apply -f -
+    kustomize build {{ manifests_path }}/apps/jupyter/jupyter-web-app/upstream/overlays/istio | kubectl apply -f -
 
 - name: Install Network Policies
-  shell: kustomize build {{ manifests_path }}common/networkpolicies/base | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/networkpolicies/base | kubectl apply -f -
 
 - name: Install PVC Viewer Controller
-  shell: kustomize build {{ manifests_path }}apps/pvcviewer-controller/upstream/default | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/apps/pvcviewer-controller/upstream/default | kubectl apply -f -
 
 - name: Install Profiles + KFAM
-  shell: kustomize build {{ manifests_path }}apps/profiles/upstream/overlays/kubeflow | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/apps/profiles/upstream/overlays/kubeflow | kubectl apply -f -
 
 - name: Install Volumes Web Application
-  shell: kustomize build {{ manifests_path }}apps/volumes-web-app/upstream/overlays/istio | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/apps/volumes-web-app/upstream/overlays/istio | kubectl apply -f -
 
 - name: Install Tensorboard
   shell: |
-    kustomize build {{ manifests_path }}apps/tensorboard/tensorboards-web-app/upstream/overlays/istio | kubectl apply -f -
-    kustomize build {{ manifests_path }}apps/tensorboard/tensorboard-controller/upstream/overlays/kubeflow | kubectl apply -f -
+    kustomize build {{ manifests_path }}/apps/tensorboard/tensorboards-web-app/upstream/overlays/istio | kubectl apply -f -
+    kustomize build {{ manifests_path }}/apps/tensorboard/tensorboard-controller/upstream/overlays/kubeflow | kubectl apply -f -
 
 - name: Install Volumes Web Application
-  shell: kustomize build {{ manifests_path }}common/user-namespace/base | kubectl apply -f -
+  shell: kustomize build {{ manifests_path }}/common/user-namespace/base | kubectl apply -f -

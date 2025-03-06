@@ -3,19 +3,31 @@ version: 1.9.1
 description: install kubeflow
 action:
   install:
-    description: install kubeflow
+    description: install Kubeflow
     tasks:
       - name: install kubeflow
         playbook: install.yml
         scope: all
   install-knative-serving:
-    description: install kubeflow
+    description: install KNative Serving based on Kubeflow
     tasks:
-      - name: install install-knative-serving based on kubeflow
+      - name: install KNative Serving
+        playbook: install-knative-serving.yml
+        scope: all
+  install-kserve:
+    description: install KServe based on Kubeflow
+    tasks:
+      - name: install KServe
+        playbook: install-kserve.yml
+        scope: all
+  install-katib:
+    description: install Katib based on Kubeflow
+    tasks:
+      - name: install Katib
         playbook: install-knative-serving.yml
         scope: all
   uninstall:
-    description: uninstall kubeflow
+    description: uninstall Kubeflow
     tasks:
       - name: uninstall kubeflow
         playbook: uninstall.yml
