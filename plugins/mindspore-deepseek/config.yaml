@@ -1,0 +1,36 @@
+﻿all:
+  children:
+    masters:
+      hosts:
+        master1:
+          ansible_host: 1.2.3.4
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+
+    workers:
+      hosts:
+        worker1:
+          ansible_host: 2.3.4.5
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+
+  vars:
+    # 容器镜像
+    image_name: hub.oepkgs.net/oedeploy/openeuler/aarch64/mindspore
+    image_tag: latest
+    # 推理服务所在容器的名称
+    container_name: openeuler_ds
+    # 模型路径
+    model_path: /path/to/model
+    # ray 开放的端口
+    ray_port: 6379
+    # 节点个数
+    node_num: 2
+    # 拉起服务前是否停止其他容器
+    is_stop_other_container: 0
+    # 推理服务端口
+    llm_port: 8000
+    # ray集群使用的网卡
+    ray_device: enp67s0f0np0

@@ -1,0 +1,9 @@
+name: mindspore-deepseek
+description: auto deploy DeepSeek with mindspore
+action:
+  install:
+    description: auto deployment
+    tasks:
+      - name: install
+        playbook: install.yml
+        scope: all

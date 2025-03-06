@@ -1,0 +1,2 @@
+- name: Start Ray on worker
+  shell: docker exec {{ container_name }} /workspace/lib/ray_start.sh {{ hostvars[groups['masters'][0]].ansible_host }}

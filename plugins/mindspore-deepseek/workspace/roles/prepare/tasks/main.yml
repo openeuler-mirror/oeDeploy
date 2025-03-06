@@ -1,0 +1,34 @@
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Set dir_path as a fact
+  set_fact:
+    dir_path: "/home/mindspore-deepseek"
+
+- name: Create directory
+  file:
+    path: "{{ dir_path }}"
+    state: directory
+    mode: '0644'
+
+- name: Copy prepare.sh to hosts
+  copy:
+    src: prepare.sh
+    dest: "{{ dir_path }}"
+    mode: '0755'
+
+- name: Copy lib to hosts
+  copy:
+    src: lib
+    dest: "{{ dir_path }}"
+    mode: '0644'
+
+- name: Copy config.cfg to hosts
+  template:
+    src: config.cfg.j2
+    dest: "{{ dir_path }}/lib/config.cfg"
+    mode: '0644'
+
+- name: Execute prepare.sh
+  shell: sh {{ dir_path }}/prepare.sh

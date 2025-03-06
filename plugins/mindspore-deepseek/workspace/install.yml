@@ -1,0 +1,23 @@
+- hosts:
+    - masters
+    - workers
+  roles:
+    - prepare
+  any_errors_fatal: true
+
+- hosts:
+    - masters
+  roles:
+    - start/ray-master
+  any_errors_fatal: true
+
+- hosts:
+    - workers
+  roles:
+    - start/ray-worker
+  any_errors_fatal: true
+
+- hosts:
+    - masters
+  roles:
+    - start/deepseek

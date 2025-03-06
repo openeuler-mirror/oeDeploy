@@ -1,0 +1,2 @@
+- name: Start DeepSeek on master
+  shell: docker exec {{ container_name }} /workspace/lib/start_ds.sh
