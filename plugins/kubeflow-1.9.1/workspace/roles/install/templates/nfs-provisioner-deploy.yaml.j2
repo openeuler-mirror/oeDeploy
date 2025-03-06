@@ -27,7 +27,7 @@ spec:
             - name: PROVISIONER_NAME
               value: {{ default_storageclass_name }}
             - name: NFS_SERVER
-              value: {{ local_address }}
+              value: {{ hostvars[groups['masters'][0]].ansible_host }}
             - name: NFS_PATH
               value: {{ nfs_path }}
             - name: ENABLE_LEADER_ELECTION
@@ -35,5 +35,5 @@ spec:
       volumes:
         - name: nfs-client-root
           nfs:
-            server: {{ local_address }}
+            server: {{ hostvars[groups['masters'][0]].ansible_host }}
             path: {{ nfs_path }}

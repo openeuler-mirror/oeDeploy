@@ -6,17 +6,23 @@ action:
     description: install kubeflow
     tasks:
       - name: install kubeflow
-        playbook: init-kubeflow.yml
+        playbook: install.yml
         scope: all
-  delete:
-    description: delete kubeflow
+  install-knative-serving:
+    description: install kubeflow
     tasks:
-      - name: delete kubeflow
-        playbook: delete-kubeflow.yml
+      - name: install install-knative-serving based on kubeflow
+        playbook: install-knative-serving.yml
+        scope: all
+  uninstall:
+    description: uninstall kubeflow
+    tasks:
+      - name: uninstall kubeflow
+        playbook: uninstall.yml
         scope: all
   clean:
     description: clean cache files
     tasks:
       - name: clean cache files
-        playbook: clean-kubeflow.yml
+        playbook: clean.yml
         scope: all

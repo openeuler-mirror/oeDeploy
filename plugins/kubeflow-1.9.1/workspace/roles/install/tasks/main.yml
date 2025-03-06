@@ -21,5 +21,5 @@
 - name: print result
   debug:
     msg: "On the master node, execute 'kubectl get pod -A' to ensure that each pod is running.
-        execute 'kubectl port-forward svc/istio-ingressgateway -n istio-system 80:80 --address {{ local_address }}'
-        access http://{{ local_address }}"
+        execute 'kubectl port-forward svc/istio-ingressgateway -n istio-system 80:80 --address {{ hostvars[groups['masters'][0]].ansible_host }}'
+        access http://{{ hostvars[groups['masters'][0]].ansible_host }}"
