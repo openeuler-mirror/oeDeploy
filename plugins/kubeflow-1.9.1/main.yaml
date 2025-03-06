@@ -8,12 +8,6 @@ action:
       - name: install kubeflow
         playbook: install.yml
         scope: all
-  install-knative-serving:
-    description: install KNative Serving based on Kubeflow
-    tasks:
-      - name: install KNative Serving
-        playbook: install-knative-serving.yml
-        scope: all
   install-kserve:
     description: install KServe based on Kubeflow
     tasks:

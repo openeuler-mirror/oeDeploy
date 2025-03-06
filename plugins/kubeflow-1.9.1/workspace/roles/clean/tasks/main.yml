@@ -1,2 +1,4 @@
-- name: Include Clean Kubeflow tasks
-  include_tasks: clean_kubeflow.yml
+- name: Clean cache files
+  file:
+    path: "{{ kubeflow_install_path }}"
+    state: absent
