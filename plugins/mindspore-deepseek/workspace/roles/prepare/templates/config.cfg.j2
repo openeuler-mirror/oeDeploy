@@ -5,8 +5,6 @@ IMAGE_TAG={{ image_tag }}
 CONTAINER_NAME={{ container_name }}
 #[模型路径]
 MODEL_PATH={{ model_path }}
-#[模型权重路径]
-MODEL_WEIGHT_PATH={{ model_weight_path }}
 #[ray开放的端口]
 RAY_PORT={{ ray_port }}
 #[节点个数]
@@ -15,3 +13,5 @@ NODE_NUM={{ node_num }}
 IS_STOP_OTHER_CONTAINER={{ is_stop_other_container }}
 #[推理服务端口]
 LLM_PORT={{ llm_port }}
+#[ray集群使用的网卡]
+RAY_DEVICE={{ ray_device }}

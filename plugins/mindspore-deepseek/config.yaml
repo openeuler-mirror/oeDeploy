@@ -1,9 +1,9 @@
-all:
+﻿all:
   children:
     masters:
       hosts:
         master1:
-          ansible_host: 192.168.1.101
+          ansible_host: 1.2.3.4
           ansible_port: 22
           ansible_user: root
           ansible_password: ""
@@ -11,17 +11,7 @@ all:
     workers:
       hosts:
         worker1:
-          ansible_host: 192.168.1.201
-          ansible_port: 22
-          ansible_user: root
-          ansible_password: ""
-        worker2:
-          ansible_host: 192.168.1.202
-          ansible_port: 22
-          ansible_user: root
-          ansible_password: ""
-        worker3:
-          ansible_host: 192.168.1.203
+          ansible_host: 2.3.4.5
           ansible_port: 22
           ansible_user: root
           ansible_password: ""
@@ -29,18 +19,18 @@ all:
   vars:
     # 容器镜像
     image_name: hub.oepkgs.net/oedeploy/openeuler/aarch64/mindspore
-    image_tag: v1.0
+    image_tag: latest
     # 推理服务所在容器的名称
     container_name: openeuler_ds
     # 模型路径
-    model_path: /workspace/deepseekv3
-    # 模型权重路径
-    model_weight_path: "/path/to/weight"
+    model_path: /path/to/model
     # ray 开放的端口
     ray_port: 6379
     # 节点个数
     node_num: 2
     # 拉起服务前是否停止其他容器
-    is_stop_other_container: 1
+    is_stop_other_container: 0
     # 推理服务端口
     llm_port: 8000
+    # ray集群使用的网卡
+    ray_device: enp67s0f0np0
