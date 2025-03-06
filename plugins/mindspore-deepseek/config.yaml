@@ -34,3 +34,5 @@
     llm_port: 8000
     # ray集群使用的网卡
     ray_device: enp67s0f0np0
+    # 跳过 ssh 校验（如需禁用此功能，请注释以下配置项）
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
