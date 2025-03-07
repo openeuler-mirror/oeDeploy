@@ -9,24 +9,5 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
 # PURPOSE.
 # See the Mulan PSL v2 for more details.
-# Create: 2025-01-14
+# Create: 2025-03-04
 # ======================================================================================================================
-
-from django.contrib import admin
-from django.urls import path, include
-from rest_framework import routers
-
-from plugins.views import PluginViewSet
-from taskmanager.views import TaskViewSet, NodeViewSet
-from usermanager.views import UserViewSet
-
-router = routers.DefaultRouter()
-router.register(r'v1.0/tasks', TaskViewSet, basename='tasks')
-router.register(r'v1.0/nodes', NodeViewSet, basename='nodes')
-router.register(r'v1.0/users', UserViewSet, basename='users')
-router.register(r'v1.0/plugins', PluginViewSet, basename='plugins')
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include(router.urls)),
-]

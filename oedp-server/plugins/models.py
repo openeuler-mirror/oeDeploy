@@ -9,24 +9,16 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
 # PURPOSE.
 # See the Mulan PSL v2 for more details.
-# Create: 2025-01-14
+# Create: 2025-02-07
 # ======================================================================================================================
 
-from django.contrib import admin
-from django.urls import path, include
-from rest_framework import routers
+from django.db import models
 
-from plugins.views import PluginViewSet
-from taskmanager.views import TaskViewSet, NodeViewSet
-from usermanager.views import UserViewSet
 
-router = routers.DefaultRouter()
-router.register(r'v1.0/tasks', TaskViewSet, basename='tasks')
-router.register(r'v1.0/nodes', NodeViewSet, basename='nodes')
-router.register(r'v1.0/users', UserViewSet, basename='users')
-router.register(r'v1.0/plugins', PluginViewSet, basename='plugins')
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include(router.urls)),
-]
+class Plugin(models.Model):
+    name = models.CharField('插件名称', max_length=32)
+    version = models.CharField('插件版本', max_length=32, blank=True, null=True)
+    description = models.TextField('插件描述', max_length=10000, blank=True, null=True)
+    icon_path = models.CharField('icon 文件存储地址', max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+    updated_at = models.DateTimeField('更新时间', auto_now=True)
