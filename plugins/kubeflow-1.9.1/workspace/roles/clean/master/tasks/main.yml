@@ -1,2 +1,0 @@
-- name: Include Clean Kubeflow tasks
-  include_tasks: clean_kubeflow.yml

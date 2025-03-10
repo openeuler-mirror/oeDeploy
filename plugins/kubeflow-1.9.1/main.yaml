@@ -3,20 +3,44 @@ version: 1.9.1
 description: install kubeflow
 action:
   install:
-    description: install kubeflow
+    description: install Kubeflow
     tasks:
       - name: install kubeflow
-        playbook: init-kubeflow.yml
+        playbook: install.yml
         scope: all
-  delete:
-    description: delete kubeflow
+  install-kserve:
+    description: install KServe based on Kubeflow
     tasks:
-      - name: delete kubeflow
-        playbook: delete-kubeflow.yml
+      - name: install KServe
+        playbook: install-kserve.yml
+        scope: all
+  install-katib:
+    description: install Katib based on Kubeflow
+    tasks:
+      - name: install Katib
+        playbook: install-katib.yml
+        scope: all
+  uninstall:
+    description: uninstall Kubeflow
+    tasks:
+      - name: uninstall kubeflow
+        playbook: uninstall.yml
+        scope: all
+  uninstall-kserve:
+    description: uninstall KServe
+    tasks:
+      - name: uninstall KServe
+        playbook: uninstall-kserve.yml
+        scope: all
+  uninstall-katib:
+    description: uninstall Katib
+    tasks:
+      - name: uninstall Katib
+        playbook: uninstall-katib.yml
         scope: all
   clean:
     description: clean cache files
     tasks:
       - name: clean cache files
-        playbook: clean-kubeflow.yml
+        playbook: clean.yml
         scope: all

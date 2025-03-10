@@ -2,19 +2,18 @@ all:
   children:
     masters:
       hosts:
-        HOST_IP:                                 # 替换HOST_IP为节点ip
-          ansible_host: HOST_IP
+        master1:
+          ansible_host: HOST_IP      # 替换HOST_IP为节点ip
           ansible_port: 22
           ansible_user: root
-          ansible_password: PASSWORD             # 节点密码
-          architecture: arm64
-          oe_version: 22.03-LTS
+          ansible_password: ""
   vars:
     kubeflow_version: 1.9.1
     kustomize_version: v5.4.2
     kubeflow_image: hub.oepkgs.net/oedeploy/
     local_port: 80
-    local_address: HOST_IP
     kubeflow_install_path: /tmp/kubeflow-install
     nfs_path: /data/kubeflow
     default_storageclass_name: default-storageclass
+    # 跳过 ssh 校验（如需禁用此功能，请注释以下配置项）
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
