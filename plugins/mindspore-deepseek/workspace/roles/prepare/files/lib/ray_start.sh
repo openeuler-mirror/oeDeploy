@@ -3,8 +3,9 @@ current_path=$(
     cd $(dirname $0/)
     pwd
 )
+ENV_FILE=/root/.bashrc
 source $current_path/config.cfg
-source /root/.bashrc
+source $ENV_FILE
 ray_start() {
     ps -ef | grep "python" | grep -v grep | awk '{print $2}' | xargs kill
     ray stop

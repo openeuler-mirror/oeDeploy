@@ -18,8 +18,8 @@
 
   vars:
     # 容器镜像
-    image_name: hub.oepkgs.net/oedeploy/openeuler/aarch64/mindspore
-    image_tag: latest
+    image_name: hub.oepkgs.net/oedeploy/openeuler/aarch64/deepseek_hyperinfer
+    image_tag: openeuler22.03-py3.11
     # 推理服务所在容器的名称
     container_name: openeuler_ds
     # 模型路径

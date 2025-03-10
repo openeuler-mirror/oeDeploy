@@ -10,9 +10,11 @@ main() {
     set -e
     chmod -R +x $current_path/lib
 
+    systemctl stop firewalld
+    systemctl stop iptables
     # 检测需要部署的节点ip数量
-    if [ $NODE_NUM -ne 2 ]; then
-        echo "当前仅支持两节点部署,当前数量是$NODE_NUM"
+    if [ [ $NODE_NUM -ne 2 ] && [ $NODE_NUM -ne 4 ] ]; then
+        echo "当前仅支持两/四节点部署,当前数量是$NODE_NUM"
         exit 1
     fi
 

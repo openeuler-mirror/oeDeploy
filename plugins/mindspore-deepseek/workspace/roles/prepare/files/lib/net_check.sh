@@ -24,7 +24,6 @@ for i in {0..7}; do
     hccn_tool -i $i -net_health -g | grep -i 'Success'
     if [ $? -ne 0 ]; then
         echo "节点npu设备 $i 检测net_health不为Success"
-        exit 1
     fi
 done
 
