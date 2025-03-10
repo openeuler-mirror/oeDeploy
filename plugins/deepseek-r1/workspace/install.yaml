@@ -32,23 +32,27 @@
             state: directory
             mode: '0755'
         
-        - name: Download Ollama package
-          get_url:
-            url: "{{ ollama_download }}"
-            dest: "{{ ollama_download_path }}/{{ ollama_file }}"
-            timeout: 1800
+        - name: Copy download.sh to remote
+          copy:
+            src: download.sh
+            dest: "{{ ollama_download_path }}/download.sh"
+            owner: root
+            group: root
+            mode: '0644'
+        
+        - name: Execute download.sh
+          shell: >
+            bash {{ ollama_download_path }}/download.sh
+            {{ ollama_download }}
+            {{ ollama_download_path }}
+            {{ 1 if download_checksum else 0 }}
+            {{ download_timeout }}
+            {{ download_retry }}
+            >> {{ ollama_download_path }}/download.log
+          ignore_errors: no
+          async: 0
           register: download_result
-          when: ollama_download is not none
-
-        - name: Check if download succeeded
-          stat:
-            path: "{{ ollama_download_path }}/{{ ollama_file }}"
-          register: download_check
-
-        - name: Fail if download failed
-          fail:
-            msg: "Download failed."
-          when: not download_check.stat.exists
+          failed_when: download_result.rc != 0
 
         - name: Extract Ollama package
           unarchive:
@@ -116,25 +120,27 @@
             state: directory
             mode: '0755'
 
-        - name: Download modelfile from URL
-          get_url:
-            url: "{{ modelfile_download }}"
-            dest: "{{ modelfile_download_path }}/{{ modelfile_file }}"
-            timeout: 1800
-          when: modelfile_download is defined and modelfile_download != ""
-          ignore_errors: yes
-
-        - name: Check if download succeeded
-          stat:
-            path: "{{ modelfile_download_path }}/{{ modelfile_file }}"
-          register: download_check
-
-        - name: Fail if download failed
-          fail:
-            msg: >
-              Failed to download modelfile from URL.
-              URL: {{ modelfile_download }}
-          when: not download_check.stat.exists
+        - name: Copy download.sh to remote
+          copy:
+            src: download.sh
+            dest: "{{ modelfile_download_path }}/download.sh"
+            owner: root
+            group: root
+            mode: '0644'
+        
+        - name: Execute download.sh
+          shell: >
+            bash {{ modelfile_download_path }}/download.sh
+            {{ modelfile_download }}
+            {{ modelfile_download_path }}
+            {{ 1 if download_checksum else 0 }}
+            {{ download_timeout }}
+            {{ download_retry }}
+            >> {{ modelfile_download_path }}/download.log
+          ignore_errors: no
+          async: 0
+          register: download_result
+          failed_when: download_result.rc != 0
 
       rescue:
         - name: Print error message of downloading modelfile
