@@ -15,3 +15,5 @@ all:
     kubeflow_install_path: /tmp/kubeflow-install
     nfs_path: /data/kubeflow
     default_storageclass_name: default-storageclass
+    # 跳过 ssh 校验（如需禁用此功能，请注释以下配置项）
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
