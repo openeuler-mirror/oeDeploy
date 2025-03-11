@@ -13,13 +13,17 @@
 
 import argparse
 import os
+import re
 
 from src.commands.check.check_cmd import CheckCmd
 from src.commands.info.info_cmd import InfoCmd
 from src.commands.init.init_cmd import InitCmd
 from src.commands.list.list_cmd import ListCmd
 from src.commands.run.run_cmd import RunCmd
+from src.constants.const import VERSION
 from src.constants.paths import PLUGIN_DIR
+
+from src.utils.command.command_executor import CommandExecutor
 
 
 class OeDeployParser:
@@ -34,6 +38,7 @@ class OeDeployParser:
             description='oeDeploy tool for openEuler.',
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
+        self.parser.add_argument('-v', '--version', action='version', version=f'oedp {self._get_version()}')
         self.subparsers = self.parser.add_subparsers(
             dest='command',
             title='Available commands',
@@ -221,3 +226,15 @@ class OeDeployParser:
         project = args.project
         group = args.group
         return CheckCmd(project, group).run()
+
+    @staticmethod
+    def _get_version():
+        stdout, _, return_code = CommandExecutor.run_single_cmd(['rpm', '-q', 'oedp'])
+        if not return_code:
+            match = re.search(r'-([\d]+\.[\d]+\.[\d]+-\d+)', stdout.strip())
+            if match:
+                return match.group(1)
+            else:
+                return VERSION
+        else:
+            return VERSION
