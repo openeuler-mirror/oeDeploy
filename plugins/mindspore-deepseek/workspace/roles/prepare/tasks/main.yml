@@ -12,6 +12,11 @@
     state: directory
     mode: '0644'
 
+- name: install python3-libselinux
+  yum:
+    name: python3-libselinux
+    state: present
+
 - name: Copy prepare.sh to hosts
   copy:
     src: prepare.sh
