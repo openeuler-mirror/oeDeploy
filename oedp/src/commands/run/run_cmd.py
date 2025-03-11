@@ -42,5 +42,8 @@ class RunCmd:
         except ConfigException as e:
             self.log.error(f'Failed to get project main info: {e}')
             return False
+        if 'tasks' not in action:
+            self.log.error(f'Failed to get tasks info: {action}')
+            return False
         tasks = action['tasks']
         return RunAction(self.project, self.action, tasks).run()

@@ -108,11 +108,11 @@ class MainReader:
         :return: 方法详情
         """
         if 'action' not in self.main:
-            return {}
+            raise ConfigException(f'No such action named {action}')
         if not isinstance(self.main['action'], dict):
-            return {}
+            raise ConfigException(f'No such action named {action}')
         if action not in self.main['action']:
-            return {}
+            raise ConfigException(f'No such action named {action}')
         if not isinstance(self.main['action'][action], dict):
             return {}
         return self.main['action'][action]
