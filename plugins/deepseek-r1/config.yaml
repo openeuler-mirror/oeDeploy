@@ -14,10 +14,10 @@ all:
     deepseek_version: 8b
     # ollama官方下载地址: https://ollama.com/download/ollama-linux-amd64.tgz  # amd64 or arm64
     ollama_download: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ollama-linux-amd64.tgz  # amd64 or arm64
-    ollama_download_path: /tmp     # 下载的目标路径
+    ollama_download_path: /root/tmp     # 下载的目标路径
     # 模型文件下载地址: https://www.modelscope.cn/models/unsloth/DeepSeek-R1-Distill-Llama-8B-GGUF/resolve/master/DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
     modelfile_download: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/DeepSeek-R1-Distill-Llama-8B-Q4_K_M.gguf
-    modelfile_download_path: /tmp  # 下载的目标路径
+    modelfile_download_path: /root/tmp  # 下载的目标路径
     # 模型参数
     parameter:
       temperature: 0.7

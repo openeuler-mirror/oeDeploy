@@ -32,6 +32,18 @@
             state: directory
             mode: '0755'
         
+        - name: Check architecture
+          set_fact:
+            arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+
+        - name: Validate ollama_file contains correct architecture
+          assert:
+            that:
+              - ollama_file is defined
+              - arch in ollama_file
+            success_msg: "Architecture validation passed (contains {{ arch }})"
+            fail_msg: "Critical error: ollama_file must contain {{ arch }} architecture identifier, current filename is {{ ollama_file }}"
+        
         - name: Copy download.sh to remote
           copy:
             src: download.sh
