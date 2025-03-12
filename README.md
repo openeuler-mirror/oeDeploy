@@ -55,19 +55,12 @@ oedp工具由以下三部分组成：
 
 ### 2.1 获取部署插件
 
-**以下功能暂未实现：**
-
-~~执行`install`命令以获取插件并初始化一个项目到家目录：~~
+执行以下命令，获取并解压插件包，确保当前目录下出现了目录`kubernetes-1.31.1/`。
 
 ```shell
-oedp init kubernetes-1.31.1 -p .
+wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins/kubernetes-1.31.1.tar.gz
+tar -zxvf kubernetes-1.31.1.tar.gz
 ```
-
-**当前暂时采用以下方案：**
-
-手动获取插件包`kubernetes-1.31.1.tar.gz`。
-
-将获取的插件包解压在当前目录下，确保当前目录下出现了目录`kubernetes-1.31.1/`。
 
 ### 2.2 查看插件详细信息
 

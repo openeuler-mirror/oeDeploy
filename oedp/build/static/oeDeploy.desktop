@@ -2,7 +2,7 @@
 Version=1.0.0
 Type=Application
 Name=oeDeploy
-Exec=xdg-open /root/oeDeploy.pdf
+Exec=xdg-open /usr/share/applications/oeDeploy.html
 Icon=/usr/share/applications/oeDeploy.png
 Comment=Tool suite for software deployment
 Terminal=false
