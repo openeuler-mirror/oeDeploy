@@ -37,9 +37,11 @@ install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir
 
 
 %postun
-# 删除可能会残留的目录
-rm -rf /var/oedp
-rm -rf /usr/lib/oedp
+if [ $1 -eq 0 ]; then
+    # 卸载时删除可能会残留的目录
+    rm -rf /var/oedp
+    rm -rf /usr/lib/oedp
+fi
 
 
 %files
@@ -53,6 +55,6 @@ rm -rf /usr/lib/oedp
 
 %attr(0600,root,root) %ghost %{_var}/oedp/log/oedp.log
 %attr(0500,root,root) %{_usr}/lib/oedp/src/*
-%attr(0600,root,root) %config %{_sysconfdir}/oedp/config/log.conf
+%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/oedp/config/log.conf
 %attr(0755,root,root) %{_usr}/share/applications/*
 %attr(0500,root,root) %{_bindir}/oedp
