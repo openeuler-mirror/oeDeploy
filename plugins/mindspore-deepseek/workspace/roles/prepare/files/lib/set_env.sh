@@ -21,9 +21,10 @@ export ASCEND_TOTAL_MEMORY_GB=64
 export HCCL_CONNECT_TIMEOUT=3600
 '
 
-RAY_ENV="
+NET_ENV="
 export GLOO_SOCKET_IFNAME=$RAY_DEVICE
 export TP_SOCKET_IFNAME=$RAY_DEVICE
+export HCCL_SOCKET_IFNAME=$RAY_DEVICE
 "
 
 if [ $NODE_NUM -eq 2 ]; then
@@ -40,7 +41,7 @@ if grep -q "openeuler_deepseek_env_config" /root/.bashrc; then
 fi
 
 echo "$ENV_ARG" >> $ENV_FILE
-echo "$RAY_ENV" >> $ENV_FILE
+echo "$NET_ENV" >> $ENV_FILE
 echo "$YAML_ENV" >> $ENV_FILE
 source $ENV_FILE
 

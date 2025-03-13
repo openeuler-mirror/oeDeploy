@@ -15,7 +15,7 @@ ray_start() {
         nohup ray start --address=$1:$RAY_PORT &
     else
         # 主节点
-        nohup ray start --head --port=$RAY_PORT &
+        nohup ray start --head --include-dashboard=False --port=$RAY_PORT &
         sleep 5
         for i in {1..10}; do
             ray status | grep '8.0 NPU'
