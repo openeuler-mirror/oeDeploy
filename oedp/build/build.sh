@@ -37,8 +37,8 @@ cd "${WORKSPACE_DIR}"
 [ ! -d "${STORAGE_DIR}" ] && mkdir "${STORAGE_DIR}"
 sub_dir=$(date +'%Y%m%d%H%M')
 mkdir "${STORAGE_DIR}/${sub_dir}"
-cp -f ~/rpmbuild/RPMS/$(arch)/*.rpm "${STORAGE_DIR}/${sub_dir}"
-rpm_name=$(ls ~/rpmbuild/RPMS/$(arch))
+find ~/rpmbuild/RPMS/ -type f -exec cp -f {} "${STORAGE_DIR}/${sub_dir}" \;
+rpm_name=$(ls "${STORAGE_DIR}/${sub_dir}")
 echo -e "\e[1;32m [INFO] RPM is stored in ${STORAGE_DIR}/${sub_dir}/${rpm_name} \e[0m"
 
 echo -e "\e[1;32m [INFO] Start to clean up environment \e[0m"
