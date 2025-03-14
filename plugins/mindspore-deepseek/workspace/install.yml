@@ -21,3 +21,11 @@
     - masters
   roles:
     - start/deepseek
+  any_errors_fatal: true
+  
+- hosts:
+    - masters
+    - workers
+  roles:
+    - post
+  any_errors_fatal: true
