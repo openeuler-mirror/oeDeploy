@@ -1,8 +1,16 @@
 - name: Install EulerCopilot
   hosts: all
   become: yes
+  vars:
+    timestamp: "{{ ansible_date_time.iso8601 }}"
 
   tasks:
+    - name: Create log directory
+      file:
+        path: "{{ log_dir }}/deploy-euler-copilot"
+        state: directory
+        mode: '0644'
+
     - name: Install python3-libselinux
       yum:
         name: python3-libselinux
@@ -24,4 +32,7 @@
         dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/8-install-EulerCopilot/install_eulercopilot.sh"
 
     - name: Execute one-click-deploy.sh
-      shell: sh {{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh
+      shell: >
+        sh {{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh
+        >"{{ log_dir }}/deploy-euler-copilot/{{ timestamp }}.out"
+        2>"{{ log_dir }}/deploy-euler-copilot/{{ timestamp }}.err"
