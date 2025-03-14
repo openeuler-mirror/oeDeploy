@@ -1,6 +1,0 @@
-- name: Set dir_path as a fact
-  set_fact:
-    dir_path: "/home/mindspore-deepseek"
-
-- name: Binding core on host
-  shell: python3 {{ dir_path }}/lib/even-iso.py
