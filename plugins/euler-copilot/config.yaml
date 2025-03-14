@@ -1,0 +1,23 @@
+all:
+  hosts:
+    host1:
+      ansible_host: HOST_IP1
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+  vars:
+    temp_dir: /tmp
+    eulercopilot_domain: "www.eulercopilot.local"
+    authhub_domain: "authhub.eulercopilot.local"
+
+    models:
+      answer:
+        url: http://localhost:11434
+        key: sk-123456
+        name: deepseek-llm-7b-chat:latest
+        ctx_length: 8192
+        max_tokens: 2048
+      embedding:
+        url: http://localhost:11434
+        key: sk-123456
+        name: bge-m3:latest
