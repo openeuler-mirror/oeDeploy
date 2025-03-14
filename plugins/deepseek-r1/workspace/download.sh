@@ -17,7 +17,7 @@ download_file_with_retry() {
 
   while [ $attempt -lt $retries ]; do
     echo "Attempt $(($attempt + 1)) to download $url..."
-    curl -C - --max-time "$timeout" -o "$dest" "$url"
+    curl -fL -C - --max-time "$timeout" -o "$dest" "$url"
     if [ $? -eq 0 ]; then
       return 0
     fi
@@ -43,7 +43,7 @@ fi
 if [ "$check" -eq 1 ]; then
   sha256sum_url="${download_url}.sha256sum"
   sha256sum_file="$store_path/${download_file}.sha256sum"
-  curl -s --max-time 60 -o "$sha256sum_file" "$sha256sum_url"
+  curl -sfL --max-time 60 -o "$sha256sum_file" "$sha256sum_url"
   if [ $? -ne 0 ]; then
     echo "Failed to download SHA256 checksum file."
     exit 1
