@@ -1,10 +1,12 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.0.0
+Version:            1.0.1
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
 Source0:            %{name}-%{version}.tar.gz
+
+BuildArch:  noarch
 
 Requires: python3, ansible, python3-prettytable
 
@@ -58,3 +60,17 @@ fi
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/oedp/config/log.conf
 %attr(0755,root,root) %{_usr}/share/applications/*
 %attr(0500,root,root) %{_bindir}/oedp
+
+
+%changelog
+* Wed Mar 12 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.1-1
+- Updated icon click effects on DevStation.
+- Added upgrade support for the oedp package.
+- Fixed exceptions caused by missing 'tasks' field.
+- Fixed other known issues.
+
+* Mon Mar 3 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.0-2
+- fix the issue of abnormal termination during the script execution phase after installation
+
+* Sat Feb 22 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.0-1
+- init package
