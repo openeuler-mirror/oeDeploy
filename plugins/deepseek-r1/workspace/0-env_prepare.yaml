@@ -1,0 +1,14 @@
+---
+- name: Install Ollama and run Deepseek
+  hosts: all
+
+  tasks:
+    - name: Ensure SELinux Python bindings are installed
+      yum:
+        name: python3-libselinux
+        state: present
+
+    - name: Ensure tar is installed
+      yum:
+        name: tar
+        state: present

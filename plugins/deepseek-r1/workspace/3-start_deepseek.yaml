@@ -1,0 +1,11 @@
+---
+- name: Install Ollama and run Deepseek
+  hosts: all
+
+  tasks:
+    - name: Create Deepseek
+      command: ollama create -f {{ modelfile_download_path }}/Modelfile deepseek-r1:{{ deepseek_version }}
+
+    - name: Print manual execution message after success
+      debug:
+        msg: "Please manually execute: ollama run deepseek-r1:{{ deepseek_version }}"

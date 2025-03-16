@@ -1,0 +1,79 @@
+---
+- name: Install Ollama and run Deepseek
+  hosts: all
+  vars:
+    modelfile_file: "{{ modelfile_download | basename }}"
+
+  tasks:
+    - name: Download modelfile
+      block:
+        - name: Ensure modelfile download path exists
+          file:
+            path: "{{ modelfile_download_path }}"
+            state: directory
+            mode: '0755'
+
+        - name: Copy download.sh to remote
+          copy:
+            src: download.sh
+            dest: "{{ modelfile_download_path }}/download.sh"
+            owner: root
+            group: root
+            mode: '0644'
+        
+        - name: Execute download.sh
+          shell: >
+            bash {{ modelfile_download_path }}/download.sh
+            {{ modelfile_download }}
+            {{ modelfile_download_path }}
+            {{ 1 if download_checksum else 0 }}
+            {{ download_timeout }}
+            {{ download_retry }}
+            >> {{ modelfile_download_path }}/download.log
+          ignore_errors: no
+          async: 0
+          register: download_result
+          failed_when: download_result.rc != 0
+
+      rescue:
+        - name: Print error message of downloading modelfile
+          debug:
+            msg: "Unable to download modelfile, parameter tuning will not take effect."
+
+        - name: Print manual execution message
+          debug:
+            msg: "Please manually execute: ollama run deepseek-r1:{{ deepseek_version }}"
+
+        - name: Mark playbook as successful
+          meta: end_play
+
+    - name: Copy Modelfile to destination
+      copy:
+        src: Modelfile
+        dest: "{{ modelfile_download_path }}/Modelfile"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Modify Modelfile parameters
+      lineinfile:
+        path: "{{ modelfile_download_path }}/Modelfile"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backrefs: yes
+      loop:
+        - { regexp: '^FROM .*$', line: 'FROM {{ modelfile_download_path }}/{{ modelfile_file }}' }
+        - { regexp: '^PARAMETER temperature .*$', line: 'PARAMETER temperature {{ parameter.temperature }}' }
+        - { regexp: '^PARAMETER top_p .*$', line: 'PARAMETER top_p {{ parameter.top_p }}' }
+        - { regexp: '^PARAMETER top_k .*$', line: 'PARAMETER top_k {{ parameter.top_k }}' }
+        - { regexp: '^PARAMETER num_ctx .*$', line: 'PARAMETER num_ctx {{ parameter.num_ctx }}' }
+        - { regexp: '^PARAMETER num_thread .*$', line: 'PARAMETER num_thread {{ parameter.num_thread }}' }
+        - { regexp: '^PARAMETER num_gpu .*$', line: 'PARAMETER num_gpu {{ parameter.num_gpu }}' }
+
+    - name: Verify Modelfile content
+      shell: cat "{{ modelfile_download_path }}/Modelfile"
+      register: modelfile_content
+
+    - name: Display modified Modelfile content
+      debug:
+        msg: "{{ modelfile_content.stdout }}"
