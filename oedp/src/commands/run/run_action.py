@@ -18,17 +18,19 @@ from src.utils.log.logger_generator import LoggerGenerator
 
 
 class RunAction:
-    def __init__(self, project: str, action: str, tasks: list):
+    def __init__(self, action: str, tasks: list, project: str, debug: bool):
         """
         执行指定项目的指定方法。
 
         :param project: 项目目录路径
         :param action: 方法名称
         :param tasks: 方法代码路径
+        :param debug: 是否启用调试模式
         """
-        self.project = project
         self.action = action
         self.tasks = tasks
+        self.project = project
+        self.debug = debug
         self.log = LoggerGenerator().get_logger('run_action')
 
     def run(self) -> bool:
@@ -55,14 +57,14 @@ class RunAction:
         return True
 
     def _run_playbook(self, task: dict, project: str) -> bool:
-        if 'disabled' in task and task['disabled'] == True:
-            self.log.info(f'Skipping task {task.get("name", "")}')
+        if self.debug and task.get('disabled_in_debug', False):
+            self.log.info(f'Skipping task "{task.get("name", "unamed task")}"')
             return True
         self.log.info(f'Running task {task.get("name", "")}')
         workspace = os.path.join(project, 'workspace')
         playbook = os.path.join(workspace, task['playbook'])
         if not os.path.exists(playbook):
-            self.log.error(f'Playbook {playbook} does not exist')
+            self.log.error(f'Playbook does not exist: {os.path.abspath(playbook)}')
             return False
         inventory = os.path.join(project, 'config.yaml')
         cmd = ['ansible-playbook', playbook, '-i', inventory]
@@ -75,12 +77,13 @@ class RunAction:
         if 'scope' in task and task['scope'] != 'all':
             cmd.extend(['--limit', task['scope']])
         self.log.debug(f'Executing cmd: {cmd}')
-        out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True)
-        if ret:
-            if err:
-                self.log.error(f'Execute cmd failed: {err}')
-            else:
-                self.log.error(f'Execute cmd failed')
+        try:
+            out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True)
+            if ret != 0:
+                self.log.error(f'Execute cmd failed [code:{ret}]:\nSTDOUT: {out}\nSTDERR: {err}')
+                return False
+        except Exception as e:
+            self.log.error(f'Exception occurred: {str(e)}')
             return False
-        self.log.info(f'Execute succeeded')
+        self.log.info(f'Execute succeeded: {task.get("name", "unamed task")}')
         return True

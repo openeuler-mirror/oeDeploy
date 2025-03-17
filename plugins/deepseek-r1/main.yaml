@@ -5,7 +5,19 @@ action:
   install:
     description: install DeepSeek-R1
     tasks:
-      - name: install DeepSeek-R1
-        playbook: install.yaml
+      - name: env prepare
+        playbook: 0-env_prepare.yaml
+        scope: all
+        disabled_in_debug: true
+      - name: install ollama
+        playbook: 1-install_ollama.yaml
+        scope: all
+        disabled_in_debug: true
+      - name: modify modelfile
+        playbook: 2-modify_modelfile.yaml
+        scope: all
+        disabled_in_debug: false
+      - name: start DeepSeek-R1
+        playbook: 3-start_deepseek.yaml
         scope: all
  

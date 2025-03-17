@@ -169,6 +169,11 @@ class OeDeployParser:
             default=os.getcwd(),
             help='Specify the project path'
         )
+        deploy_command.add_argument(
+            '-d', '--debug',
+            action='store_true',
+            help='Enable debug mode'
+        )
         deploy_command.set_defaults(func=self._run_run_command)
 
     def _add_check_command(self):
@@ -219,7 +224,8 @@ class OeDeployParser:
     def _run_run_command(args):
         action = args.action
         project = args.project
-        return RunCmd(action, project).run()
+        debug = args.debug
+        return RunCmd(action, project, debug).run()
 
     @staticmethod
     def _run_check_command(args):
