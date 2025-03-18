@@ -16,6 +16,19 @@
         name: python3-libselinux
         state: present
 
+    - name: Set environment variables
+      shell: echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /root/.bashrc && source /root/.bashrc
+
+    - name: Pip install requests and ruamel.yaml
+      pip:
+        name:
+          - requests
+          - ruamel.yaml
+        extra_args: >-
+          {% if pypi_index_url %}
+            -i {{ pypi_index_url }} --trusted-host {{ pypi_trusted_host }}
+          {% endif %}
+
     - name: Copy "deploy-euler-copilot" to hosts
       copy:
         src: deploy-euler-copilot

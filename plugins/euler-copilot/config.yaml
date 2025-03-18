@@ -11,6 +11,10 @@ all:
     eulercopilot_domain: "www.eulercopilot.local"
     authhub_domain: "authhub.eulercopilot.local"
 
+    install_ollama: "true"
+    deploy_deepseek: "true"
+    deploy_embedding: "true"
+
     models:
       answer:
         url: http://$host:11434
