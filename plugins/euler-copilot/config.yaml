@@ -8,6 +8,9 @@ all:
   vars:
     temp_dir: /tmp
     log_dir: /var/log
+    pypi_index_url: https://mirrors.huaweicloud.com/repository/pypi/simple
+    pypi_trusted_host: mirrors.huaweicloud.com
+
     eulercopilot_domain: "www.eulercopilot.local"
     authhub_domain: "authhub.eulercopilot.local"
 
