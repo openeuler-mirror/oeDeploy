@@ -188,7 +188,6 @@ start_deployment() {
             handle_tools_step $current_step
         elif [[ "$script_path" == "_conditional_eulercopilot_step" ]]; then
             handle_eulercopilot_step $current_step
-            sleep 60
         elif [[ "$script_path" == "../3-install-ollama/install_ollama.sh" && x"{{ install_ollama }}" != x"true" ]]; then
             echo "Step 3 is skipped"
         elif [[ "$script_path" == "../4-deploy-deepseek/deploy_deepseek.sh" && x"{{ deploy_deepseek }}" != x"true" ]]; then
