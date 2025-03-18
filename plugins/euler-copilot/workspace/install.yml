@@ -34,6 +34,11 @@
         src: deploy-euler-copilot
         dest: "{{ temp_dir }}"
 
+    - name: Copy one-click-deploy.sh to hosts
+      template:
+        src: templates/scripts/0-one-click-deploy/one-click-deploy.sh.j2
+        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh"
+
     - name: Copy install_authhub.sh to hosts
       template:
         src: templates/scripts/7-install-authhub/install_authhub.sh.j2
