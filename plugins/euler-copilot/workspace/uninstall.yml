@@ -1,0 +1,11 @@
+- name: Install EulerCopilot
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Uninstall all components
+      shell: |
+        sh {{ temp_dir }}/deploy-euler-copilot/scripts/deploy.sh
+        3
+        Y
+        ""
