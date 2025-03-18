@@ -47,6 +47,3 @@ class TestListCmd(unittest.TestCase):
         
         lc = ListCmd(self.test_dir.name)
         self.assertTrue(lc.run())
-
-if __name__ == '__main__':
-    unittest.main()
