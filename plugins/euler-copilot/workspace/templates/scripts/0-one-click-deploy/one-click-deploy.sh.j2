@@ -191,12 +191,18 @@ start_deployment() {
             sleep 60
         else
             if [[ "$script_path" == "../3-install-ollama/install_ollama.sh" && x"{{ install_ollama }}" != x"true" ]]; then
+                colorful_progress $current_step $total_steps
+                ((current_step++))
                 continue
             fi
             if [[ "$script_path" == "../4-deploy-deepseek/deploy_deepseek.sh" && x"{{ deploy_deepseek }}" != x"true" ]]; then
+                colorful_progress $current_step $total_steps
+                ((current_step++))
                 continue
             fi
             if [[ "$script_path" == "../5-deploy-embedding/deploy-embedding.sh" && x"{{ deploy_embedding }}" != x"true" ]]; then
+                colorful_progress $current_step $total_steps
+                ((current_step++))
                 continue
             fi
             if ! run_script_with_check "$script_path" "$script_name" $current_step $auto_input; then
