@@ -2,6 +2,12 @@
 
 ### 第一步：部署**InferenceService推理服务**
 
+执行如下命令安装KServe:
+
+```
+oedp run install-kserve -p ~/kubeflow-1.9.1/
+```
+
 执行命令，创建一个名为**sklearn-iris**的InferenceService推理服务。
 
 该推理服务将使用iris （鸢尾花）数据集训练的scikit-learn模型。

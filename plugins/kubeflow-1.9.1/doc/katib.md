@@ -1,9 +1,13 @@
 # 1. 安装katib
-a) 使用以下命令安装kubeflow及katib
+a) 使用以下命令安装kubeflow
 ```
 oedp run install -p ~/kubeflow-1.9.1/
 ```
-b) 测试katib是否安装成功，katib相关的pod状态正常
+b) 使用如下命令安装katib
+```
+oedp run install-katib -p kubeflow-1.9.1/
+```
+c) 测试katib是否安装成功，katib相关的pod状态正常
 ```
 [root@master2 ~]# kubectl get pod -n kubeflow | grep katib
 katib-controller-855cf4d89c-sg2gp                    1/1     Running   0              13h
@@ -12,7 +16,7 @@ katib-mysql-6fffd89b48-sh59s                         1/1     Running   1 (13h ag
 katib-ui-76745d6dd6-qnn84                            2/2     Running   0              13h
 [root@master2 ~]#
 ```
-c) 转发kubeflow接口
+d) 转发kubeflow接口
 ```
 kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80 --address 192.168.122.133
 ```
