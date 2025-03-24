@@ -11,7 +11,7 @@
 # Create: 2025-03-17
 # ======================================================================================================================
 
-
+#run as:PYTHONPATH=/home/xxx/openeuler_repos/oeDeploy/oedp coverage run -m pytest
 
 import unittest
 from unittest.mock import patch, MagicMock
@@ -63,5 +63,3 @@ class TestRunAction(unittest.TestCase):
         self.assertTrue(result)
         self.assertIn('Skipping task', log.output[0])
 
-if __name__ == '__main__':
-    unittest.main()
