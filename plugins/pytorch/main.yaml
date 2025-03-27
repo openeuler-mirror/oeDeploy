@@ -5,12 +5,18 @@ action:
   install:
     description: install pytorch
     tasks:
-      - name: install pytorch
-        playbook: install.yaml
-        scope: all
+    - name: install pytorch
+      playbook: install.yaml
+      scope: all
   uninstall:
     description: uninstall pytorch
     tasks:
     - name: uninstall pytorch
       playbook: uninstall.yaml
+      scope: all
+  train:
+    description: train cnn based on mnist on pytorch
+    tasks:
+    - name: train cnn based on mnist on pytorch
+      playbook: train.yaml
       scope: all

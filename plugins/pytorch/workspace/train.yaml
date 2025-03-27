@@ -1,0 +1,54 @@
+---
+- name: Execute PyTorch training script
+  hosts: all
+  vars:
+    script_name: "pytorch-ai-training.py"
+    script_with_vars_name: "pytorch-ai-training-with-vars.py"
+  tasks:
+    - name: Get running pod name
+      shell: |
+        kubectl get pods -n {{ namespace }} \
+          --field-selector=status.phase=Running \
+          -o jsonpath='{.items[0].metadata.name}'
+      register: pod_query
+      failed_when:
+        - pod_query.rc != 0
+        - "'No resources found' not in pod_query.stderr"
+
+    - name: Validate container existence
+      shell: |
+        kubectl get pod {{ pod_query.stdout }} -n {{ namespace }} \
+          -o jsonpath='{.spec.containers[*].name}' | grep -qw "http-container"
+      register: container_check
+      ignore_errors: yes
+
+    - name: Copy and render the python file with variables from config.yaml
+      template:
+        src: "{{ script_name }}"
+        dest: "{{ script_with_vars_name }}"
+        mode: '0744'
+
+    - name: Copy training script to pod
+      shell: |
+        kubectl cp "/root/pytorch/workspace/{{ script_with_vars_name }}" \
+          {{ namespace }}/{{ pod_query.stdout }}:/tmp/{{ script_with_vars_name }}
+      when:
+        - pod_query is succeeded
+        - container_check.rc == 0
+      register: copy_result
+      changed_when: "'tar' in copy_result.stdout"
+
+    - name: Execute training script
+      shell: |
+        kubectl exec -n {{ namespace }} {{ pod_query.stdout }} \
+          -c http-container -- \
+          python -u /tmp/{{ script_with_vars_name }}
+      args:
+        executable: /bin/bash
+      register: training_output
+      when: copy_result is succeeded
+      changed_when: false
+
+    - name: Display training output
+      debug:
+        msg: "{{ training_output.stdout_lines }}"
