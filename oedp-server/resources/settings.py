@@ -24,9 +24,12 @@ SECRET_KEY = RESOURCE_STRING
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-APPEND_SLASH = False
+APPEND_SLASH = True
 
 ALLOWED_HOSTS = ['*']
+
+# Setting the system user model
+AUTH_USER_MODEL = 'usermanager.User'
 
 # Application definition
 INSTALLED_APPS = [
@@ -37,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'taskmanager.apps.TaskmanagerConfig',
+    'usermanager.apps.UsermanagerConfig',
+    'plugins.apps.PluginsConfig',
 ]
 
 MIDDLEWARE = [

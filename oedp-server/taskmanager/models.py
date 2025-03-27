@@ -70,18 +70,25 @@ class TaskProcess(models.Model):
 
 
 class Node(models.Model):
-    name = models.CharField('节点名称', max_length=32)
     ip = models.CharField('IP 地址', max_length=18)
     port = models.IntegerField('端口')
     username = models.CharField('用户名', max_length=128)
     ciphertext_data = models.CharField('密码密文数据', max_length=512)
-    role = models.CharField('节点角色', max_length=32)
     arch = models.CharField('节点架构', max_length=32)
     os_type = models.CharField('操作系统', max_length=64)
-    task_id = models.IntegerField('任务 id')
     is_deleted = models.BooleanField('节点是否被删除', default=False)
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField('更新时间', auto_now=True)
 
     def __str__(self):
         return f"{self.ip}:{self.port}"
+
+
+class TaskNode(models.Model):
+    task_id = models.IntegerField('任务 ID')
+    node_id = models.IntegerField('节点 ID')
+    name = models.CharField('节点名称', max_length=32, help_text="相同节点在不同任务下可以拥有不同名称")
+    role = models.CharField('节点角色', max_length=32, help_text="相同节点在不同任务下可以拥有不同角色")
+    is_deleted = models.BooleanField('节点使用记录是否被删除', default=False)
+    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+    updated_at = models.DateTimeField('更新时间', auto_now=True)
