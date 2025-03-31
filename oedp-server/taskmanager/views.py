@@ -13,9 +13,10 @@
 # ======================================================================================================================
 
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from taskmanager.models import Task, Node
+from taskmanager.models import Task
 from taskmanager.serializers import (
     TaskSerializer,
     TaskSerializerForCreate,
@@ -40,45 +41,6 @@ class TaskViewSet(viewsets.GenericViewSet):
         if task_status:
             task_queryset = task_queryset.filter(status=task_status)
         return task_queryset
-
-    def list(self, request):
-        task_queryset = Task.objects.filter(is_deleted=False).filter(user_id=request.user.id)
-        tasks = self.paginate_queryset(self._filter_tasks(request, task_queryset))
-        serializer = TaskSerializer(
-            tasks,
-            context={'request': request},
-            many=True,
-        )
-        return self.get_paginated_response(serializer.data)
-
-    def create(self, request):
-        serializer = TaskSerializerForCreate(data=request.data, context={"request": request})
-        if not serializer.is_valid():
-            return Response({
-                'is_success': False,
-                'message': 'Please check input.',
-                'errors': serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
-        task = serializer.save()
-        return Response({
-            'is_success': True,
-            'message': 'Create task successfully.',
-            'data': TaskSerializer(task).data
-        }, status=status.HTTP_201_CREATED)
-
-    def destroy(self, request, pk):
-        task = Task.objects.get(id=pk)
-        task.is_deleted = True
-        task.save()
-        return Response({
-            'is_success': True,
-            'message': 'Delete task successfully.',
-            'data': TaskSerializer(task).data
-        }, status=status.HTTP_200_OK)
-
-
-class NodeViewSet(viewsets.GenericViewSet):
-    queryset = Node.objects.all()
 
     @staticmethod
     def _get_ssh_connector(validated_data):
@@ -116,7 +78,43 @@ class NodeViewSet(viewsets.GenericViewSet):
             os_type = std.strip()
         return arch, os_type
 
+    def list(self, request):
+        task_queryset = Task.objects.filter(is_deleted=False).filter(user_id=request.user.id)
+        tasks = self.paginate_queryset(self._filter_tasks(request, task_queryset))
+        serializer = TaskSerializer(
+            tasks,
+            context={'request': request},
+            many=True,
+        )
+        return self.get_paginated_response(serializer.data)
+
     def create(self, request):
+        serializer = TaskSerializerForCreate(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return Response({
+                'is_success': False,
+                'message': 'Please check input.',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        task = serializer.save()
+        return Response({
+            'is_success': True,
+            'message': 'Create task successfully.',
+            'data': TaskSerializer(task).data
+        }, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, pk):
+        task = Task.objects.get(id=pk)
+        task.is_deleted = True
+        task.save()
+        return Response({
+            'is_success': True,
+            'message': 'Delete task successfully.',
+            'data': TaskSerializer(task).data
+        }, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def add_node(self, request):
         serializer = NodeSerializerForCreate(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return Response({
@@ -131,6 +129,8 @@ class NodeViewSet(viewsets.GenericViewSet):
         else:
             node = serializer.save()
         data = NodeSerializer(node).data
+        data['name'] = serializer.validated_data.get('name')
+        data['role'] = serializer.validated_data.get('role')
         if not ssh_connector:
             return Response({
                 'is_success': False,

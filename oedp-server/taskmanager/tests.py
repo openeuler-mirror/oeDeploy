@@ -17,13 +17,12 @@ from unittest.mock import patch
 from rest_framework.test import APIClient
 
 from plugins.models import Plugin
-from taskmanager.models import Task, TaskPlugin, Node
+from taskmanager.models import Task, TaskPlugin, Node, TaskNode
 from utils.test.testcases import CustomTestCase
 
 
 class TaskTestCase(CustomTestCase):
     TASK_URL = "/v1.0/tasks/"
-    NODE_URL = "/v1.0/nodes/"
 
     def _create_a_task(self, name, user_id, task_status=None):
         if task_status is None:
@@ -33,7 +32,7 @@ class TaskTestCase(CustomTestCase):
     def _create_a_plugin(self, name):
         return Plugin.objects.create(name=name)
 
-    def _create_a_node(
+    def _add_a_node(
         self,
         name,
         task_id,
@@ -46,8 +45,8 @@ class TaskTestCase(CustomTestCase):
         if ciphertext_data is None:
             ciphertext_data = "{'half_key': '', 'encrypted_work_key': '', 'work_key_iv': '', " \
                               "'ciphertext': '', 'plaintext_iv': ''}"
-        return Node.objects.create(name=name, task_id=task_id, ip=ip, port=port, role=role, username=username,
-                                   ciphertext_data=ciphertext_data)
+        node = Node.objects.create(ip=ip, port=port, username=username, ciphertext_data=ciphertext_data)
+        TaskNode.objects.create(task_id=task_id, node_id=node.id, name=name, role=role)
 
     def _create_a_task_plugin_entry(self, task_id, plugin_id):
         return TaskPlugin.objects.create(task_id=task_id, plugin_id=plugin_id)
@@ -446,7 +445,7 @@ class TaskTestCase(CustomTestCase):
         期望结果：
             - HTTP 状态码 401
         """
-        response = self.anonymous_client.post(self.NODE_URL)
+        response = self.anonymous_client.post(self.TASK_URL + 'add_node/')
         self.assertEqual(response.status_code, 401)
 
     def test_node_creation_without_params(self):
@@ -487,7 +486,7 @@ class TaskTestCase(CustomTestCase):
             }
         }
 
-        response = self.admin_client.post(self.NODE_URL)
+        response = self.admin_client.post(self.TASK_URL + 'add_node/')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
@@ -520,7 +519,7 @@ class TaskTestCase(CustomTestCase):
             }
         }
 
-        response = self.admin_client.post(self.NODE_URL, request_data, format='json')
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
@@ -551,6 +550,140 @@ class TaskTestCase(CustomTestCase):
             }
         }
 
-        response = self.admin_client.post(self.NODE_URL, request_data, format='json')
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, except_data)
+
+    def test_node_creation_with_invalid_ip_port(self):
+        """
+        测试添加节点使用无效的 IP 和 端口
+        期望结果：
+            - HTTP 状态码 400
+            - except_data
+        """
+        task = self._create_a_task("Task-01", self.admin.id)
+        request_data = {
+            "name": "Node-01",
+            "task_id": task.id,
+            "ip": "192.168.266.6",
+            "port": "abc",
+            "role": "master",
+            "username": "root",
+            "root_password": "Test12#$",
+            "password": "Test12#$"
+        }
+        except_data = {
+            "is_success": False,
+            "message": "Please check input.",
+            "errors": {
+                "ip": [
+                    "Invalid IP."
+                ],
+                "port": [
+                    "A valid integer is required."
+                ]
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, except_data)
+
+        request_data = {
+            "name": "Node-01",
+            "task_id": task.id,
+            "ip": "192.168.122.6",
+            "port": 1000000,
+            "role": "master",
+            "username": "root",
+            "root_password": "Test12#$",
+            "password": "Test12#$"
+        }
+        except_data = {
+            "is_success": False,
+            "message": "Please check input.",
+            "errors": {
+                "port": [
+                    "Invalid port, the valid range for port numbers is 1 to 65535."
+                ]
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, except_data)
+
+    @patch("taskmanager.views.TaskViewSet._get_ssh_connector")
+    def test_node_creation_when_ssh_connection_fail(self, mock_get_ssh_connector):
+        """
+        测试添加节点信息后，无法建立 SSH 连接
+        期望结果：
+            - HTTP 状态码 400
+            - except_data
+        """
+        task = self._create_a_task("Task-01", self.admin.id)
+        mock_get_ssh_connector.return_value = None
+        request_data = {
+            "name": "Node-01",
+            "task_id": task.id,
+            "ip": "192.168.122.6",
+            "port": 22,
+            "role": "master",
+            "username": "root",
+            "root_password": "Test12#$",
+            "password": "Test12#$"
+        }
+        except_data = {
+            "is_success": False,
+            "message": "Please check input.",
+            "data": {
+                "id": 1,
+                "name": "Node-01",
+                "ip": "192.168.122.6",
+                "port": 22,
+                "role": "master",
+                "arch": "",
+                "os_type": "",
+            },
+            "errors": {"non_field_errors": ["Failed to establish SSH connection."]}
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, except_data)
+
+    @patch("taskmanager.views.TaskViewSet._get_arch_and_os_type")
+    @patch("taskmanager.views.TaskViewSet._get_ssh_connector")
+    def test_node_creation_success(self, mock_get_ssh_connector, mock_get_arch_and_os_type):
+        """
+        添加节点信息后，成功建立 SSH 连接
+        期望结果：
+            - HTTP 状态码 201
+            - except_data
+        """
+        task = self._create_a_task("Task-01", self.admin.id)
+        mock_get_ssh_connector.return_value = "mock_ssh_connector"
+        mock_get_arch_and_os_type.return_value = ("x86_64", "openEuler 22.03 (LTS-SP4)")
+        request_data = {
+            "name": "Node-01",
+            "task_id": task.id,
+            "ip": "192.168.122.6",
+            "port": 22,
+            "role": "master",
+            "username": "root",
+            "root_password": "Test12#$",
+            "password": "Test12#$"
+        }
+        except_data = {
+            "is_success": True,
+            "message": "Add node successfully.",
+            "data": {
+                "id": 1,
+                "name": "Node-01",
+                "ip": "192.168.122.6",
+                "port": 22,
+                "role": "master",
+                "arch": "x86_64",
+                "os_type": "openEuler 22.03 (LTS-SP4)",
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, except_data)
