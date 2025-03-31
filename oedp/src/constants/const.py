@@ -15,7 +15,7 @@
 import stat
 
 # oedp 版本信息
-VERSION = "1.0.1-1"
+VERSION = "1.0.2-1"
 
 OK = 0
 FAILED = 1
