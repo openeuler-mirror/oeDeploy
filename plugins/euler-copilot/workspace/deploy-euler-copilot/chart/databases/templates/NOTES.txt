@@ -1,3 +1,0 @@
-感谢您使用Euler Copilot！
-当前为Euler Copilot 0.9.4版本。
-当前Chart的功能为：数据库部署。
