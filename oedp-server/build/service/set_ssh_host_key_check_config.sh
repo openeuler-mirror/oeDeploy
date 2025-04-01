@@ -40,7 +40,7 @@ SSH_CONFIG_FILE="/etc/ssh/ssh_config"
     # 根据用户输入对ssh配置文件做修改
     if [ ! -w "${SSH_CONFIG_FILE}" ];then
        echo -e "\e[1;31m${SSH_CONFIG_FILE} can not write, modify fail.\e[0m"
-       return
+       exit 1
     fi
     if [ "${answer}" == "y" ];then
         sed -i 's/^StrictHostKeyChecking.*//' ${SSH_CONFIG_FILE}
