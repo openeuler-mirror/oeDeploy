@@ -1,6 +1,6 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.0.1
+Version:            1.0.2
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
@@ -47,22 +47,28 @@ fi
 
 
 %files
-%attr(0500,root,root) %dir %{_var}/oedp
-%attr(0700,root,root) %dir %{_var}/oedp/log
-%attr(0500,root,root) %dir %{_var}/oedp/plugin
-%attr(0500,root,root) %dir %{_var}/oedp/python
-%attr(0500,root,root) %dir %{_var}/oedp/python/venv
-%attr(0500,root,root) %dir %{_usr}/lib/oedp
-%attr(0700,root,root) %dir %{_sysconfdir}/oedp/config
+%attr(0555,root,root) %dir %{_var}/oedp
+%attr(0777,root,root) %dir %{_var}/oedp/log
+%attr(0555,root,root) %dir %{_var}/oedp/plugin
+%attr(0555,root,root) %dir %{_var}/oedp/python
+%attr(0555,root,root) %dir %{_var}/oedp/python/venv
+%attr(0555,root,root) %dir %{_usr}/lib/oedp
+%attr(0777,root,root) %dir %{_sysconfdir}/oedp/config
 
-%attr(0600,root,root) %ghost %{_var}/oedp/log/oedp.log
-%attr(0500,root,root) %{_usr}/lib/oedp/src/*
-%attr(0600,root,root) %config(noreplace) %{_sysconfdir}/oedp/config/log.conf
-%attr(0755,root,root) %{_usr}/share/applications/*
-%attr(0500,root,root) %{_bindir}/oedp
+%attr(0666,root,root) %ghost %{_var}/oedp/log/oedp.log
+%attr(0555,root,root) %{_usr}/lib/oedp/src/*
+%attr(0666,root,root) %config(noreplace) %{_sysconfdir}/oedp/config/log.conf
+%attr(0644,root,root) %{_usr}/share/applications/*
+%attr(0555,root,root) %{_bindir}/oedp
 
 
 %changelog
+* Mon Mar 31 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.2-1
+- Fix the issue where non-root users cannot execute
+
+* Thu Mar 20 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.1-2
+- Fix known issues
+
 * Wed Mar 12 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.1-1
 - Updated icon click effects on DevStation.
 - Added upgrade support for the oedp package.
