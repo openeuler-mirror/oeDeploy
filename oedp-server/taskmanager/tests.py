@@ -12,8 +12,10 @@
 # Create: 2025-01-14
 # ======================================================================================================================
 
+import unittest
 from unittest.mock import patch
 
+from rest_framework import serializers
 from rest_framework.test import APIClient
 
 from plugins.models import Plugin
@@ -23,6 +25,10 @@ from utils.test.testcases import CustomTestCase
 
 class TaskTestCase(CustomTestCase):
     TASK_URL = "/v1.0/tasks/"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        unittest.TestCase.maxDiff = None
 
     def _create_a_task(self, name, user_id, task_status=None):
         if task_status is None:
@@ -34,11 +40,11 @@ class TaskTestCase(CustomTestCase):
 
     def _add_a_node(
         self,
-        name,
+        node_name,
         task_id,
         ip="192.168.122.1",
         port=22,
-        role="master",
+        node_role="master",
         username="root",
         ciphertext_data=None
     ):
@@ -46,7 +52,9 @@ class TaskTestCase(CustomTestCase):
             ciphertext_data = "{'half_key': '', 'encrypted_work_key': '', 'work_key_iv': '', " \
                               "'ciphertext': '', 'plaintext_iv': ''}"
         node = Node.objects.create(ip=ip, port=port, username=username, ciphertext_data=ciphertext_data)
-        TaskNode.objects.create(task_id=task_id, node_id=node.id, name=name, role=role)
+        TaskNode.objects.create(
+            task_id=task_id, node_id=node.id, node_name=node_name, node_role=node_role
+        )
 
     def _create_a_task_plugin_entry(self, task_id, plugin_id):
         return TaskPlugin.objects.create(task_id=task_id, plugin_id=plugin_id)
@@ -439,7 +447,7 @@ class TaskTestCase(CustomTestCase):
         task.refresh_from_db()
         self.assertEqual(task.is_deleted, True)
 
-    def test_node_creation_when_anonymous(self):
+    def test_node_addition_when_anonymous(self):
         """
         测试匿名状态下添加节点
         期望结果：
@@ -448,7 +456,7 @@ class TaskTestCase(CustomTestCase):
         response = self.anonymous_client.post(self.TASK_URL + 'add_node/')
         self.assertEqual(response.status_code, 401)
 
-    def test_node_creation_without_params(self):
+    def test_node_addition_without_params(self):
         """
         测试登录状态但是未输入任何内容的情况下添加节点
         期望结果：
@@ -459,30 +467,18 @@ class TaskTestCase(CustomTestCase):
             "is_success": False,
             "message": "Please check input.",
             "errors": {
-                "name": [
-                    "This field is required."
-                ],
                 "task_id": [
                     "This field is required."
                 ],
-                "ip": [
+                "node_name": [
                     "This field is required."
                 ],
-                "port": [
+                "node_role": [
                     "This field is required."
                 ],
-                "role": [
+                "node": [
                     "This field is required."
                 ],
-                "username": [
-                    "This field is required."
-                ],
-                "root_password": [
-                    "This field is required."
-                ],
-                "password": [
-                    "This field is required."
-                ]
             }
         }
 
@@ -490,7 +486,7 @@ class TaskTestCase(CustomTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
-    def test_node_creation_with_duplicate_name(self):
+    def test_node_addition_with_duplicate_name(self):
         """
         测试添加节点使用重复的名称
         期望结果：
@@ -498,22 +494,24 @@ class TaskTestCase(CustomTestCase):
             - except_data
         """
         task = self._create_a_task("Task-01", self.admin.id)
-        self._create_a_node("Node-01", task.id)
+        self._add_a_node("Node-01", task.id)
         request_data = {
-            "name": "Node-01",
             "task_id": task.id,
-            "ip": "192.168.122.6",
-            "port": 22,
-            "role": "master",
-            "username": "root",
-            "root_password": "Test12#$",
-            "password": "Test12#$"
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
         }
         except_data = {
             "is_success": False,
             "message": "Please check input.",
             "errors": {
-                "name": [
+                "node_name": [
                     "The node name 'Node-01' already exists."
                 ]
             }
@@ -523,7 +521,7 @@ class TaskTestCase(CustomTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
-    def test_node_creation_with_not_exists_task_id(self):
+    def test_node_addition_with_not_exists_task_id(self):
         """
         测试添加节点使用不存在的任务 ID
         期望结果：
@@ -531,14 +529,16 @@ class TaskTestCase(CustomTestCase):
             - except_data
         """
         request_data = {
-            "name": "Node-01",
             "task_id": 1,
-            "ip": "192.168.122.6",
-            "port": 22,
-            "role": "master",
-            "username": "root",
-            "root_password": "Test12#$",
-            "password": "Test12#$"
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
         }
         except_data = {
             "is_success": False,
@@ -554,7 +554,7 @@ class TaskTestCase(CustomTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
-    def test_node_creation_with_invalid_ip_port(self):
+    def test_node_addition_with_invalid_ip_port(self):
         """
         测试添加节点使用无效的 IP 和 端口
         期望结果：
@@ -563,25 +563,29 @@ class TaskTestCase(CustomTestCase):
         """
         task = self._create_a_task("Task-01", self.admin.id)
         request_data = {
-            "name": "Node-01",
             "task_id": task.id,
-            "ip": "192.168.266.6",
-            "port": "abc",
-            "role": "master",
-            "username": "root",
-            "root_password": "Test12#$",
-            "password": "Test12#$"
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.266.6",
+                "port": "abc",
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
         }
         except_data = {
             "is_success": False,
             "message": "Please check input.",
             "errors": {
-                "ip": [
-                    "Invalid IP."
-                ],
-                "port": [
-                    "A valid integer is required."
-                ]
+                "node": {
+                    "ip": [
+                        "Invalid IP."
+                    ],
+                    "port": [
+                        "A valid integer is required."
+                    ]
+                }
             }
         }
         response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
@@ -589,69 +593,68 @@ class TaskTestCase(CustomTestCase):
         self.assertEqual(response.data, except_data)
 
         request_data = {
-            "name": "Node-01",
             "task_id": task.id,
-            "ip": "192.168.122.6",
-            "port": 1000000,
-            "role": "master",
-            "username": "root",
-            "root_password": "Test12#$",
-            "password": "Test12#$"
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 1000000,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
         }
         except_data = {
             "is_success": False,
             "message": "Please check input.",
             "errors": {
-                "port": [
-                    "Invalid port, the valid range for port numbers is 1 to 65535."
-                ]
+                "node": {
+                    "port": [
+                        "Invalid port, the valid range for port numbers is 1 to 65535."
+                    ]
+                }
             }
         }
         response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
-    @patch("taskmanager.views.TaskViewSet._get_ssh_connector")
-    def test_node_creation_when_ssh_connection_fail(self, mock_get_ssh_connector):
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_ssh_connection")
+    def test_node_addition_when_ssh_connection_fail(self, mock_get_ssh_connection):
         """
-        测试添加节点信息后，无法建立 SSH 连接
+        测试添加节点信息后，无法建立 SSH 连接，可能原因是 IP 端口不存在，用户名密码错误
         期望结果：
             - HTTP 状态码 400
             - except_data
         """
         task = self._create_a_task("Task-01", self.admin.id)
-        mock_get_ssh_connector.return_value = None
+        mock_get_ssh_connection.side_effect = serializers.ValidationError(
+            {"ssh_connection": ["Failed to establish SSH connection."]}
+        )
         request_data = {
-            "name": "Node-01",
             "task_id": task.id,
-            "ip": "192.168.122.6",
-            "port": 22,
-            "role": "master",
-            "username": "root",
-            "root_password": "Test12#$",
-            "password": "Test12#$"
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
         }
         except_data = {
             "is_success": False,
             "message": "Please check input.",
-            "data": {
-                "id": 1,
-                "name": "Node-01",
-                "ip": "192.168.122.6",
-                "port": 22,
-                "role": "master",
-                "arch": "",
-                "os_type": "",
-            },
-            "errors": {"non_field_errors": ["Failed to establish SSH connection."]}
+            "errors": {"ssh_connection": ["Failed to establish SSH connection."]}
         }
         response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, except_data)
 
-    @patch("taskmanager.views.TaskViewSet._get_arch_and_os_type")
-    @patch("taskmanager.views.TaskViewSet._get_ssh_connector")
-    def test_node_creation_success(self, mock_get_ssh_connector, mock_get_arch_and_os_type):
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_arch_and_os_type")
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_ssh_connection")
+    def test_node_addition_success(self, mock_get_ssh_connection, mock_get_arch_and_os_type):
         """
         添加节点信息后，成功建立 SSH 连接
         期望结果：
@@ -659,31 +662,199 @@ class TaskTestCase(CustomTestCase):
             - except_data
         """
         task = self._create_a_task("Task-01", self.admin.id)
-        mock_get_ssh_connector.return_value = "mock_ssh_connector"
+        mock_get_ssh_connection.return_value = "ssh_connection"
         mock_get_arch_and_os_type.return_value = ("x86_64", "openEuler 22.03 (LTS-SP4)")
         request_data = {
-            "name": "Node-01",
             "task_id": task.id,
-            "ip": "192.168.122.6",
-            "port": 22,
-            "role": "master",
-            "username": "root",
-            "root_password": "Test12#$",
-            "password": "Test12#$"
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
         }
         except_data = {
             "is_success": True,
-            "message": "Add node successfully.",
+            "message": "Add a node successfully.",
             "data": {
-                "id": 1,
-                "name": "Node-01",
-                "ip": "192.168.122.6",
-                "port": 22,
-                "role": "master",
-                "arch": "x86_64",
-                "os_type": "openEuler 22.03 (LTS-SP4)",
+                "task_id": task.id,
+                "node_id": 1,
+                "node_name": "Node-01",
+                "node_role": "master",
+                "node": {
+                    "ip": "192.168.122.6",
+                    "port": 22,
+                    "username": "root",
+                    "arch": "x86_64",
+                    "os_type": "openEuler 22.03 (LTS-SP4)",
+                }
             }
         }
         response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, except_data)
+
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_arch_and_os_type")
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_ssh_connection")
+    def test_add_same_node_under_diff_task_success(self, mock_get_ssh_connection, mock_get_arch_and_os_type):
+        """
+        测试不同的任务，成功添加同一个节点
+        """
+        task_01 = self._create_a_task("Task-01", self.admin.id)
+        task_02 = self._create_a_task("Task-02", self.admin.id)
+        mock_get_ssh_connection.return_value = "ssh_connection"
+        mock_get_arch_and_os_type.return_value = ("x86_64", "openEuler 22.03 (LTS-SP4)")
+        request_data = {
+            "task_id": task_01.id,
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
+        }
+        except_data = {
+            "is_success": True,
+            "message": "Add a node successfully.",
+            "data": {
+                "task_id": task_01.id,
+                "node_id": 1,
+                "node_name": "Node-01",
+                "node_role": "master",
+                "node": {
+                    "ip": "192.168.122.6",
+                    "port": 22,
+                    "username": "root",
+                    "arch": "x86_64",
+                    "os_type": "openEuler 22.03 (LTS-SP4)",
+                }
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, except_data)
+
+        request_data = {
+            "task_id": task_02.id,
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
+        }
+        except_data = {
+            "is_success": True,
+            "message": "Add a node successfully.",
+            "data": {
+                "task_id": task_02.id,
+                "node_id": 1,
+                "node_name": "Node-01",
+                "node_role": "master",
+                "node": {
+                    "ip": "192.168.122.6",
+                    "port": 22,
+                    "username": "root",
+                    "arch": "x86_64",
+                    "os_type": "openEuler 22.03 (LTS-SP4)",
+                }
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, except_data)
+
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_arch_and_os_type")
+    @patch("taskmanager.serializers.TaskNodeSerializer._get_ssh_connection")
+    def test_add_same_node_under_diff_task_success_02(self, mock_get_ssh_connection, mock_get_arch_and_os_type):
+        """
+        测试不同的任务添加同一个节点，但是在第二个任务添加节点时，该节点的密码、架构和操作系统类型都已发生变化
+        """
+        task_01 = self._create_a_task("Task-01", self.admin.id)
+        task_02 = self._create_a_task("Task-02", self.admin.id)
+        mock_get_ssh_connection.return_value = "ssh_connection"
+        mock_get_arch_and_os_type.return_value = ("x86_64", "openEuler 22.03 (LTS-SP4)")
+        request_data = {
+            "task_id": task_01.id,
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "Test12#$",
+                "password": "Test12#$"
+            }
+        }
+        except_data = {
+            "is_success": True,
+            "message": "Add a node successfully.",
+            "data": {
+                "task_id": task_01.id,
+                "node_id": 1,
+                "node_name": "Node-01",
+                "node_role": "master",
+                "node": {
+                    "ip": "192.168.122.6",
+                    "port": 22,
+                    "username": "root",
+                    "arch": "x86_64",
+                    "os_type": "openEuler 22.03 (LTS-SP4)",
+                }
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, except_data)
+        node = Node.objects.get(id=1)
+
+        mock_get_arch_and_os_type.return_value = ("aarch64", "openEuler 22.03 (LTS-SP3)")
+        request_data = {
+            "task_id": task_02.id,
+            "node_name": "Node-01",
+            "node_role": "master",
+            "node": {
+                "ip": "192.168.122.6",
+                "port": 22,
+                "username": "root",
+                "root_password": "NewTest12#$",
+                "password": "NewTest12#$"
+            }
+        }
+        except_data = {
+            "is_success": True,
+            "message": "Add a node successfully.",
+            "data": {
+                "task_id": task_02.id,
+                "node_id": 1,
+                "node_name": "Node-01",
+                "node_role": "master",
+                "node": {
+                    "ip": "192.168.122.6",
+                    "port": 22,
+                    "username": "root",
+                    "arch": "aarch64",
+                    "os_type": "openEuler 22.03 (LTS-SP3)",
+                }
+            }
+        }
+        response = self.admin_client.post(self.TASK_URL + 'add_node/', request_data, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, except_data)
+        node_ = Node.objects.get(id=1)
+
+        # 判断节点信息是否已更新
+        self.assertNotEqual(node.ciphertext_data, node_.ciphertext_data)
+        self.assertNotEqual(node.arch, node_.arch)
+        self.assertNotEqual(node.os_type, node_.os_type)
+        self.assertEqual(node_.arch, "aarch64")
+        self.assertEqual(node_.os_type, "openEuler 22.03 (LTS-SP3)")
