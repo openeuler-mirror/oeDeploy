@@ -206,8 +206,7 @@ done
 unset Y_N
 
 # 检查防火墙是否启动，如果启动则检查 3306 端口是否在防火墙白名单中，如果不存在则添加到白名单中
-status=$(systemctl status firewalld | grep -E "Active" | awk -F":" '{print $2}'| awk -F" " '{print $1}')
-if [[ "${status}" == "active" ]]; then
+if systemctl is-active --quiet firewalld; then
   port_3306=$(firewall-cmd --query-port=3306/tcp)
   if [[ "${port_3306}" == "no" ]]; then
     port_3306=$(firewall-cmd --zone=public --add-port=3306/tcp --permanent)
