@@ -1,0 +1,57 @@
+{
+    "login": [
+        {
+            "prompt": "[p/P]assword:",
+            "send": "PASSWORD",
+            "status": "In Progress",
+            "next": null
+        },
+        {
+            "prompt": "Are you sure you want to continue connecting",
+            "send": "yes\n",
+            "status": "In Progress",
+            "next": {
+                "prompt": "[p/P]assword:",
+                "send": "PASSWORD",
+                "status": "In Progress",
+                "next": null
+            }
+        },
+        {
+            "prompt": "Last login:",
+            "send": null,
+            "status": "Success",
+            "next": null
+        },
+        {
+            "prompt": "上一次登录：",
+            "send": null,
+            "status": "Success",
+            "next": null
+        },
+        {
+            "prompt": "[p/P]ermission denied",
+            "send": null,
+            "status": "Fail",
+            "next": null
+        },
+        {
+            "prompt": "ssh: connect to host",
+            "send": null,
+            "status": "Fail",
+            "next": null
+        },
+        {
+            "prompt": "Connection refused",
+            "send": null,
+            "status": "Fail",
+            "next": null
+        },
+        {
+            "prompt": "Host key verification failed",
+            "send": null,
+            "status": "Fail",
+            "next": null
+        }
+    ]
+}
