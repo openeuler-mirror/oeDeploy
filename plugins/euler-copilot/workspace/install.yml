@@ -1,0 +1,56 @@
+- name: Install EulerCopilot
+  hosts: all
+  become: yes
+  vars:
+    timestamp: "{{ ansible_date_time.iso8601 }}"
+
+  tasks:
+    - name: Create log directory
+      file:
+        path: "{{ log_dir }}/deploy-euler-copilot"
+        state: directory
+        mode: '0644'
+
+    - name: Install python3-libselinux
+      yum:
+        name: python3-libselinux
+        state: present
+
+    - name: Set environment variables
+      shell: echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /root/.bashrc && source /root/.bashrc
+
+    - name: Pip install requests and ruamel.yaml
+      pip:
+        name:
+          - requests
+          - ruamel.yaml
+        extra_args: >-
+          {% if pypi_index_url %}
+            -i {{ pypi_index_url }} --trusted-host {{ pypi_trusted_host }}
+          {% endif %}
+
+    - name: Copy "deploy-euler-copilot" to hosts
+      copy:
+        src: deploy-euler-copilot
+        dest: "{{ temp_dir }}"
+
+    - name: Copy one-click-deploy.sh to hosts
+      template:
+        src: templates/scripts/0-one-click-deploy/one-click-deploy.sh.j2
+        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh"
+
+    - name: Copy install_authhub.sh to hosts
+      template:
+        src: templates/scripts/7-install-authhub/install_authhub.sh.j2
+        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/7-install-authhub/install_authhub.sh"
+
+    - name: Copy install_eulercopilot.sh to hosts
+      template:
+        src: templates/scripts/8-install-EulerCopilot/install_eulercopilot.sh.j2
+        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/8-install-EulerCopilot/install_eulercopilot.sh"
+
+    - name: Execute one-click-deploy.sh
+      shell: >
+        sh {{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh
+        >"{{ log_dir }}/deploy-euler-copilot/{{ timestamp }}.out"
+        2>"{{ log_dir }}/deploy-euler-copilot/{{ timestamp }}.err"

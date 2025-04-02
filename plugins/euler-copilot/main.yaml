@@ -1,0 +1,15 @@
+name: euler-copilot
+description: one-click deployment of EulerCopilot
+action:
+  install:
+    description: install EulerCopilot
+    tasks:
+      - name: install EulerCopilot
+        playbook: install.yml
+        scope: all
+  uninstall:
+    description: uninstall EulerCopilot
+    tasks:
+      - name: uninstall EulerCopilot
+        playbook: uninstall.yml
+        scope: all

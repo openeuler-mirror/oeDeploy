@@ -1,0 +1,31 @@
+all:
+  hosts:
+    host1:
+      ansible_host: HOST_IP1
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+  vars:
+    temp_dir: /tmp
+    log_dir: /var/log
+    pypi_index_url: https://mirrors.huaweicloud.com/repository/pypi/simple
+    pypi_trusted_host: mirrors.huaweicloud.com
+
+    eulercopilot_domain: "www.eulercopilot.local"
+    authhub_domain: "authhub.eulercopilot.local"
+
+    install_ollama: "true"
+    deploy_deepseek: "true"
+    deploy_embedding: "true"
+
+    models:
+      answer:
+        url: http://$host:11434
+        key: sk-123456
+        name: deepseek-llm-7b-chat:latest
+        ctx_length: 8192
+        max_tokens: 2048
+      embedding:
+        url: http://$host:11434
+        key: sk-123456
+        name: bge-m3:latest
