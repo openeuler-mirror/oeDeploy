@@ -21,6 +21,7 @@ from plugins.serializers import PluginIDSerializer
 from taskmanager.models import Task, TaskPlugin, Node, TaskNode
 from usermanager.models import User
 from utils.cipher import OEDPCipher
+from utils.ssh.ssh_connector import SSHConnector, SSHEstablishError, SSHCmdTimeoutError
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -92,17 +93,12 @@ class TaskSerializerForCreate(serializers.ModelSerializer):
         return task
 
 
-class NodeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Node
-        fields = (
-            'id',
-            'ip',
-            'port',
-            'arch',
-            'os_type',
-        )
+class NodeSerializer(serializers.Serializer):
+    ip = serializers.CharField()
+    port = serializers.IntegerField()
+    username = serializers.CharField()
+    root_password = serializers.CharField()
+    password = serializers.CharField()
 
     def validate_ip(self, value):
         # 校验 IP 是否符合规范
@@ -118,64 +114,157 @@ class NodeSerializer(serializers.ModelSerializer):
         return value
 
 
-class NodeSerializerForCreate(NodeSerializer):
-    root_password = serializers.CharField()
-    password = serializers.CharField()
-    task_id = serializers.IntegerField()
-    name = serializers.CharField()
-    role = serializers.CharField()
+class TaskNodeSerializer(serializers.ModelSerializer):
+    node = serializers.SerializerMethodField()
 
     class Meta:
-        model = Node
+        model = TaskNode
         fields = (
             'task_id',
-            'name',
-            'ip',
-            'port',
-            'role',
-            'username',
-            'root_password',
-            'password',
+            'node_id',
+            'node_name',
+            'node_role',
+            'node'
         )
 
-    def validate(self, data):
-        node_name = data.get("name")
-        task_id = data.get('task_id')
-        user = self.context.get('request').user
+    @staticmethod
+    def _get_arch_and_os_type(ssh_connector):
+        arch = ""
+        os_type = ""
+        try:
+            std, return_code = ssh_connector.execute_cmd("arch")
+        except (SSHCmdTimeoutError, ValueError):
+            std = ""
+            return_code = 1
+        if not return_code:
+            arch = std.strip()
+        try:
+            std, return_code = ssh_connector.execute_cmd(
+                "cat /etc/os-release | grep PRETTY_NAME | cut -d'=' -f2 | tr -d '\"'")
+        except (SSHCmdTimeoutError, ValueError):
+            std = ""
+            return_code = 1
+        if not return_code:
+            os_type = std.strip()
+        return arch, os_type
+
+    @staticmethod
+    def _validate_task(task_id, user):
         # 校验指定 task_id 的任务是否存在
         try:
             task = Task.objects.get(id=task_id)
         except Task.DoesNotExist:
             raise serializers.ValidationError({'task_id': f'The task with ID {task_id} does not exist.'})
-        # 校验用户是否有可以在该任务下添加节点 (管理员用户和该任务的创建者可以操作)
+        # 校验用户是否有有权限操作该任务 (管理员用户和该任务的创建者可以操作)
         if user.role != User.Role.ADMIN and task.user_id != user.id:
             raise serializers.ValidationError(
-                f'The current user does not have permission to operate the task with ID {task_id}.')
+                {'user': f'The current user does not have permission to operate the task with ID {task_id}.'})
+
+    @staticmethod
+    def _validate_node_name(task_id, node_name):
         # 校验指定任务下是否已存在相同的节点名称
-        if TaskNode.objects.filter(name=node_name).filter(is_deleted=False).filter(task_id=task_id).exists():
-            raise serializers.ValidationError({"name": f"The node name '{node_name}' already exists."})
+        if TaskNode.objects.filter(node_name=node_name).filter(is_deleted=False).filter(task_id=task_id).exists():
+            raise serializers.ValidationError({"node_name": f"The node name '{node_name}' already exists."})
+
+    @staticmethod
+    def _encrypt(data):
+        node = data.get("node")
         # 对密码进行加密
-        if data.get("root_password") and data.get("password"):
-            password_dict = {
-                "root_password": data.pop("root_password"),
-                "password": data.pop("password")
-            }
-            oedp_cipher = OEDPCipher()
-            data['ciphertext_data'] = oedp_cipher.encrypt_plaintext(password_dict)
+        password_dict = {
+            "root_password": node.pop("root_password"),
+            "password": node.pop("password")
+        }
+        oedp_cipher = OEDPCipher()
+        node['ciphertext_data'] = oedp_cipher.encrypt_plaintext(password_dict)
+        del password_dict
         return data
 
+    @staticmethod
+    def _get_ssh_connection(node_dict):
+        try:
+            ssh_connector = SSHConnector(
+                ip=node_dict.get("ip"),
+                port=node_dict.get("port"),
+                username=node_dict.get("username"),
+                ciphertext_data=node_dict.get("ciphertext_data")
+            )
+        except SSHEstablishError as ex:
+            raise serializers.ValidationError(
+                {"ssh_connection": [f"Failed to establish SSH connection, Error: {ex}"]}
+            )
+        return ssh_connector
+
+    def _validate_ssh_connection(self, data):
+        node_dict = data.get("node")
+        ssh_connector = self._get_ssh_connection(node_dict)
+        arch, os_type = self._get_arch_and_os_type(ssh_connector)
+        node_dict["arch"] = arch
+        node_dict["os_type"] = os_type
+        return data
+
+    def get_node(self, obj):
+        node = Node.objects.get(id=obj.node_id)
+        return {
+            "ip": node.ip,
+            "port": node.port,
+            "username": node.username,
+            "arch": node.arch,
+            "os_type": node.os_type
+        }
+
+
+class TaskNodeSerializerForCreate(TaskNodeSerializer):
+    node = NodeSerializer()
+
+    class Meta:
+        model = TaskNode
+        fields = (
+            'task_id',
+            'node_name',
+            'node_role',
+            'node',
+        )
+
+    def validate(self, data):
+        task_id = data.get('task_id')
+        user = self.context.get('request').user
+        node_name = data.get("node_name")
+
+        self._validate_task(task_id, user)
+        self._validate_node_name(task_id, node_name)
+        data = self._encrypt(data)
+        return self._validate_ssh_connection(data)
+
     def create(self, validated_data):
-        ip = validated_data.get("ip")
-        port = validated_data.get("port")
-        username = validated_data.get("username")
-        task_id = validated_data.pop("task_id")
-        node_name = validated_data.pop("name")
-        role = validated_data.pop("role")
+        node_dict = validated_data.pop("node")
+        ip = node_dict.get("ip")
+        port = node_dict.get("port")
+        username = node_dict.get("username")
+        ciphertext_data = node_dict.get("ciphertext_data")
+        arch = node_dict.get("arch")
+        os_type = node_dict.get("os_type")
+        task_id = validated_data.get("task_id")
+        node_name = validated_data.get("node_name")
+        node_role = validated_data.get("node_role")
 
         nodes = Node.objects.filter(ip=ip).filter(port=port).filter(username=username)
         if not nodes:
-            node = Node.objects.create(**validated_data)
+            # 如果节点不存在，则创建节点
+            node = Node.objects.create(**node_dict)
         else:
+            # 如果节点存在，则判断密码密文，架构和操作系统信息是否不同，如果不同则更新
             node = nodes[0]
-        TaskNode.objects.create(task_id=task_id, node_id=node.id, name=node_name, role=role)
-        return node
+            is_save = False
+            if node.ciphertext_data != ciphertext_data:
+                node.ciphertext_data = ciphertext_data
+                is_save = True
+            if node.arch != arch:
+                node.arch = arch
+                is_save = True
+            if node.os_type != os_type:
+                node.os_type = os_type
+                is_save = True
+            if is_save:
+                node.save()
+        task_node = TaskNode.objects.create(task_id=task_id, node_id=node.id, node_name=node_name, node_role=node_role)
+        return task_node
