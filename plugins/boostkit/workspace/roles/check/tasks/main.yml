@@ -1,6 +1,6 @@
 - name: "[Check] Initialize check results"
   set_fact:
-    check_results: []
+    check_results: [ ]
     check_failed: "false"
 
 - name: "[CPU] Verify Kunpeng-920 processor"
@@ -16,11 +16,11 @@
     check_failed: "{{ check_failed or (cpu_implementer.stdout != '0x48') }}"
   tags: hardware_check
 
-- name: "[Network] Test connectivity to Baidu"
-  uri:
-    url: https://www.baidu.com
-    method: GET
-    timeout: 5
+- name: "[Network] Test connectivity to Baidu using curl"
+  command: >-
+    curl -sSf --connect-timeout 5
+    -w "HTTP %{http_code}" -o /dev/null
+    https://www.baidu.com
   register: network_test
   ignore_errors: yes
   changed_when: false
@@ -28,7 +28,9 @@
 
 - name: "[Network] Record network check result"
   set_fact:
-    check_results: "{{ check_results + ['Network test: ' + (network_test is failed | ternary('Failed', 'Success'))] }}"
+    check_results: >-
+      {{ check_results + ['Network test: ' + 
+      (network_test is failed | ternary('Failed', 'Success (' + network_test.stdout + ')'))] }}
     check_failed: "{{ check_failed or (network_test is failed) }}"
   tags: network_check
 
@@ -51,6 +53,7 @@
   set_fact:
     check_results: "{{ check_results + ['Pip repository: ' + (pip_validation is failed | ternary('Unavailable', 'Available'))] }}"
     check_failed: "{{ check_failed or (pip_validation is failed) }}"
+  when: pip_index_url is defined
   tags: python_check
 
 - name: "[Check] Display all check results"
