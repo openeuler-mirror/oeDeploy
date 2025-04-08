@@ -17,8 +17,9 @@
   tags: hardware_check
 
 - name: "[Network] Test connectivity to Baidu"
-  ping:
-    host: www.baidu.com
+  uri:
+    url: https://www.baidu.com
+    method: GET
     timeout: 5
   register: network_test
   ignore_errors: yes
