@@ -1,0 +1,5 @@
+- hosts: all
+- roles:
+    - check
+    - AccLib/prepare
+    - AccLib/install

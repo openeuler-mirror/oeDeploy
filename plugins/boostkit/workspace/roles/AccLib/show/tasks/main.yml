@@ -1,0 +1,11 @@
+- name: "[Script] Get info and display"
+  shell: |
+    python3 {{ temp_dir }}/install.py -i
+  register: info_output
+  changed_when: false
+  tags: get_info
+
+- name: "[Script] Display execution output"
+  debug:
+    msg: "{{ info_output.stdout_lines }}"
+  tags: get_info

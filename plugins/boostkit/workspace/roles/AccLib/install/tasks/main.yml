@@ -1,0 +1,7 @@
+- name: "[Script] Execute install script"
+  shell: |
+    python3 {{ temp_dir }}/install.py --component {{ item }}
+  changed_when: false
+  tags: install
+  loop: "{{ install_list | default([]) | list }}"
+  when: install_list is defined and install_list | length > 0

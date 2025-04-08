@@ -1,0 +1,5 @@
+- name: "[File] Transfer local file to remote host"
+  copy:
+    src: "BoostKit-AccLib"
+    dest: "{{ temp_dir }}"
+  tags: file_transfer
