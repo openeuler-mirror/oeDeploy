@@ -46,8 +46,8 @@
     - name: "[Python] Validate pip repository accessibility"
       pip:
         name: pip
-        index_url: "{{ pip_index_url | default('https://pypi.org/simple', true) }}"
         extra_args: >-
+          -i "{{ pip_index_url | default('https://pypi.org/simple', true) }}"
           --disable-pip-version-check
           --timeout 30
           --retries 2
