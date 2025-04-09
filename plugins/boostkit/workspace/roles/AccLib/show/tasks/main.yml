@@ -1,6 +1,8 @@
 - name: "[Script] Get info and display"
   shell: |
-    python3 {{ temp_dir }}/install.py -i
+    python3 install.py -i
+  args:
+    chdir: {{ temp_path }}/BoostKit-AccLib
   register: info_output
   changed_when: false
   tags: get_info

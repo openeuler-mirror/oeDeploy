@@ -162,8 +162,7 @@ class Installer(object):
             download = info.get("boost")
             bag = info.get("boost").split('/')[-1]
 
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/Hyperscan")
-            Runcmd.sendcmd(f"tar -zxf {bag}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
+            Runcmd.sendcmd(f"yum install -y boost boost-devel")
 
         with self.__process("安装pcre"):
             download = info.get("pcre")
