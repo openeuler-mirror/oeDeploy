@@ -16,6 +16,7 @@ all:
       vars:
         install_list: []
   vars:
+    skip_check: false
     pip_index_url: "https://mirrors.huaweicloud.com/repository/pypi/simple"
     temp_path: /tmp
     # 跳过 ssh 校验（如需禁用此功能，请注释以下配置项）
