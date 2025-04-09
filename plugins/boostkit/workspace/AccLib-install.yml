@@ -1,4 +1,5 @@
 - hosts: all
+  environments: "{{ proxy_env | default({}) }}"
   roles:
     - check
     - AccLib/prepare
