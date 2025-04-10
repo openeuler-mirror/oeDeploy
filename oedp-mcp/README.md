@@ -7,7 +7,7 @@ oeDeploy 目前提供了两个 MCP Server
 
 ## 1. 环境准备
 
-安装 python 依赖。为了更加直观，当前示例使用 `pip`安装到系统的 python 目录，实际上更加推荐 `uv`安装到虚拟环境。
+安装 python 依赖。为了更加直观，当前示例使用`pip`安装到系统的 python 目录，实际上更加推荐`uv`安装到虚拟环境。
 
 ````bash
 pip install pydantic mcp requests --trusted-host mirrors.huaweicloud.com -i https://mirrors.huaweicloud.com/repository/pypi/simple
@@ -25,11 +25,11 @@ wget https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plu
 
 ## 2. MCP 配置
 
-当前示例使用 VScode 开发平台，用 Remote ssh 连接到一个 openEuler24.03sp1 的 linux 环境。
+当前示例使用 VScode 开发平台，用 Remote ssh 连接到一个 openEuler24.03sp1 的 linux 环境，并以家目录`~`为项目路径。
 
-在插件 Roo Code中配置了 DeepSeek-V3 的API。
+在插件 Roo Code 中配置了 DeepSeek-V3 的API。
 
-打开 MCP 配置页面，编辑 MCP 配置文件 `mcp_settings.json`，在 `mcpServers`中新增如下内容：
+打开 MCP 配置页面，编辑 MCP 的项目配置文件`.roo/mcp.json`，修改如下：
 
 ````json
 {
@@ -40,7 +40,7 @@ wget https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plu
     "mcp-oedp": {
       "command": "python3",
       "args": [
-        "/root/.oedp/mcp/mcp-oedp.py"
+        ".oedp/mcp/mcp-oedp.py"  // 请根据实际情况调整路径
       ],
       "disabled": false,
       "alwaysAllow": []
@@ -48,7 +48,7 @@ wget https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plu
     "mcp-make-oedp-plugin": {
       "command": "python3",
       "args": [
-        "/root/.oedp/mcp/mcp-make-oedp-plugin.py"
+        ".oedp/mcp/mcp-make-oedp-plugin.py"  // 请根据实际情况调整路径
       ],
       "disabled": false,
       "alwaysAllow": []
@@ -57,7 +57,7 @@ wget https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plu
 }
 ````
 
-配置完成后，可以在 MCP 列表上看看到 `mcp-oedp`和 `mcp-make-oedp-plugin`，且状态正常。
+配置完成后，可以在 MCP 列表上看看到`mcp-oedp`和`mcp-make-oedp-plugin`，且状态正常。
 
 > 如果出现报错，请根据提示信息检查 python 组件依赖是否满足。
 

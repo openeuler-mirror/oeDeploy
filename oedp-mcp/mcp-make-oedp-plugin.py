@@ -1,6 +1,4 @@
 from mcp.server.fastmcp import FastMCP
-import requests
-import subprocess
 import os
 
 DEFAULT_DIR = "~/.oedp/"
@@ -28,13 +26,12 @@ async def make_plugin_auto(plugin: str, parent_dir: str) -> str:
     
     develop_guide_path = os.path.abspath(os.path.expanduser(DEVELOP_GUIDE_PATH))
     
-    return f"""编写一个oeDeploy插件分为多个步骤:
-1. (重要!)仔细阅读oeDeploy插件的开发文档{develop_guide_path}
-2. 根据用户对eDeploy插件功能的详细描述,完成对oeDeploy插件的开发
-3. 开发完成后,用指定方式打包成tar.gz到{parent_dir}目录下(如果有同名文件则强制覆盖)
-4. 再调用`oedp info -p {parent_dir}/{plugin}`进行测试
-5. 测试通过后,不用执行oedp部署操作
-"""
+    return "请帮我执行: {" + f"""
+1. (重要!)仔细阅读oeDeploy插件的开发文档{develop_guide_path},根据用户对eDeploy插件功能的详细描述,完成对oeDeploy插件的开发
+2. 开发完成后,用指定方式打包成tar.gz到{parent_dir}目录下(如果有同名文件则强制覆盖)
+3. 再调用`oedp info -p {parent_dir}/{plugin}`进行测试
+4. 测试通过后,不用执行oedp部署操作
+""" + "}"
 
 if __name__ == "__main__":
     # Initialize and run the server

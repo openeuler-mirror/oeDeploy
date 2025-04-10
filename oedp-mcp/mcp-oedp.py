@@ -8,7 +8,7 @@ DEFAULT_DIR = "~/.oedp/"
 # Initialize FastMCP server
 mcp = FastMCP("安装部署命令行工具oedp调用方法", log_level="ERROR")
 
-def validate_project_structure(project: str) -> str:
+def _validate_project_structure(project: str) -> str:
     """校验项目目录结构
     
     Args:
@@ -24,7 +24,7 @@ def validate_project_structure(project: str) -> str:
             return f"Missing required file/directory: {f}"
     return ""
 
-def check_oedp_installed() -> str:
+def _check_oedp_installed() -> str:
     """检查oedp是否安装
     
     Returns:
@@ -144,7 +144,7 @@ async def remove_oedp() -> str:
 
 @mcp.tool()
 async def oedp_init_plugin(plugin: str, parent_dir: str) -> str:
-    """获取已经存在的oeDeploy插件(又称oedp插件),并初始化到{parent_dir}目录
+    """获取已经存在的oeDeploy插件(又称oedp插件),并初始化
 
     Args:
         plugin: oeDeploy插件名称或.tar.gz文件路径/名称
@@ -217,7 +217,7 @@ async def oedp_init_plugin(plugin: str, parent_dir: str) -> str:
         except requests.exceptions.RequestException:
             # 所有获取方式都失败,检查现有目录
             if os.path.exists(plugin_dir):
-                validation_result = validate_project_structure(plugin_dir)
+                validation_result = _validate_project_structure(plugin_dir)
                 if not validation_result:
                     return "[Success] (Using existing valid plugin directory)"
                 return f"[Fail]Existing directory is invalid: {validation_result}"
@@ -227,21 +227,99 @@ async def oedp_init_plugin(plugin: str, parent_dir: str) -> str:
         return f"[Fail]Unexpected error: {str(e)}"
 
 @mcp.tool()
-async def oedp_setup_plugin(operation: str, project: str) -> str:
-    """配置oeDeploy插件(又称oedp插件): 根据operation, 修改oeDeploy插件的配置文件{project}/config.yaml
+async def oedp_info_plugin(project: str) -> str:
+    """查询oeDeploy插件(又称oedp插件)信息,仅在明确指定project路径时触发
 
     Args:
-        operation: 用户对oeDeploy插件config.yaml的修改说明(人类描述语言)
         project: oeDeploy插件的项目目录, 其中必定有config.yaml,main.yaml,workspace/
     """
     
     # 校验项目目录结构
     abs_project = os.path.abspath(os.path.expanduser(project))
-    validation_result = validate_project_structure(abs_project)
+    validation_result = _validate_project_structure(abs_project)
     if validation_result:
         return f"[Fail]{validation_result}"
     
-    return f"请根据用户的指令'{operation}', 修改{abs_project}/config.yaml"
+    # 检查oedp是否安装
+    oedp_check_result = _check_oedp_installed()
+    if oedp_check_result:
+        return f"[Fail]{oedp_check_result}"
+    
+    # 执行安装命令
+    try:
+        result = subprocess.run(
+            ["oedp", "info", "-p", abs_project],
+            capture_output=True,
+            text=True
+        )
+        
+        log_text = result.stdout + "\n" + result.stderr
+        
+        if result.returncode == 0:
+            return "[Success]" + "\n" + log_text
+        else:
+            return f"[Fail]Installation failed" + "\n" + log_text
+            
+    except subprocess.CalledProcessError as e:
+        return f"[Fail]Command execution failed: {str(e)}"
+    except Exception as e:
+        return f"[Fail]Unexpected error: {str(e)}"
+
+@mcp.tool()
+async def oedp_setup_plugin(operation: str, project: str) -> str:
+    """配置oeDeploy插件(又称oedp插件): 根据operation,修改oeDeploy插件的配置文件{project}/config.yaml
+
+    Args:
+        operation: 用户对oeDeploy插件config.yaml的修改说明(人类描述语言)
+        project: oeDeploy插件的项目目录,其中必定有config.yaml,main.yaml,workspace/
+    """
+    
+    # 校验项目目录结构
+    abs_project = os.path.abspath(os.path.expanduser(project))
+    validation_result = _validate_project_structure(abs_project)
+    if validation_result:
+        return f"[Fail]{validation_result}"
+    
+    return "请帮我执行: { " + f"修改{abs_project}/config.yaml.依据来自用户描述[{operation}]" + " }"
+
+@mcp.tool()
+async def oedp_run_action_plugin(action: str, project: str) -> str:
+    """运行oeDeploy插件(又称oedp插件)的特定操作action,仅在明确指定project路径时触发
+
+    Args:
+        action: oeDeploy插件的一个操作名称
+        project: oeDeploy插件的项目目录, 其中必定有config.yaml,main.yaml,workspace/
+    """
+    try:
+        # 校验项目目录结构
+        abs_project = os.path.abspath(os.path.expanduser(project))
+        validation_result = _validate_project_structure(abs_project)
+        if validation_result:
+            return f"[Fail]{validation_result}"
+        
+        # 检查oedp是否安装
+        oedp_check_result = _check_oedp_installed()
+        if oedp_check_result:
+            return f"[Fail]{oedp_check_result}"
+        
+        # 执行命令
+        result = subprocess.run(
+            ["oedp", "run", action, "-p", abs_project],
+            capture_output=True,
+            text=True
+        )
+        
+        log_text = result.stdout + "\n" + result.stderr
+        
+        if result.returncode == 0:
+            return "[Success]" + "\n" + log_text
+        else:
+            return f"[Fail]Execution failed" + "\n" + log_text
+            
+    except subprocess.CalledProcessError as e:
+        return f"[Fail]Command execution failed: {str(e)}"
+    except Exception as e:
+        return f"[Fail]Unexpected error: {str(e)}"
 
 @mcp.tool()
 async def oedp_run_install_plugin(project: str) -> str:
@@ -253,12 +331,12 @@ async def oedp_run_install_plugin(project: str) -> str:
     try:
         # 校验项目目录结构
         abs_project = os.path.abspath(os.path.expanduser(project))
-        validation_result = validate_project_structure(abs_project)
+        validation_result = _validate_project_structure(abs_project)
         if validation_result:
             return f"[Fail]{validation_result}"
         
         # 检查oedp是否安装
-        oedp_check_result = check_oedp_installed()
+        oedp_check_result = _check_oedp_installed()
         if oedp_check_result:
             return f"[Fail]{oedp_check_result}"
         
@@ -283,7 +361,7 @@ async def oedp_run_install_plugin(project: str) -> str:
 
 @mcp.tool()
 async def oedp_run_uninstall_plugin(project: str) -> str:
-    """运行oeDeploy插件(又称oedp插件)的卸载流程
+    """运行oeDeploy插件(又称oedp插件)的卸载流程,仅在明确指定project路径时触发
 
     Args:
         project: oeDeploy插件的项目目录, 其中必定有config.yaml,main.yaml,workspace/
@@ -291,12 +369,12 @@ async def oedp_run_uninstall_plugin(project: str) -> str:
     try:
         # 校验项目目录结构
         abs_project = os.path.abspath(os.path.expanduser(project))
-        validation_result = validate_project_structure(abs_project)
+        validation_result = _validate_project_structure(abs_project)
         if validation_result:
             return f"[Fail]{validation_result}"
         
         # 检查oedp是否安装
-        oedp_check_result = check_oedp_installed()
+        oedp_check_result = _check_oedp_installed()
         if oedp_check_result:
             return f"[Fail]{oedp_check_result}"
         
@@ -331,17 +409,17 @@ async def oedp_install_software_one_click(software: str, operation: str) -> str:
     """
     
     # 检查oedp是否安装
-    oedp_check_result = check_oedp_installed()
+    oedp_check_result = _check_oedp_installed()
     if oedp_check_result:
         return f"[Fail]{oedp_check_result}"
     
     parent_dir = os.path.abspath(os.path.expanduser(DEFAULT_DIR))
     
-    return f"""用oeDeploy一键执行特定软件的部署流程(install)分为多个步骤：
+    return "请帮我执行: {" + f"""
 1. 调用oedp_init_plugin方法,将指定的oeDeploy插件[{software}]初始化到{parent_dir}目录
 2. 调用oedp_setup_plugin方法,根据用户的指令[{operation}],修改oeDeploy插件的配置文件{parent_dir}/{software}/config.yaml
 3. 调用oedp_run_install_plugin方法,运行oeDeploy插件的安装部署流程 项目路径{parent_dir}/{software}
-"""
+""" + "}"
 
 if __name__ == "__main__":
     # Initialize and run the server
