@@ -10,6 +10,7 @@
     chdir: "{{ temp_path }}/BoostKit-AccLib/scripts"
   register: install_result
   changed_when: false
+  ignore_errors: true
   tags: install
 
 - name: Show execution result
