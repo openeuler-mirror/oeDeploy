@@ -91,7 +91,7 @@ class Installer(object):
         if libpath and value in libpath:
             return True
 
-        env_list = Runcmd.sendcmd(f"cat /etc/profile | grep {key}").split("\n")
+        env_list = Runcmd.sendcmd(f"cat /etc/profile | grep {key}", check=False).split("\n")
         for env in env_list:
             if value in env and not re.search("#.+export", env):
                 return True
@@ -159,10 +159,7 @@ class Installer(object):
             Runcmd.sendcmd(f"ragel -v")
 
         with self.__process("安装boost"):
-            download = info.get("boost")
-            bag = info.get("boost").split('/')[-1]
-
-            Runcmd.sendcmd(f"yum install -y boost boost-devel")
+            Runcmd.sendcmd("yum install -y boost boost-devel")
 
         with self.__process("安装pcre"):
             download = info.get("pcre")
@@ -176,14 +173,6 @@ class Installer(object):
             stdout = Runcmd.sendcmd("pkg-config --libs sqlite3")
             assert "-lsqlite3" in stdout, "安装sqlite失败"
             Runcmd.sendcmd("yum install -y cmake make gcc gcc-c++")
-
-        with self.__process("下载测试集"):
-            Runcmd.sendcmd("wget https://cdrdv2.intel.com/v1/dl/getContent/739375 --no-check-certificate",
-                           workspace=f"{self.__ROOT_PATH}/Hyperscan")
-            Runcmd.sendcmd("unzip 739375 && mv '[Hyperscan] hsbench-samples' hsbench-samples",
-                           workspace=f"{self.__ROOT_PATH}/Hyperscan")
-            Runcmd.sendcmd(f"cp ./2_suricata_rule_hs_9.txt {self.__ROOT_PATH}/Hyperscan/hsbench-samples/pcres",
-                           workspace=f"{self.__ROOT_PATH}/resources/hsbench-samples")
 
     def __install_hyperscan(self):
         self.__install_hyperscan_dep()
@@ -208,8 +197,7 @@ class Installer(object):
             else:
                 Runcmd.sendcmd(f"git clone {download} -b {branch}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
-            boost_path = Runcmd.sendcmd("ls | grep boost | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
-            boost_path = f"{self.__ROOT_PATH}/Hyperscan/{boost_path}"
+            boost_path = "/usr/include"
             Runcmd.sendcmd(f"ln -s {boost_path}/boost include/boost", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
 
             pcre_path = Runcmd.sendcmd("ls | grep pcre | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
@@ -427,33 +415,6 @@ class Installer(object):
             ksl_version = re.search("boostkit-ksl-(\d+.\d+.\d+)", res).group(1)
             assert check_version(ksl_version, "2.4.0"), "ksl版本过低，请指定2.4.0以上版本"
 
-        with self.__process("安装tcmalloc"):
-            Runcmd.sendcmd("yum install -y jemalloc-devel jemalloc")
-
-        with self.__process("编译安装tcmalloc"):
-            tcmalloc_info = self.__get_element_text("Tcmalloc")
-            download = tcmalloc_info.get("code")
-            branch = tcmalloc_info.get("branch")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd("rm -rf /opt/tcmalloc")
-            Runcmd.sendcmd(f"git clone {download} -b {branch} --depth=1",
-                           workspace=f"{self.__ROOT_PATH}/KQMalloc/resource")
-            Runcmd.sendcmd(
-                './autogen.sh && ./configure --prefix=/opt/tcmalloc CFLAGS=" -O3 -march=armv8.2-a " CXXFLAGS=" -O3 -march=armv8.2-a "',
-                workspace=f"{self.__ROOT_PATH}/KQMalloc/resource/{dir}")
-            Runcmd.sendcmd("make -j && make install", workspace=f"{self.__ROOT_PATH}/KQMalloc/resource/{dir}")
-
-        with self.__process("安装KQMalloc benchmark"):
-            Runcmd.sendcmd(f"cp -r ./* {self.__ROOT_PATH}/KQMalloc/resource",
-                           workspace=f"{self.__ROOT_PATH}/resources/benchmark")
-            if check_version(ksl_version, "2.5.0", "<"):
-                Runcmd.sendcmd("sed -i 's/-lkqmalloc/-lkqmallocmt/g' Makefile",
-                               workspace=f"{self.__ROOT_PATH}/KQMalloc/resource")
-
-            Runcmd.sendcmd("make", workspace=f"{self.__ROOT_PATH}/KQMalloc/resource")
-            Runcmd.sendcmd(f"mv ./bin_* {self.__ROOT_PATH}/KQMalloc", workspace=f"{self.__ROOT_PATH}/KQMalloc/resource")
-
     def __init_func_dict(self):
         self.__function_dict["Hyperscan"] = self.__install_hyperscan
         self.__function_dict["Libgcrypt"] = self.__install_libgcrypt
@@ -471,10 +432,10 @@ class Installer(object):
     def get_support(self):
         return ' '.join(self.__function_dict.keys())
 
-    def install(self, component):
+    def install(self, components):
         self.__check_env()
 
-        if "ALL" == component:
+        if "ALL" == components:
             for func in self.__function_dict.values():
                 try:
                     func()
@@ -483,11 +444,17 @@ class Installer(object):
                     if not args.ignore:
                         raise e
         else:
-            func = self.__function_dict.get(component)
-            if func:
-                func()
-            else:
-                raise "没有找到安装方法"
+            for component in components.split():
+                func = self.__function_dict.get(component)
+                if func:
+                    try:
+                        func()
+                    except Exception as e:
+                        print(e)
+                        if not args.ignore:
+                            raise e
+                else:
+                    raise f"没有找到安装方法, {component}"
 
 
 if __name__ == '__main__':
@@ -495,11 +462,13 @@ if __name__ == '__main__':
     supports = installer.get_support()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--component", type=str, help=f"support component eg. [{supports}], default ALL", default='ALL')
+    parser.add_argument("--component", type=str,
+                        help=f"support component eg. ALL | component | 'component1 component2...', default ALL",
+                        default='ALL')
     parser.add_argument("-q", '--quiet', action='store_true', help="print quiet")
     parser.add_argument('--ignore', action='store_true',
                         help="ignore error for each installing component while component is ALL")
-    parser.add_argument("-i", '--info', action='store_true')
+    parser.add_argument("-i", '--info', action='store_true', help="check supported components")
     args = parser.parse_args()
     quiet = args.quiet
     info_t = args.info

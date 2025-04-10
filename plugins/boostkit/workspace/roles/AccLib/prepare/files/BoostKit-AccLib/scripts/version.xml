@@ -13,9 +13,9 @@
         <branch>gperftools-2.16.90</branch>
     </Tcmalloc>
     <Hyperscan>
-        <ragel>http://www.colm.net/files/ragel/ragel-6.10.tar.gz</ragel>
+        <ragel>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ragel-6.10.tar.gz</ragel>
         <boost>https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz</boost>
-        <pcre>https://sourceforge.net/projects/pcre/files/pcre/8.43/pcre-8.43.tar.gz</pcre>
+        <pcre>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/pcre-8.43.tar.gz</pcre>
         <code_arm>https://gitee.com/kunpengcompute/hyperscan.git</code_arm>
         <branch_arm>v5.4.2.aarch64</branch_arm>
         <code_x86>https://github.com/intel/hyperscan.git</code_x86>
