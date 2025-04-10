@@ -5,19 +5,25 @@ all:
       ansible_port: 22
       ansible_user: root
       ansible_password: ""
-      # 按实际代理需要添加
+      # 按实际代理需要添加，如需全局使用代理请移动至 all:vars
       # proxy_env:
       #   http_proxy:
       #   https_proxy:
+    # 可在此添加更多主机
   children:
     AccLib:
       hosts:
         host1:
+        # 可在此包含更多主机
       vars:
-        install_list: []
+        install_list:
+          - 'ALL'
   vars:
+    # 跳过所有基本检查项
     skip_check: false
+    # pip 源地址，如不涉及 pip 安装可删除此项
     pip_index_url: "https://mirrors.huaweicloud.com/repository/pypi/simple"
+    # 临时文件存放目录
     temp_path: /tmp
-    # 跳过 ssh 校验（如需禁用此功能，请注释以下配置项）
+    # 跳过 ssh 校验，如需禁用此功能，请删除以下配置项
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

@@ -1,9 +1,27 @@
 - name: "[Script] Execute install script"
-  shell: |
-    python3 install.py --component {{ item }}
-  args:
-    chdir: "{{ temp_path }}/BoostKit-AccLib/scripts"
-  changed_when: false
-  tags: install
-  loop: "{{ install_list | default([]) | list }}"
+  block:
+    - name: Get timestamp
+      command: date +%Y%m%d%H%M%S
+      register: timestamp
+      changed_when: false
+
+    - name: Execute install script for {{ item }}
+      shell: |
+        python3 install.py --component {{ item }} > {{ temp_path }}/BoostKit-AccLib/scripts/{{ timestamp.stdout }}.log 2>&1
+      args:
+        chdir: "{{ temp_path }}/BoostKit-AccLib/scripts"
+      register: install_result
+      changed_when: false
+      tags: install
+
+    - name: Show execution result
+      debug:
+        msg: "Installation completed for {{ item }}. Log file: {{ temp_path }}/BoostKit-AccLib/scripts/{{ timestamp.stdout }}.log"
+      when: install_result is succeeded
+
+    - name: Fail if installation failed
+      fail:
+        msg: "Installation failed for {{ item }}. Check log file: {{ temp_path }}/BoostKit-AccLib/scripts/{{ timestamp.stdout }}.log"
+      when: install_result is failed
+  loop: "{{ install_list | default(['ALL'], true) | list }}"
   when: install_list is defined and install_list | length > 0

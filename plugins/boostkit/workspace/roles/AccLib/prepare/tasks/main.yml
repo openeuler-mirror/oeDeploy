@@ -4,6 +4,12 @@
     state: present
   tags: dependency
 
+- name: "[File] Ensure destination directory exists"
+  file:
+    path: "{{ temp_path }}"
+    state: directory
+  tags: file_transfer
+
 - name: "[File] Transfer local file to remote host"
   copy:
     src: "BoostKit-AccLib"
