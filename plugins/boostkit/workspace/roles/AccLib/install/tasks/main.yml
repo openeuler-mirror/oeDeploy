@@ -1,4 +1,4 @@
 - name: "[Script] Execute install script"
-  include_tasks: install_block.yml
+  include_tasks: execute_install.yml
   loop: "{{ install_list | default(['ALL'], true) | list }}"
   when: install_list is defined and install_list | length > 0
