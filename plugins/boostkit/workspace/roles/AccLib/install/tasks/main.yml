@@ -2,7 +2,7 @@
   shell: |
     python3 install.py --component {{ item }}
   args:
-    chdir: "{{ temp_path }}/scripts/BoostKit-AccLib"
+    chdir: "{{ temp_path }}/BoostKit-AccLib/scripts"
   changed_when: false
   tags: install
   loop: "{{ install_list | default([]) | list }}"

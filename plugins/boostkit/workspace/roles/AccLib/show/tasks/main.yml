@@ -2,7 +2,7 @@
   shell: |
     python3 install.py -i
   args:
-    chdir: "{{ temp_path }}/scripts/BoostKit-AccLib"
+    chdir: "{{ temp_path }}/BoostKit-AccLib/scripts"
   register: info_output
   changed_when: false
   tags: get_info
