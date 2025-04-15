@@ -292,8 +292,6 @@ class Installer(object):
 
             print("成功安装KAE, 已经添加必要环境变量, 执行source /etc/profile使能")
 
-        self.__install_compress_decompress_tools()
-
     def __install_libgcrypt_dep(self):
         with self.__process("安装libgcrypt相关依赖"):
             Runcmd.sendcmd("yum install -y texinfo transfig hwloc hwloc-devel autoconf automake")

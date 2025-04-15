@@ -8,10 +8,6 @@
         <version>2.5.0</version>
         <url>https://repo.oepkgs.net/openEuler/rpm/{}/extras/aarch64/Packages/b/boostkit-hmpp-{}-1.aarch64.rpm</url>
     </HMPP>
-    <Tcmalloc>
-        <code>https://github.com/gperftools/gperftools.git</code>
-        <branch>gperftools-2.16.90</branch>
-    </Tcmalloc>
     <Hyperscan>
         <ragel>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ragel-6.10.tar.gz</ragel>
         <boost>https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz</boost>
