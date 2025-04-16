@@ -22,3 +22,4 @@
   fail:
     msg: "Installation failed for {{ item }}. Check log file: {{ temp_path }}/BoostKit-AccLib/scripts/{{ timestamp.stdout }}.log"
   when: install_result is failed
+  changed_when: false

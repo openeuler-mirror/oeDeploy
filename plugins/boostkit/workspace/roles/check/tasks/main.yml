@@ -79,6 +79,7 @@
           {% endfor %}
           Please fix the issues and try again.
       when: check_failed
+      changed_when: false
   when: >
     skip_check is not defined or 
     (skip_check != true and skip_check | string != "true")
