@@ -69,7 +69,6 @@
       debug:
         msg: "{{ item }}"
       loop: "{{ check_results }}"
-      when: check_failed
 
     - name: "[Check] Abort if any check failed"
       fail:
