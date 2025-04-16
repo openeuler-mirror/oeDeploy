@@ -442,7 +442,7 @@ class Installer(object):
                     if not args.ignore:
                         raise e
         else:
-            for component in components.split():
+            for component in components.split(','):
                 func = self.__function_dict.get(component)
                 if func:
                     try:
