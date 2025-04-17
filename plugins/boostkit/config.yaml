@@ -5,10 +5,12 @@ all:
       ansible_port: 22
       ansible_user: root
       ansible_password: ""
-      # 按实际代理需要添加，如需全局使用代理请移动至 all:vars
-      # proxy_env:
-      #   http_proxy:
-      #   https_proxy:
+      # 按实际代理需要添加，添加时删除以下第一行和所需行的井号；如需全局使用代理请移动至 all:vars
+      #proxy_env:
+      #  http_proxy:
+      #  https_proxy:
+      #  ftp_proxy:
+      #  no_proxy:
     # 可在此添加更多主机
   children:
     AccLib:
