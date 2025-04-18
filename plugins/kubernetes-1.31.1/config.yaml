@@ -31,3 +31,4 @@ all:
     pod_cidr: 10.244.0.0/16                # pod ip 网段
     certs_expired: 3650                    # 证书过期时间
     has_deployed_containerd: "false"       # e.g. [ "true", "false" ]  是否已有 containerd
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

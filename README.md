@@ -9,7 +9,7 @@ oeDeploy 是一款轻量级的软件部署工具，旨在帮助开发者快速�
 
 # 下载/Download
 
-- [命令行工具 oedp (noarch)](https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.0.2-1.oe2503.noarch.rpm)
+- [命令行工具 oedp (noarch)](https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/)
 - [oeDeploy 部署插件](https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins/)
 
 # 文档/Docs
