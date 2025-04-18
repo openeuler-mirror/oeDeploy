@@ -1,0 +1,17 @@
+- name: "[Dependency] Install python3-libselinux"
+  yum:
+    name: python3-libselinux
+    state: present
+  tags: dependency
+
+- name: "[File] Ensure destination directory exists"
+  file:
+    path: "{{ temp_path }}"
+    state: directory
+  tags: file_transfer
+
+- name: "[File] Transfer local file to remote host"
+  copy:
+    src: "BoostKit-AccLib"
+    dest: "{{ temp_path }}"
+  tags: file_transfer

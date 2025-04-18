@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SoftWare>
+    <KSL>
+        <version>2.4.0</version>
+        <url>https://repo.oepkgs.net/openEuler/rpm/{}/extras/aarch64/Packages/b/boostkit-ksl-{}-1.aarch64.rpm</url>
+    </KSL>
+    <HMPP>
+        <version>2.5.0</version>
+        <url>https://repo.oepkgs.net/openEuler/rpm/{}/extras/aarch64/Packages/b/boostkit-hmpp-{}-1.aarch64.rpm</url>
+    </HMPP>
+    <Hyperscan>
+        <ragel>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ragel-6.10.tar.gz</ragel>
+        <boost>https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.gz</boost>
+        <pcre>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/pcre-8.43.tar.gz</pcre>
+        <code_arm>https://gitee.com/kunpengcompute/hyperscan.git</code_arm>
+        <branch_arm>v5.4.2.aarch64</branch_arm>
+        <code_x86>https://github.com/intel/hyperscan.git</code_x86>
+        <branch_x86>v5.4.2</branch_x86>
+    </Hyperscan>
+    <KAE>
+        <kae_code>https://gitee.com/kunpengcompute/KAE.git</kae_code>
+        <kae_code_tag>kae2</kae_code_tag>
+    </KAE>
+    <QAT>
+        <driver>https://downloadmirror.intel.com/843052/QAT20.L.1.2.30-00078.tar.gz</driver>
+        <code_engine>https://github.com/intel/QAT_Engine.git</code_engine>
+        <branch_engine>v1.8.1</branch_engine>
+        <code_zip>https://github.com/intel/QATzip.git</code_zip>
+        <branch_zip>v1.3.0</branch_zip>
+    </QAT>
+    <HCT>
+        <devkit>https://gitee.com/anolis/hygon-devkit.git</devkit>
+        <version>hct_2.1.0.20241030_release</version>
+    </HCT>
+</SoftWare>

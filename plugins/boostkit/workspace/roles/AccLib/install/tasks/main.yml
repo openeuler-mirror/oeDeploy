@@ -1,0 +1,3 @@
+- name: "[Script] Execute install script"
+  include_tasks: execute_install.yml
+  loop: "{{ (install_list if install_list is defined and (install_list is iterable and not install_list is string) else [install_list]) if install_list is defined and install_list | length > 0 else ['ALL'] }}"

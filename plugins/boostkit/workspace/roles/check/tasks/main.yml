@@ -1,0 +1,84 @@
+- name: "[Check] Skip all checks if skip_check is true"
+  debug:
+    msg: "Skipping all checks"
+  when: >
+    skip_check is defined and 
+    (skip_check == true or skip_check | string == "true")
+  tags: never
+
+- block:
+    - name: "[Check] Initialize check results"
+      set_fact:
+        check_results: [ ]
+        check_failed: "false"
+
+    - name: "[CPU] Verify Kunpeng-920 processor"
+      shell: |
+        grep -m1 "CPU implementer" /proc/cpuinfo | awk '{print $4}'
+      register: cpu_implementer
+      changed_when: false
+      tags: hardware_check
+
+    - name: "[CPU] Record CPU check result"
+      set_fact:
+        check_results: "{{ check_results + ['CPU implementer: ' + cpu_implementer.stdout] }}"
+        check_failed: "{{ check_failed or (cpu_implementer.stdout != '0x48') }}"
+      tags: hardware_check
+
+    - name: "[Network] Test connectivity to Baidu using curl"
+      command: >-
+        curl -sSf --connect-timeout 5
+        -w "HTTP %{http_code}" -o /dev/null
+        https://www.baidu.com
+      register: network_test
+      ignore_errors: yes
+      changed_when: false
+      tags: network_check
+
+    - name: "[Network] Record network check result"
+      set_fact:
+        check_results: >-
+          {{ check_results + ['Network test: ' + 
+          (network_test is failed | ternary('Failed', 'Success (' + network_test.stdout + ')'))] }}
+        check_failed: "{{ check_failed or (network_test is failed) }}"
+      tags: network_check
+
+    - name: "[Python] Validate pip repository accessibility"
+      pip:
+        name: pip
+        extra_args: >-
+          -i "{{ pip_index_url | default('https://pypi.org/simple', true) }}"
+          --disable-pip-version-check
+          --timeout 30
+          --retries 2
+        state: present
+      when: pip_index_url is defined
+      register: pip_validation
+      ignore_errors: yes
+      changed_when: false
+      tags: python_check
+
+    - name: "[Python] Record pip check result"
+      set_fact:
+        check_results: "{{ check_results + ['Pip repository: ' + (pip_validation is failed | ternary('Unavailable', 'Available'))] }}"
+        check_failed: "{{ check_failed or (pip_validation is failed) }}"
+      when: pip_index_url is defined
+      tags: python_check
+
+    - name: "[Check] Display all check results"
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ check_results }}"
+
+    - name: "[Check] Abort if any check failed"
+      fail:
+        msg: >-
+          Pre-deployment checks failed:
+          {% for result in check_results %}
+          - {{ result }}
+          {% endfor %}
+          Please fix the issues and try again.
+      when: check_failed
+  when: >
+    skip_check is not defined or 
+    (skip_check != true and skip_check | string != "true")
