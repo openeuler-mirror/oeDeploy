@@ -29,11 +29,12 @@ mkdir -p -m 700 %{buildroot}%{_var}/oedp/python
 mkdir -p -m 700 %{buildroot}%{_var}/oedp/python/venv
 mkdir -p -m 700 %{buildroot}%{_usr}/lib/oedp
 mkdir -p -m 700 %{buildroot}%{_usr}/share/applications
-mkdir -p -m 700 %{buildroot}%{_sysconfdir}/oedp/config
+mkdir -p -m 700 %{buildroot}%{_sysconfdir}/oedp/config/repo/cache
 mkdir -p %{buildroot}%{_bindir}
 
+touch %{buildroot}%{_var}/oedp/log/oedp.log
 cp -rdpf %{_builddir}/%{name}-%{version}/src %{buildroot}%{_usr}/lib/oedp
-mv %{buildroot}%{_usr}/lib/oedp/src/config/log.conf %{buildroot}%{_sysconfdir}/oedp/config
+mv %{buildroot}%{_usr}/lib/oedp/src/config/* %{buildroot}%{_sysconfdir}/oedp/config
 install -c -m 0400 %{_builddir}/%{name}-%{version}/static/* %{buildroot}%{_usr}/share/applications
 install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir}/oedp
 
@@ -41,6 +42,7 @@ install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir
 %postun
 if [ $1 -eq 0 ]; then
     # 卸载时删除可能会残留的目录
+    rm -rf /etc/oedp
     rm -rf /var/oedp
     rm -rf /usr/lib/oedp
 fi
@@ -49,15 +51,18 @@ fi
 %files
 %attr(0555,root,root) %dir %{_var}/oedp
 %attr(0777,root,root) %dir %{_var}/oedp/log
-%attr(0555,root,root) %dir %{_var}/oedp/plugin
+%attr(0777,root,root) %dir %{_var}/oedp/plugin
 %attr(0555,root,root) %dir %{_var}/oedp/python
 %attr(0555,root,root) %dir %{_var}/oedp/python/venv
 %attr(0555,root,root) %dir %{_usr}/lib/oedp
 %attr(0777,root,root) %dir %{_sysconfdir}/oedp/config
+%attr(0777,root,root) %dir %{_sysconfdir}/oedp/config/repo
+%attr(0777,root,root) %dir %{_sysconfdir}/oedp/config/repo/cache
 
-%attr(0666,root,root) %ghost %{_var}/oedp/log/oedp.log
+%attr(0666,root,root) %{_var}/oedp/log/oedp.log
 %attr(0555,root,root) %{_usr}/lib/oedp/src/*
 %attr(0666,root,root) %config(noreplace) %{_sysconfdir}/oedp/config/log.conf
+%attr(0666,root,root) %config(noreplace) %{_sysconfdir}/oedp/config/repo/repo.conf
 %attr(0644,root,root) %{_usr}/share/applications/*
 %attr(0555,root,root) %{_bindir}/oedp
 
