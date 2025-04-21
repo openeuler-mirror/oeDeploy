@@ -159,7 +159,11 @@ class Installer(object):
             Runcmd.sendcmd(f"ragel -v")
 
         with self.__process("安装boost"):
-            Runcmd.sendcmd("yum install -y boost boost-devel")
+            download = info.get("boost")
+            bag = info.get("boost").split('/')[-1]
+
+            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/Hyperscan")
+            Runcmd.sendcmd(f"tar -zxf {bag}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
         with self.__process("安装pcre"):
             download = info.get("pcre")
@@ -197,8 +201,8 @@ class Installer(object):
             else:
                 Runcmd.sendcmd(f"git clone {download} -b {branch}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
-            boost_path = "/usr/include"
-            Runcmd.sendcmd(f"ln -s {boost_path}/boost include/boost", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
+            boost_path = Runcmd.sendcmd("ls | grep boost | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
+            boost_path = f"{self.__ROOT_PATH}/Hyperscan/{boost_path}"
 
             pcre_path = Runcmd.sendcmd("ls | grep pcre | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             Runcmd.sendcmd(f"cp -rf ../{pcre_path} ./pcre", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
@@ -317,86 +321,6 @@ class Installer(object):
             if not self.__chech_env_in_profile("LD_LIBRARY_PATH", "/usr/local/lib"):
                 Runcmd.sendcmd("echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> /etc/profile")
 
-    def __install_qat_dep(self):
-        with self.__process("安装QAT依赖包"):
-            Runcmd.sendcmd("yum install -y systemd-devel pciutils libudev-devel readline-devel libxml2-devel "
-                           "boost-devel elfutils-libelf-devel python3 libnl3-devel kernel-devel-$(uname -r) "
-                           "gcc gcc-c++ yasm nasm zlib openssl-devel zlib-devel make")
-
-    def __install_qat(self):
-        self.__install_qat_dep()
-
-        Runcmd.sendcmd(f"rm -rf ./QAT", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir -p QAT/qat_driver", workspace=f"{self.__ROOT_PATH}")
-
-        info = self.__get_element_text("QAT")
-
-        with self.__process("安装部署QAT驱动"):
-            download = info.get("driver")
-            bag = download.split('/')[-1]
-            decompresser = "unzip" if "zip" in bag else "tar -xf"
-            qat_hw_root = f"{self.__ROOT_PATH}/QAT/qat_driver"
-
-            os.putenv("ICP_ROOT", qat_hw_root)
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-            Runcmd.sendcmd(f"{decompresser} {bag}", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-            Runcmd.sendcmd("./configure", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-            Runcmd.sendcmd("make && make install", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-
-            Runcmd.sendcmd("service qat_service status && service qat_service restart")
-
-        with self.__process("安装部署QAT引擎"):
-            download = info.get("code_engine")
-            branch = info.get("branch_engine")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd(f"git clone {download} -b {branch} --depth=1", workspace=f"{self.__ROOT_PATH}/QAT")
-            Runcmd.sendcmd(f"./autogen.sh && ./configure --with-qat_hw-dir={qat_hw_root}",
-                           workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-            Runcmd.sendcmd(f"make && make install", workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-
-        with self.__process("安装部署QATzip"):
-            download = info.get("code_zip")
-            branch = info.get("branch_zip")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd(f"git clone {download} -b {branch} --depth=1", workspace=f"{self.__ROOT_PATH}/QAT")
-            Runcmd.sendcmd(f"./autogen.sh && ./configure --with-ICP_ROOT={qat_hw_root}",
-                           workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-            Runcmd.sendcmd("make clean && make all install", workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-
-            res = Runcmd.sendcmd("ls /usr/local/lib")
-            assert "qatzip.so" in res, "没有找到qatzip动态库"
-
-        self.__install_compress_decompress_tools()
-
-    def __install_hct_dep(self):
-        with self.__process("安装HCT依赖"):
-            Runcmd.sendcmd(
-                "yum install -y numactl libuuid-devel kernel-`uname -r` kernel-devel-`uname -r` python3-unversioned-command")
-
-    def __install_hct(self):
-        self.__install_hct_dep()
-
-        info = self.__get_element_text("HCT")
-        Runcmd.sendcmd("rm -rf HCT", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir -p HCT/build", workspace=f"{self.__ROOT_PATH}")
-
-        with self.__process("安装HCT"):
-            download = info.get("devkit")
-            version = info.get("version")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd(f"git clone {download} -n --filter=blob:none", workspace=f"{self.__ROOT_PATH}/HCT")
-            Runcmd.sendcmd(f"git restore --staged hct/pkg/{version} && git restore hct/pkg/{version}",
-                           workspace=f"{self.__ROOT_PATH}/HCT/{dir}")
-            Runcmd.sendcmd(f"rpm -ivh --nodeps hct-*.rpm", workspace=f"{self.__ROOT_PATH}/HCT/{dir}/hct/pkg/{version}",
-                           check=False)
-            Runcmd.sendcmd(f"cp ./Makefile {self.__ROOT_PATH}/HCT/build",
-                           workspace=f"{self.__ROOT_PATH}/HCT/{dir}/hct/pkg/{version}")
-            Runcmd.sendcmd("make && make install", workspace=f"{self.__ROOT_PATH}/HCT/build")
-            Runcmd.sendcmd("modprobe hct && /opt/hygon/hct/hct/script/hctconfig start")
-
     def __install_kqmalloc_dep(self):
         with self.__process("安装kqmalloc编译依赖"):
             Runcmd.sendcmd("yum install -y autoconf gcc gcc-c++")
@@ -420,10 +344,6 @@ class Installer(object):
         if "Kunpeng" in res:
             self.__function_dict["KAE"] = self.__install_kae
             self.__function_dict["KQMalloc"] = self.__install_kqmalloc
-        elif "INTEL" in res:
-            self.__function_dict["QAT"] = self.__install_qat
-        elif "Hygon" in res:
-            self.__function_dict["HCT"] = self.__install_hct
         else:
             self.__function_dict["SOFT_COMPRESS"] = self.__install_compress_decompress_tools
 
@@ -442,7 +362,7 @@ class Installer(object):
                     if not args.ignore:
                         raise e
         else:
-            for component in components.split(','):
+            for component in components.split():
                 func = self.__function_dict.get(component)
                 if func:
                     try:
