@@ -1,6 +1,6 @@
-# oeDeploy 应用案例
 
-## 应用案例 1：kubernetes 一键部署
+
+# kubernetes 一键部署操作示例
 
 准备 3 个 2U4G 的虚拟机环境（三层网络互通），使用的 OS 版本为 openEuler 24.03 或 22.03 的任意版本，目标是部署由 1 个 master、2 个 worker 构成的 k8s 集群。
 
