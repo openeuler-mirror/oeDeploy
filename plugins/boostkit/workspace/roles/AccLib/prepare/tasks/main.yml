@@ -15,3 +15,9 @@
     src: "BoostKit-AccLib"
     dest: "{{ temp_path }}"
   tags: file_transfer
+
+- name: "[File] Copy version.xml to remote host"
+  template:
+    src: "version.xml.j2"
+    dest: "{{ temp_path }}/Boostkit-AccLib/scripts/version.xml"
+  tags: file_transfer

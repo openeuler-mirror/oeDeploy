@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <SoftWare>
     <KSL>
-        <version>2.4.0</version>
-        <url>https://repo.oepkgs.net/openEuler/rpm/{}/extras/aarch64/Packages/b/boostkit-ksl-{}-1.aarch64.rpm</url>
+        <version>2.5.0</version>
+        <url>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boostkit-ksl-{}-1.aarch64.rpm</url>
     </KSL>
     <HMPP>
         <version>2.5.0</version>
-        <url>https://repo.oepkgs.net/openEuler/rpm/{}/extras/aarch64/Packages/b/boostkit-hmpp-{}-1.aarch64.rpm</url>
+        <url>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boostkit-hmpp-{}-1.aarch64.rpm</url>
     </HMPP>
     <Hyperscan>
         <ragel>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ragel-6.10.tar.gz</ragel>
@@ -14,8 +14,6 @@
         <pcre>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/pcre-8.43.tar.gz</pcre>
         <code_arm>https://gitee.com/kunpengcompute/hyperscan.git</code_arm>
         <branch_arm>v5.4.2.aarch64</branch_arm>
-        <code_x86>https://github.com/intel/hyperscan.git</code_x86>
-        <branch_x86>v5.4.2</branch_x86>
     </Hyperscan>
     <KAE>
         <kae_code>https://gitee.com/kunpengcompute/KAE.git</kae_code>
