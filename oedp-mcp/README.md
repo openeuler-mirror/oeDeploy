@@ -17,10 +17,10 @@ pip install pydantic mcp requests --trusted-host mirrors.huaweicloud.com -i http
 
 ```bash
 mkdir -p ~/.oedp/mcp/
-cd ~/.oedp/mcp/
-wget https://gitee.com/openeuler/oeDeploy/blob/master/doc/DevelopGuide.md
-wget https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-oedp.py
-wget https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plugin.py
+git clone https://gitee.com/openeuler/oeDeploy.git
+cp oeDeploy/doc/DevelopGuide.md ~/.oedp/mcp/
+cp oeDeploy/oedp-mcp/mcp-oedp.py ~/.oedp/mcp/
+cp oeDeploy/oedp-mcp/mcp-make-oedp-plugin.py ~/.oedp/mcp/
 ```
 
 ## 2. MCP 配置

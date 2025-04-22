@@ -1,12 +1,68 @@
 from mcp.server.fastmcp import FastMCP
-import requests
 import subprocess
 import os
 
+# 全局配置
 DEFAULT_DIR = "~/.oedp/"
+DOWNLOAD_TIMEOUT = 300  # 默认超时时间(秒)
+DOWNLOAD_RETRIES = 60    # 默认重试次数
 
 # Initialize FastMCP server
 mcp = FastMCP("安装部署命令行工具oedp调用方法", log_level="ERROR")
+
+async def _download_file(url: str, save_path: str, timeout: int = None, max_retries: int = None) -> str:
+    """下载文件并支持断点续传
+    
+    Args:
+        url: 下载URL
+        save_path: 文件保存路径
+        timeout: 超时时间(秒)，默认使用全局配置
+        max_retries: 最大重试次数，默认使用全局配置
+        
+    Returns:
+        str: 成功返回"[Success]"，失败返回错误信息
+    """
+    timeout = timeout or DOWNLOAD_TIMEOUT
+    max_retries = max_retries or DOWNLOAD_RETRIES
+    temp_path = save_path + ".download"
+    
+    # 构建curl命令
+    curl_cmd = [
+        "curl",
+        "-fL",  # 失败时不显示HTML错误页面，跟随重定向
+        "-C", "-",  # 自动断点续传
+        "--max-time", str(timeout),  # 设置超时时间
+        "--retry", str(max_retries),  # 设置重试次数
+        "--retry-delay", "2",  # 设置重试间隔(秒)
+        "--output", temp_path,  # 输出到临时文件
+        url
+    ]
+    
+    for attempt in range(max_retries):
+        try:
+            # 执行curl命令
+            result = subprocess.run(
+                curl_cmd,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                # 下载完成后重命名临时文件
+                os.rename(temp_path, save_path)
+                return "[Success]"
+            else:
+                if attempt == max_retries - 1:
+                    return f"[Fail]Download failed after {max_retries} attempts: {result.stderr}"
+                
+        except subprocess.CalledProcessError as e:
+            if attempt == max_retries - 1:
+                return f"[Fail]Download failed after {max_retries} attempts: {str(e)}"
+        except Exception as e:
+            if attempt == max_retries - 1:
+                return f"[Fail]Download failed after {max_retries} attempts: {str(e)}"
+    
+    return f"[Fail]Download failed after {max_retries} attempts"
 
 def _validate_project_structure(project: str) -> str:
     """校验项目目录结构
@@ -64,10 +120,6 @@ async def _extract_plugin(tar_path: str, parent_dir: str) -> str:
             text=True
         )
         
-        # 清理临时文件
-        if os.path.abspath(tar_path).startswith("/tmp/"):
-            os.remove(tar_path)
-        
         if result.returncode == 0:
             return "[Success]"
         return f"[Fail]Extraction failed: {result.stderr}"
@@ -85,19 +137,15 @@ async def install_oedp() -> str:
     """
     try:
         # 构建下载URL
-        url = "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.0.2-1.oe2503.noarch.rpm"
+        url = "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/"
         package_name = "oedp-1.0.2-1.oe2503.noarch.rpm"
-        
-        # 下载RPM包
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        
-        # 保存到临时文件
         temp_file = os.path.abspath(f"/tmp/{package_name}")
-        with open(temp_file, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-                
+        
+        # 使用新的下载函数
+        download_result = await _download_file(url + package_name, temp_file)
+        if download_result != "[Success]":
+            return download_result
+            
         # 安装RPM包
         result = subprocess.run(
             ["sudo", "yum", "install", "-y", temp_file],
@@ -113,8 +161,6 @@ async def install_oedp() -> str:
         else:
             return f"[Fail]Installation failed: {result.stderr}"
             
-    except requests.exceptions.RequestException as e:
-        return f"[Fail]Download failed: {str(e)}"
     except subprocess.CalledProcessError as e:
         return f"[Fail]Yum command failed: {str(e)}"
     except Exception as e:
@@ -144,7 +190,7 @@ async def remove_oedp() -> str:
 
 @mcp.tool()
 async def oedp_init_plugin(plugin: str, parent_dir: str) -> str:
-    """获取已经存在的oeDeploy插件(又称oedp插件),并初始化
+    """获取的oeDeploy插件(又称oedp插件),并初始化
 
     Args:
         plugin: oeDeploy插件名称或.tar.gz文件路径/名称
@@ -177,20 +223,15 @@ async def oedp_init_plugin(plugin: str, parent_dir: str) -> str:
                 return await _extract_plugin(local_path, parent_dir)
             
             # 尝试从网络下载
-            try:
-                base_url = "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins"
-                url = f"{base_url}/{plugin}"
-                response = requests.get(url, stream=True)
-                response.raise_for_status()
+            base_url = "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins"
+            url = f"{base_url}/{plugin}"
+            download_path = os.path.join(parent_dir, plugin)
+            
+            download_result = await _download_file(url, download_path)
+            if download_result != "[Success]":
+                return download_result
                 
-                temp_path = os.path.abspath(f"/tmp/{plugin}")
-                with open(temp_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                
-                return await _extract_plugin(temp_path, parent_dir)
-            except requests.exceptions.RequestException as e:
-                return f"[Fail]Download failed: {str(e)}"
+            return await _extract_plugin(download_path, parent_dir)
         
         # 情况3：plugin是插件名称
         plugin_dir = os.path.join(parent_dir, plugin)
@@ -202,26 +243,21 @@ async def oedp_init_plugin(plugin: str, parent_dir: str) -> str:
             return await _extract_plugin(local_package, parent_dir)
         
         # 尝试从网络下载
-        try:
-            base_url = "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins"
-            url = f"{base_url}/{package_name}"
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            
-            temp_path = os.path.abspath(f"/tmp/{package_name}")
-            with open(temp_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            
-            return await _extract_plugin(temp_path, parent_dir)
-        except requests.exceptions.RequestException:
+        base_url = "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins"
+        url = f"{base_url}/{package_name}"
+        download_path = os.path.join(parent_dir, package_name)
+        
+        download_result = await _download_file(url, download_path)
+        if download_result != "[Success]":
             # 所有获取方式都失败,检查现有目录
             if os.path.exists(plugin_dir):
                 validation_result = _validate_project_structure(plugin_dir)
                 if not validation_result:
                     return "[Success] (Using existing valid plugin directory)"
                 return f"[Fail]Existing directory is invalid: {validation_result}"
-            return f"[Fail]Failed to get plugin package and no existing directory"
+            return download_result
+            
+        return await _extract_plugin(download_path, parent_dir)
         
     except Exception as e:
         return f"[Fail]Unexpected error: {str(e)}"
@@ -280,7 +316,7 @@ async def oedp_setup_plugin(operation: str, project: str) -> str:
     if validation_result:
         return f"[Fail]{validation_result}"
     
-    return "请帮我执行: { " + f"修改{abs_project}/config.yaml.依据来自用户描述[{operation}]" + " }"
+    return "请帮我执行: { " + f"阅读{abs_project}/config.yaml并检查参数是否正确,如果不正确请修改" + " }"
 
 @mcp.tool()
 async def oedp_run_action_plugin(action: str, project: str) -> str:
@@ -302,22 +338,8 @@ async def oedp_run_action_plugin(action: str, project: str) -> str:
         if oedp_check_result:
             return f"[Fail]{oedp_check_result}"
         
-        # 执行命令
-        result = subprocess.run(
-            ["oedp", "run", action, "-p", abs_project],
-            capture_output=True,
-            text=True
-        )
-        
-        log_text = result.stdout + "\n" + result.stderr
-        
-        if result.returncode == 0:
-            return "[Success]" + "\n" + log_text
-        else:
-            return f"[Fail]Execution failed" + "\n" + log_text
-            
-    except subprocess.CalledProcessError as e:
-        return f"[Fail]Command execution failed: {str(e)}"
+        return "请帮我执行命令行: { " + f"oedp run {action} -p {abs_project}" + " }"
+
     except Exception as e:
         return f"[Fail]Unexpected error: {str(e)}"
 
@@ -340,22 +362,8 @@ async def oedp_run_install_plugin(project: str) -> str:
         if oedp_check_result:
             return f"[Fail]{oedp_check_result}"
         
-        # 执行安装命令
-        result = subprocess.run(
-            ["oedp", "run", "install", "-p", abs_project],
-            capture_output=True,
-            text=True
-        )
-        
-        log_text = result.stdout + "\n" + result.stderr
-        
-        if result.returncode == 0:
-            return "[Success]" + "\n" + log_text
-        else:
-            return f"[Fail]Installation failed" + "\n" + log_text
-            
-    except subprocess.CalledProcessError as e:
-        return f"[Fail]Command execution failed: {str(e)}"
+        return "请帮我执行命令行: { " + f"oedp run install -p {abs_project}" + " }"
+
     except Exception as e:
         return f"[Fail]Unexpected error: {str(e)}"
 
@@ -378,22 +386,8 @@ async def oedp_run_uninstall_plugin(project: str) -> str:
         if oedp_check_result:
             return f"[Fail]{oedp_check_result}"
         
-        # 执行安装命令
-        result = subprocess.run(
-            ["oedp", "run", "uninstall", "-p", abs_project],
-            capture_output=True,
-            text=True
-        )
-        
-        log_text = result.stdout + "\n" + result.stderr
-        
-        if result.returncode == 0:
-            return "[Success]" + "\n" + log_text
-        else:
-            return f"[Fail]Uninstallation failed" + "\n" + log_text
-            
-    except subprocess.CalledProcessError as e:
-        return f"[Fail]Command execution failed: {str(e)}"
+        return "请帮我执行命令行: { " + f"oedp run uninstall -p {abs_project}" + " }"
+
     except Exception as e:
         return f"[Fail]Unexpected error: {str(e)}"
 
@@ -417,7 +411,7 @@ async def oedp_install_software_one_click(software: str, operation: str) -> str:
     
     return "请帮我执行: {" + f"""
 1. 调用oedp_init_plugin方法,将指定的oeDeploy插件[{software}]初始化到{parent_dir}目录
-2. 调用oedp_setup_plugin方法,根据用户的指令[{operation}],修改oeDeploy插件的配置文件{parent_dir}/{software}/config.yaml
+2. 根据用户的指令[{operation}],阅读{parent_dir}/{software}/config.yaml并检查参数是否正确,如果不正确请修改
 3. 调用oedp_run_install_plugin方法,运行oeDeploy插件的安装部署流程 项目路径{parent_dir}/{software}
 """ + "}"
 
