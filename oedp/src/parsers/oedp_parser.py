@@ -20,6 +20,7 @@ from src.commands.info.info_cmd import InfoCmd
 from src.commands.init.init_cmd import InitCmd
 from src.commands.list.list_cmd import ListCmd
 from src.commands.run.run_cmd import RunCmd
+from src.commands.repo.repo_cmd import RepoCmd
 from src.constants.const import VERSION
 from src.constants.paths import PLUGIN_DIR
 
@@ -50,6 +51,7 @@ class OeDeployParser:
         self._add_info_command()
         self._add_run_command()
         self._add_check_command()
+        self._add_repo_command()
 
     def execute(self):
         """
@@ -202,6 +204,92 @@ class OeDeployParser:
         )
         check_command.set_defaults(func=self._run_check_command)
 
+    def _add_repo_command(self):
+        """
+        oedp repo <subcommand> [<args>]
+
+        插件源管理
+        """
+        repo_command = self.subparsers.add_parser(
+            'repo',
+            prog='oedp repo',
+            help='Manage plugin repositories',
+            usage='%(prog)s <subcommand> [<args>]'
+        )
+        subparsers = repo_command.add_subparsers(
+            dest='subcommand',
+            title='Available subcommands',
+            required=True,
+            metavar='<subcommand>'
+        )
+
+        # repo list
+        list_parser = subparsers.add_parser(
+            'list',
+            help='List all configured repositories'
+        )
+        list_parser.set_defaults(func=self._run_repo_command)
+
+        # repo update
+        update_parser = subparsers.add_parser(
+            'update',
+            help='Update repository index cache'
+        )
+        update_parser.set_defaults(func=self._run_repo_command)
+
+        # repo set
+        set_parser = subparsers.add_parser(
+            'set',
+            help='Modify repository URL'
+        )
+        set_parser.add_argument(
+            'name',
+            type=str,
+            help='Repository name'
+        )
+        set_parser.add_argument(
+            'url',
+            type=str,
+            help='New repository URL'
+        )
+        set_parser.set_defaults(func=self._run_repo_command)
+
+        # repo del
+        del_parser = subparsers.add_parser(
+            'del',
+            help='Delete a repository'
+        )
+        del_parser.add_argument(
+            'name',
+            type=str,
+            help='Repository name to delete'
+        )
+        del_parser.set_defaults(func=self._run_repo_command)
+
+        # repo enable
+        enable_parser = subparsers.add_parser(
+            'enable',
+            help='Enable a repository'
+        )
+        enable_parser.add_argument(
+            'name',
+            type=str,
+            help='Repository name to enable'
+        )
+        enable_parser.set_defaults(func=self._run_repo_command)
+
+        # repo disable
+        disable_parser = subparsers.add_parser(
+            'disable',
+            help='Disable a repository'
+        )
+        disable_parser.add_argument(
+            'name',
+            type=str,
+            help='Repository name to disable'
+        )
+        disable_parser.set_defaults(func=self._run_repo_command)
+
     @staticmethod
     def _run_init_command(args):
         plugin = args.plugin
@@ -232,6 +320,10 @@ class OeDeployParser:
         project = args.project
         group = args.group
         return CheckCmd(project, group).run()
+
+    @staticmethod
+    def _run_repo_command(args):
+        return RepoCmd(args).run()
 
     @staticmethod
     def _get_version():

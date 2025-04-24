@@ -55,7 +55,6 @@ class LoggerGenerator:
     def _add_file_handler(self, logger):
         log_dir = os.path.dirname(LOG_CONFIG_OBJ.log_file_path)
         os.makedirs(log_dir, mode=DIR_MODE, exist_ok=True)
-        self._change_file_mode_for_writing()
         file_handler = logging.handlers.RotatingFileHandler(
             filename=LOG_CONFIG_OBJ.log_file_path,
             maxBytes=LOG_CONFIG_OBJ.file_max_size,
@@ -65,11 +64,3 @@ class LoggerGenerator:
         file_formatter = logging.Formatter(LOG_CONFIG_OBJ.file_log_format)
         file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
-
-    def _change_file_mode_for_writing(self):
-        if LOG_CONFIG_OBJ.log_file_path:
-            if not os.path.exists(LOG_CONFIG_OBJ.log_file_path):
-                os.fdopen(
-                    os.open(LOG_CONFIG_OBJ.log_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, LOG_MODE_WRITING),
-                    'w').close()
-            os.chmod(LOG_CONFIG_OBJ.log_file_path, LOG_MODE_WRITING)

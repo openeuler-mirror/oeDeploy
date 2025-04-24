@@ -46,7 +46,13 @@ LOG_DIR = join(OEDP_HOME, "log")
 
 # oedp 配置家目录
 OEDP_CONFIG_HOME_DIR = "/etc/oedp"
-# 配置文件目录
+# /etc/oedp/config 配置文件目录
 OEDP_CONFIG_DIR = join(OEDP_CONFIG_HOME_DIR, "config")
-# 日志配置文件所在目录
+# /etc/oedp/config/log 日志配置文件所在目录
 LOG_CONFIG_DIR = join(OEDP_CONFIG_DIR, "log")
+# /etc/oedp/config/repo 插件源相关配置所在目录
+REPO_CONFIG_DIR = join(OEDP_CONFIG_DIR, "repo")
+# /etc/oedp/config/repo/repo.conf 插件源配置文件
+REPO_CONFIG_PATH = join(REPO_CONFIG_DIR, "repo.conf")
+# /etc/oedp/config/repo/cache 插件源索引缓存目录
+REPO_CACHE_DIR = join(REPO_CONFIG_DIR, "cache")
