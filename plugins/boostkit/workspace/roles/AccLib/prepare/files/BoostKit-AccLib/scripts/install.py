@@ -130,9 +130,8 @@ class Installer(object):
             res = Runcmd.sendcmd("cat /etc/os-release")
             name = re.search("NAME=\"(.+)\"", res).group(1)
             assert name == "openEuler", "仅支持在openEuler上安装"
-            os_version = re.search("VERSION=\"(.+)\"", res).group(1).replace(' ', '').replace(')', '').replace('(', '-')
             pkg_version = ksl_info.get("version")
-            url = ksl_info.get('url').format(f"{name}-{os_version}", pkg_version)
+            url = ksl_info.get('url').format(pkg_version)
 
             Runcmd.sendcmd(f"wget {url} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/KSL/rpm")
             Runcmd.sendcmd("rpm -e boostkit-ksl", check=False)
@@ -203,6 +202,7 @@ class Installer(object):
 
             boost_path = Runcmd.sendcmd("ls | grep boost | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             boost_path = f"{self.__ROOT_PATH}/Hyperscan/{boost_path}"
+            Runcmd.sendcmd(f"ln -s {boost_path}/boost include/boost", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
 
             pcre_path = Runcmd.sendcmd("ls | grep pcre | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             Runcmd.sendcmd(f"cp -rf ../{pcre_path} ./pcre", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
