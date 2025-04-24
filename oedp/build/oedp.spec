@@ -8,7 +8,7 @@ Source0:            %{name}-%{version}.tar.gz
 
 BuildArch:  noarch
 
-Requires: python3, ansible, python3-prettytable
+Requires: python3, ansible, python3-prettytable, tar
 
 %description
 openEuler deploy tool
@@ -29,12 +29,13 @@ mkdir -p -m 700 %{buildroot}%{_var}/oedp/python
 mkdir -p -m 700 %{buildroot}%{_var}/oedp/python/venv
 mkdir -p -m 700 %{buildroot}%{_usr}/lib/oedp
 mkdir -p -m 700 %{buildroot}%{_usr}/share/applications
-mkdir -p -m 700 %{buildroot}%{_sysconfdir}/oedp/config/repo/cache
+mkdir -p -m 700 %{buildroot}%{_sysconfdir}/oedp/config
 mkdir -p %{buildroot}%{_bindir}
 
 touch %{buildroot}%{_var}/oedp/log/oedp.log
 cp -rdpf %{_builddir}/%{name}-%{version}/src %{buildroot}%{_usr}/lib/oedp
 mv %{buildroot}%{_usr}/lib/oedp/src/config/* %{buildroot}%{_sysconfdir}/oedp/config
+mkdir -p -m 700 %{buildroot}%{_sysconfdir}/oedp/config/repo/cache
 install -c -m 0400 %{_builddir}/%{name}-%{version}/static/* %{buildroot}%{_usr}/share/applications
 install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir}/oedp
 
