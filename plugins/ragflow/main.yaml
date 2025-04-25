@@ -1,0 +1,24 @@
+name: ragflow
+description: install RAGFlow
+action:
+  install:
+    description: install RAGFlow
+    tasks:
+      - name: Check env
+        playbook: check-env.yml
+        scope: all
+      - name: Set env
+        playbook: set-env.yml
+        scope: all
+      - name: Install Docker
+        playbook: install-docker.yml
+        scope: all
+      - name: Install RAGFlow
+        playbook: install-ragflow.yml
+        scope: all
+  delete:
+    description: Delete RAGFlow
+    tasks:
+      - name: Delete RAGFlow
+        playbook: delete-ragflow.yml
+        scope: all

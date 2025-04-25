@@ -1,0 +1,71 @@
+- name: Install RAGFlow
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Validate code directory
+      ansible.builtin.stat:
+        path: "{{ RAGFLOW_CODE_DIR }}"
+      register: dir_check
+      tags: always
+
+    - name: Set HTTP_PROXY environment
+      ansible.builtin.set_fact:
+        environment:
+          http_proxy: "{{ HTTP_PROXY }}"
+          https_proxy: "{{ HTTPS_PROXY }}"
+      when: NEED_PROXY and not dir_check.stat.exists
+
+    - name: Clone RAGFlow code
+      ansible.builtin.git:
+        repo: "{{ RAGFLOW_GIT_URL }}"
+        dest: "{{ RAGFLOW_CODE_DIR }}"
+      when: not dir_check.stat.exists
+
+    - name: Detect CPU architecture
+      ansible.builtin.set_fact:
+        target_arch: >-
+          {% if ansible_architecture is match('^(aarch64|arm)') %}arm
+          {%- else %}x86{% endif %}
+      tags: detect
+
+    - name: Pull RAGFLOW image
+      command: docker pull
+        {% if target_arch == 'arm' %}{{ RAGFLOW_ARM_IMAGE_NAME }}:{{ RAGFLOW_ARM_IMAGE_TAG }}
+        {%- else %}{{ RAGFLOW_X86_IMAGE_NAME }}:{{ RAGFLOW_X86_IMAGE_TAG }}{% endif %}
+      register: pull_ragflow
+      tags: pull
+
+    - name: Pull MinIO image
+      command: docker pull {{ MINIO_IMAGE_NAME }}:{{ MINIO_IMAGE_TAG }}
+      register: pull_minio
+      tags: pull
+
+    - name: Update .env image config
+      ansible.builtin.replace:
+        path: "{{ RAGFLOW_CODE_DIR }}/docker/.env"
+        regexp: '^RAGFLOW_IMAGE=.*'
+        replace: >-
+          RAGFLOW_IMAGE={% if target_arch == 'arm' %}{{ RAGFLOW_ARM_IMAGE_NAME }}:{{ RAGFLOW_ARM_IMAGE_TAG }}
+          {%- else %}{{ RAGFLOW_X86_IMAGE_NAME }}:{{ RAGFLOW_X86_IMAGE_TAG }}{% endif %}
+        backup: yes
+      register: modify_env
+      tags: config
+
+    - name: Update MinIO in docker-compose
+      ansible.builtin.replace:
+        path: "{{ RAGFLOW_CODE_DIR }}/docker/docker-compose-base.yml"
+        regexp: '^(\s*image:\s*).*minio:.*'
+        replace: '\1{{ MINIO_IMAGE_NAME }}:{{ MINIO_IMAGE_TAG }}'
+        backup: yes
+      register: modify_compose
+      tags: config
+
+    - name: Launch Docker stack with retry
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.yml up -d
+        chdir: "{{ RAGFLOW_CODE_DIR }}/docker"
+      register: stack_result
+      retries: 5
+      delay: 30
+      until: stack_result is succeeded  
