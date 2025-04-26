@@ -67,40 +67,35 @@ class OeDeployParser:
 
     def _add_init_command(self):
         """
-        oedp init <plugin> -p|--project <path> [-l|--local <path>] [-f|--force]
+        oedp init [plugin] [-p|--project <path>] [-d|--dir <path>] [-f|--force]
 
-        在指定的目录下初始化一个项目。
-
-        如果选中了--force选项，会删除路径下的原有内容，然后重新初始化。
+        插件初始化到指定路径。[plugin]可以是插件压缩包路径、插件下载地址、插件名称
         """
         init_command = self.subparsers.add_parser(
             'init',
             prog='oedp init',
-            help='Initialize a plugin to a project.',
-            usage='%(prog)s <plugin> -p|--project <path> [-f|--force]',
+            help='Initialize a plugin to specified path',
+            usage='%(prog)s [plugin] [-p|--project <path>] [-d|--dir <path>] [-f|--force]'
         )
         init_command.add_argument(
             'plugin',
             type=str,
-            help='Specify the plugin name.'
-        )
-        init_command.add_argument(
-            '-l', '--local',
-            type=str,
-            default=PLUGIN_DIR,
-            help='Specify the local source path',
+            help='Plugin name, local tar.gz path or download URL'
         )
         init_command.add_argument(
             '-p', '--project',
             type=str,
-            help='Specify the project path.',
-            required=True,
-            metavar='<path>'
+            help='Project path, will be created if not exists'
+        )
+        init_command.add_argument(
+            '-d', '--dir',
+            type=str,
+            help='Parent directory of project, will be created if not exists'
         )
         init_command.add_argument(
             '-f', '--force',
             action='store_true',
-            help='Force the initialization of a project, overwrite existing project.',
+            help='Force overwrite existing directory'
         )
         init_command.set_defaults(func=self._run_init_command)
 
@@ -292,11 +287,17 @@ class OeDeployParser:
 
     @staticmethod
     def _run_init_command(args):
+        """
+        执行init命令
+
+        :param args: 命令行参数
+        :return: 命令执行结果
+        """
         plugin = args.plugin
-        source = args.local
         project = args.project
+        parent_dir = args.dir
         force = args.force
-        return InitCmd(plugin, source, project, force).run()
+        return InitCmd(plugin, project, parent_dir, force).run()
 
     @staticmethod
     def _run_list_command(args):
