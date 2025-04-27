@@ -1,6 +1,6 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.0.2
+Version:            1.1.0
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
@@ -69,6 +69,11 @@ fi
 
 
 %changelog
+* Sun Apr 27 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.1.0-1
+- Support configurable plugin sources
+- Support one-click initialization
+- Fix the log permission bug
+
 * Mon Mar 31 2025 Liu Jiangbin <liujiangbin3@h-partners.com> - 1.0.2-1
 - Fix the issue where non-root users cannot execute
 
