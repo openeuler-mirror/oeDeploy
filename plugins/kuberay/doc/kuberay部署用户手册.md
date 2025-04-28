@@ -52,9 +52,40 @@ all:
         num: 1
         cpu: "1"
         memory: "1G"
+      training:                        # 模型训练参数
+        pip: "https://pypi.tuna.tsinghua.edu.cn/simple"
+        batch_size: 1024
+        epoch: 5
 
 ```
 
 ### 2.2. 执行自动化部署
 
 在插件目录下执行`oedp run install`，或在任意位置执行`oedp run install -p [插件目录]`，即可完成自动化部署 KubeRay。
+
+## 3. 查看 Dashboard
+
+### 3.1. 查询对应端口
+
+在 master 节点，使用`kubectl get svc -A`命令查看端口映射：
+````bash
+NAMESPACE     NAME                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                                                                       AGE
+default       kubernetes                     ClusterIP   10.96.0.1       <none>        443/TCP                                                                       24h
+kube-system   kube-dns                       ClusterIP   10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP                                                        24h
+kuberay       kuberay-operator               ClusterIP   10.96.175.101   <none>        8080/TCP                                                                      9h
+kuberay       ray-cluster-kuberay-head-svc   NodePort    10.96.168.232   <none>        10001:32414/TCP,8265:31457/TCP,8080:31582/TCP,6379:31938/TCP,8000:32102/TCP   9h
+````
+其中 8265 对应的端口，即为 Dashboard 的端口。
+
+### 3.2. 打开 Dashboard 页面
+使用 [http://ip:port/] 链接，即可打开 Dashboard 页面，查看 Ray Job / Serve / Cluster 及资源、日志等信息。其中 IP 为 master 节点 IP，port 为 3.1 中 8265 对应的端口。
+
+
+## Demo: 基于 FashionMNIST 数据集的 MLP 模型训练推理
+
+- 已完成 KubeRay 部署，节点资源要求至少 5U
+- 在 master 节点，执行以下命令，即可一键自动完成模型训练、推理
+    ````bash
+    oedp run train -p kuberay-1.2.2
+    ````
+  
