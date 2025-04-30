@@ -25,12 +25,12 @@
     - name: Copy and render the python file with variables from config.yaml
       template:
         src: "{{ script_name }}"
-        dest: "{{ script_with_vars_name }}"
+        dest: "/tmp/{{ script_with_vars_name }}"
         mode: '0744'
 
     - name: Copy training script to pod
       shell: |
-        kubectl cp "/root/pytorch/workspace/{{ script_with_vars_name }}" \
+        kubectl cp "/tmp/{{ script_with_vars_name }}" \
           {{ namespace }}/{{ pod_query.stdout }}:/tmp/{{ script_with_vars_name }}
       when:
         - pod_query is succeeded

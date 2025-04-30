@@ -1,0 +1,119 @@
+---
+- name: Execute KubeRay training script
+  hosts: all
+
+  vars:
+    ansible_python_interpreter: auto_silent
+    pip_source: "{{ training.pip }}"
+    script_name: "kuberay-ai-training-inference.py"
+    script_with_vars_name: "kuberay-ai-training-inference-with-vars.py"
+
+  tasks:
+    - name: Copy and render the python file with variables from config.yaml
+      template:
+        src: "{{ script_name }}"
+        dest: "/tmp/{{ script_with_vars_name }}"
+        mode: '0744'
+
+    - name: Check if Head Pod is running
+      shell: |
+        kubectl get pods -n {{ namespace }} \
+          --selector=ray.io/node-type=head \
+          -o jsonpath='{.items[0].status.phase}'
+      register: head_pod_status
+      retries: 10
+      delay: 5
+      until: head_pod_status.stdout == "Running"
+
+    - name: Get Worker Pods info
+      shell: |
+        kubectl get pods -n {{ namespace }} \
+          --selector=ray.io/node-type=worker \
+          -o json
+      register: worker_pods_info
+
+    - name: Check if Worker Pod(s) exist
+      fail:
+        msg: "No Worker Pod(s) found!"
+      when: (worker_pods_info.stdout | from_json | json_query('items')) | length == 0
+
+    - name: Check if every Worker Pod is running
+      shell: |
+        kubectl get pods -n {{ namespace }} \
+          --selector=ray.io/node-type=worker \
+          -o json
+      register: worker_pods_status
+      retries: 10
+      delay: 5
+      until: >
+        (
+          (worker_pods_status.stdout | from_json | json_query('items[*].status.phase') | select('equalto', 'Running') | list | length)
+          ==
+          (worker_pods_status.stdout | from_json | json_query('items') | length)
+        )
+
+    - name: Get Head Pod name
+      shell: |
+        kubectl get pods -n {{ namespace }} \
+          --selector=ray.io/node-type=head \
+          --field-selector=status.phase=Running \
+          -o jsonpath='{.items[0].metadata.name}'
+      register: head_pod_query
+      failed_when: head_pod_query.rc != 0
+
+    - name: Save Head Pod name
+      set_fact:
+        head_pod_name: "{{ head_pod_query.stdout }}"
+
+    - name: Get Worker Pod names
+      shell: |
+        kubectl get pods -n {{ namespace }} \
+          --selector=ray.io/node-type=worker \
+          --field-selector=status.phase=Running \
+          -o jsonpath='{.items[*].metadata.name}'
+      register: worker_pods_query
+      failed_when: "'No resources found' in worker_pods_query.stderr"
+
+    - name: Merge Pod List
+      set_fact:
+        all_pods: >-
+          {{
+          (head_pod_query.stdout_lines | default([])) +
+          (worker_pods_query.stdout.split(' ') if worker_pods_query.stdout != '' else [])
+          }}
+
+    - name: Copy files to all pods
+      block:
+        - name: Copy training script
+          command: "kubectl cp /tmp/{{ script_with_vars_name }} {{ namespace }}/{{ item }}:/tmp/"
+          loop: "{{ all_pods }}"
+
+        - name: Copy test picture
+          command: "kubectl cp {{ playbook_dir }}/inference.png {{ namespace }}/{{ item }}:/tmp/"
+          loop: "{{ all_pods }}"
+
+    - name: Install dependencies in all Pods
+      shell: |
+        kubectl exec {{ pod_name }} -n {{ namespace }} -- \
+          sh -c "pip install torch torchvision scikit-learn {% if pip_source %} -i '{{ pip_source }}' {% endif %}"
+      loop: "{{ all_pods }}"
+      register: pip_install_result
+      args:
+        warn: false
+      failed_when: pip_install_result.rc != 0 and ('ERROR' in pip_install_result.stdout or pip_install_result.stderr != '')
+      loop_control:
+        loop_var: pod_name
+        index_var: ansible_loop_index
+
+    - name: Execute training script
+      shell: |
+        kubectl exec -n {{ namespace }} {{ head_pod_name }} -- \
+          python -u /tmp/{{ script_with_vars_name }}
+      args:
+        executable: /bin/bash
+      register: training_output
+      changed_when: false
+
+    - name: Display training output
+      debug:
+        msg: "{{ training_output.stdout_lines }}"

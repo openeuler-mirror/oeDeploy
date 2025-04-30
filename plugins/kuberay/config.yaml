@@ -21,7 +21,7 @@ all:
     ray_cluster_values_file: ""
     ray_cluster_values:
       repository: "hub.oepkgs.net/oedeploy/rayproject/ray"
-      tag: 2.9.0
+      tag: 2.9.0     # 使用默认 docker 源时，x86 为 2.9.0, arm 为 2.9.0-aarch64；具体的 tag 请至配置的仓库确认
       head:
         cpu: "1"
         memory: "2G"
@@ -29,3 +29,7 @@ all:
         num: 2
         cpu: "1"
         memory: "1G"
+    training:
+      pip: "https://pypi.tuna.tsinghua.edu.cn/simple"   # pip 源
+      batch_size: 1024                                  # 单次处理数据单元的大小
+      epoch: 5                                          # 训练轮数

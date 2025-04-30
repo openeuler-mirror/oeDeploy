@@ -16,3 +16,9 @@ action:
       - name: uninstall KubeRay
         playbook: uninstall.yml
         scope: all
+  train:
+    description: train MLP model based on FashionMNIST on KubeRay
+    tasks:
+      - name: train MLP model based on FashionMNIST on KubeRay
+        playbook: train.yaml
+        scope: all
