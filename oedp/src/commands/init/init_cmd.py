@@ -18,7 +18,7 @@ import hashlib
 from typing import List, Dict, Optional
 from datetime import datetime
 
-from src.constants.paths import PLUGIN_DIR, REPO_CACHE_DIR
+from src.constants.paths import PLUGIN_DIR, REPO_CACHE_DIR, REPO_CONFIG_PATH
 from src.utils.command.command_executor import CommandExecutor
 from src.utils.log.logger_generator import LoggerGenerator
 
@@ -92,24 +92,23 @@ class InitCmd:
     def _determine_target_path(self) -> str:
         """
         plugin 如果为本地的插件压缩包，则直接初始化到指定路径
-        plugin 如果为插件下载地址，则先下载到缓存路径 /var/oedp/plugin，再初始化到指定路径
+        plugin 如果为插件下载地址，则先下载到缓存路径 /var/oedp/plugin ，再初始化到指定路径
         plugin 如果为插件名称，从已经配置的插件源中查找，下载到缓存路径后初始化到指定路径
         """
         if self.project:
             return os.path.abspath(self.project)
         elif self.parent_dir:
-            plugin_name = os.path.splitext(os.path.basename(self.plugin))[0] if self.plugin.endswith('.tar.gz') else self.plugin
+            plugin_name = os.path.basename(self.plugin).replace('.tar.gz', '') if self.plugin.endswith('.tar.gz') else self.plugin
             return os.path.abspath(os.path.join(self.parent_dir, plugin_name))
         else:
-            plugin_name = os.path.splitext(os.path.basename(self.plugin))[0] if self.plugin.endswith('.tar.gz') else self.plugin
+            plugin_name = os.path.basename(self.plugin).replace('.tar.gz', '') if self.plugin.endswith('.tar.gz') else self.plugin
             return os.path.abspath(os.path.join(os.getcwd(), plugin_name))
 
     def _validate_target_path(self, target_path: str) -> bool:
         """验证目标路径是否合法"""
-        # 检查路径层级
-        path_parts = os.path.normpath(target_path).split(os.sep)
-        if len(path_parts) < 2:
-            self.log.error("target path must be at least two levels deep")
+        path_parts = [part for part in os.path.normpath(target_path).split(os.sep) if part]
+        if len(path_parts) < 2:  # 路径层级不小于2
+            self.log.error("target path must be at least two level deep")
             return False
         return True
 
@@ -118,13 +117,13 @@ class InitCmd:
         if os.listdir(target_path):
             if self.force:
                 try:
+                    self.log.info(f"cleaning existing directory: {target_path}")
                     for item in os.listdir(target_path):
                         item_path = os.path.join(target_path, item)
                         if os.path.isdir(item_path):
                             CommandExecutor.run_single_cmd(['rm', '-rf', item_path])
                         else:
                             os.remove(item_path)
-                    self.log.info(f"cleaned existing directory: {target_path}")
                 except Exception as e:
                     self.log.error(f"failed to clean directory {target_path}: {str(e)}")
                     return False
@@ -135,13 +134,14 @@ class InitCmd:
 
     def _extract_archive(self, archive_path: str, target_path: str) -> bool:
         """解压压缩包到目标路径"""
+        self.log.info(f"extracting archive to {target_path}")
         try:
             cmd = ['tar', '-xzf', archive_path, '-C', target_path, '--strip-components=1']
             _, stderr, return_code = CommandExecutor.run_single_cmd(cmd)
             if return_code != 0:
                 self.log.error(f"failed to extract archive: {stderr}")
                 return False
-            self.log.info(f"successfully extracted archive to {target_path}")
+            self.log.info(f"process success")
             return True
         except Exception as e:
             self.log.error(f"failed to extract archive: {str(e)}")
@@ -184,9 +184,63 @@ class InitCmd:
             self.log.error(f"failed to handle plugin name: {str(e)}")
             return False
 
+    def _check_and_update_repo(self) -> bool:
+        """检查并更新插件仓库
+        """
+        try:
+            # 获取REPO_CONFIG_PATH的修改时间
+            if not os.path.exists(REPO_CONFIG_PATH):
+                self.log.error(f"repo config file not found: {REPO_CONFIG_PATH}")
+                return False
+                
+            config_mtime = os.path.getmtime(REPO_CONFIG_PATH)
+            
+            # 获取REPO_CACHE_DIR中所有.yaml文件
+            yaml_files = glob.glob(os.path.join(REPO_CACHE_DIR, '*.yaml'))
+            
+            if not yaml_files:
+                # 没有缓存文件，需要更新
+                self.log.info("no cached repo files found, updating repo")
+                return self._update_repo()
+                
+            # 找出最老的修改时间
+            oldest_mtime = min(os.path.getmtime(f) for f in yaml_files)
+            
+            if oldest_mtime < config_mtime:
+                # 缓存文件比配置文件旧，需要更新
+                self.log.info("cached repo files are older than config, updating repo")
+                return self._update_repo()
+            
+            # 检查缓存文件是否超过24小时未更新
+            current_time = datetime.now().timestamp()
+            if current_time - oldest_mtime > 86400:  # 86400秒=24小时
+                self.log.info("cached repo files are older than 24 hours, updating repo")
+                return self._update_repo()
+
+            return True
+        except Exception as e:
+            self.log.error(f"failed to check repo update status: {str(e)}")
+            return False
+            
+    def _update_repo(self) -> bool:
+        """执行oedp repo update命令更新仓库"""
+        try:
+            cmd = ['oedp', 'repo', 'update']
+            _, stderr, return_code = CommandExecutor.run_single_cmd(cmd)
+            if return_code != 0:
+                self.log.error(f"failed to update repo: {stderr}")
+                return False
+            return True
+        except Exception as e:
+            self.log.error(f"failed to update repo: {str(e)}")
+            return False
+            
     def _find_plugin_in_repos(self) -> Optional[Dict]:
         """在仓库中查找插件"""
-        # 遍历所有索引文件
+        
+        if not self._check_and_update_repo():
+            return None
+        
         for index_file in glob.glob(os.path.join(REPO_CACHE_DIR, '*.yaml')):
             try:
                 with open(index_file, 'r') as f:
@@ -252,7 +306,7 @@ class InitCmd:
             except Exception as e:
                 self.log.warning(f"failed to remove existing file {output_file}: {str(e)}")
         
-        self.log.info(f"starting download from {url}")
+        self.log.info(f"downloading from {url}")
         cmd = [
             'curl', '-fL',
             '--max-time', str(timeout),
@@ -265,12 +319,7 @@ class InitCmd:
             _, stderr, return_code = CommandExecutor.run_single_cmd(cmd)
             
             if return_code == 0:
-                try:
-                    self.log.info(f"successfully downloaded to {output_file}")
-                    return True
-                except Exception as e:
-                    self.log.error(f"failed to set permissions for {output_file}: {str(e)}")
-                    return False
+                return True
             
             if attempt < max_retries - 1:
                 self.log.warning(f"retrying download for repo {repo_name} (attempt {attempt + 1}/{max_retries})")
