@@ -5,11 +5,9 @@
   vars:
     MIN_DOCKER_VERSION: "24.0.0"
     DOCKER_PKGS:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
+      - docker-client
+      - docker-compose
+      - docker-engine
     DOCKER_CONF_PATH: /etc/docker/daemon.json
 
   tasks:
@@ -57,17 +55,6 @@
               )
             )
           }}
-      tags: install
-
-    - name: Copy Docker-ce.repo file
-      ansible.builtin.copy:
-        src: docker-ce.repo
-        dest: /etc/yum.repos.d/docker-ce.repo
-        owner: root
-        group: root
-        mode: 0644
-      when: requires_installation
-      notify: Clean yum cache
       tags: install
 
     - name: Install Docker packages

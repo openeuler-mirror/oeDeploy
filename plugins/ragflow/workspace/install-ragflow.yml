@@ -9,16 +9,9 @@
       register: dir_check
       tags: always
 
-    - name: Set HTTP_PROXY environment
-      ansible.builtin.set_fact:
-        environment:
-          http_proxy: "{{ HTTP_PROXY }}"
-          https_proxy: "{{ HTTPS_PROXY }}"
-      when: NEED_PROXY and not dir_check.stat.exists
-
     - name: Clone RAGFlow code
       ansible.builtin.git:
-        repo: "{{ RAGFLOW_GIT_URL }}"
+        repo: "{{ GITHUB_PROXY }}{{ RAGFLOW_GIT_URL }}"
         dest: "{{ RAGFLOW_CODE_DIR }}"
       when: not dir_check.stat.exists
 

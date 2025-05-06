@@ -33,8 +33,5 @@ all:
     RAGFLOW_CODE_DIR: /opt/ragflow
     # RAGFlow github 地址
     RAGFLOW_GIT_URL: https://github.com/infiniflow/ragflow.git
-    # 是否使用代理
-    NEED_PROXY: false
-    # 代理
-    HTTP_PROXY: "http://proxy.example.com:8080"
-    HTTPS_PROXY: "https://proxy.example.com:8080"
+    # github 代理代理
+    GITHUB_PROXY: https://gh.idayer.com/
