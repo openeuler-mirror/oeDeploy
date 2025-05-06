@@ -1,0 +1,19 @@
+all:
+  hosts:
+    host1:
+      ansible_host: x.x.x.x      # 远端IP
+      ansible_port: 22             # 端口号
+      ansible_user: root           # 用户名
+      ansible_password: yuan156816,   # 密码
+
+  vars:
+    docker_download_url:
+      x86_64: https://download.docker.com/linux/static/stable/x86_64/docker-26.1.4.tgz
+      aarch64: https://download.docker.com/linux/static/stable/aarch64/docker-26.1.4.tgz
+    docker_download_path: /tmp
+    docker_image_urls: https://docker.m.daocloud.io
+
+    container_name: "anythinglLLM-container"
+    docker_image: "mintplexlabs/anythingllm"
+    storage_location: "{{ lookup('env', 'HOME') }}/anythingllm"
+    host_port: 3001

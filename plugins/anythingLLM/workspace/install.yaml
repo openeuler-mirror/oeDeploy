@@ -1,0 +1,75 @@
+---
+- name: install anythingLLM automatically
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: check if docker is installed
+      command: docker --version
+      register: docker_check_output
+      ignore_errors: yes
+      changed_when: false
+
+    - name: install docker
+      include_tasks: install_docker.yaml
+      vars:
+        docker_package_name: "{{ docker_download_url[ansible_architecture] | basename }}"
+      when: docker_check_output.rc != 0
+
+    - name: get docker version
+      command: docker --version
+      register: docker_version_output
+      when: docker_check_output.rc != 0
+
+    - name: extract docker version
+      block:
+        - set_fact:
+            docker_version: "{{ docker_version_output.stdout | regex_replace('^Docker version (\\d+\\.\\d+).*$', '\\1') }}"
+      rescue:
+        - set_fact:
+            docker_version: "{{ docker_check_output.stdout | regex_replace('^Docker version (\\d+\\.\\d+).*$', '\\1') }}"
+
+    - name: check if docker version >= 20.10
+      assert:
+        that:
+          - "docker_version is version_compare('20.10', '>=')"
+        fail_msg: "Docker 版本必须 >= 20.10，当前版本为 {{ docker_version }}"
+        success_msg: "Docker 版本 {{ docker_version }} 符合要求"
+
+    - name: check if docker service is running
+      command: docker ps
+      register: docker_ps_output
+
+    - name: check if exists anythingLLM image
+      shell: docker images | grep  {{ docker_image }}
+      register: image_result
+      ignore_errors: yes
+
+    - name: pull anythingLLM image
+      shell: docker pull {{ docker_image }}
+      when: image_result.rc != 0
+
+    - name: create STORAGE_LOCATION directory
+      file:
+        path: "{{ storage_location }}"
+        state: directory
+        mode: '0755'
+
+    - name: create .env file
+      file:
+        path: "{{ storage_location }}/.env"
+        state: touch
+        mode: '0644'
+
+    - name: start anythingLLM container
+      shell: >
+        docker run -d 
+        --name {{ container_name }} 
+        --cap-add SYS_ADMIN \
+        -p {{ host_port }}:3001
+        -v {{ storage_location }}:/app/server/storage 
+        -v {{ storage_location }}/.env:/app/server/.env 
+        -e STORAGE_DIR="/app/server/storage"
+        {{ docker_image }}
+      register: container_start_result
+      failed_when: container_start_result.rc != 0
