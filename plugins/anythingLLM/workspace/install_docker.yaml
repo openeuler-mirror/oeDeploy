@@ -27,6 +27,7 @@
   template: src=daemon.json.j2 dest=/etc/docker/daemon.json
 
 - name: start docker service
-  shell: 'dockerd &'
+  shell: >
+    nohup dockerd >> {{ docker_download_path }}/docker.log 2>&1 &
   register: service_status
   failed_when: service_status.rc != 0

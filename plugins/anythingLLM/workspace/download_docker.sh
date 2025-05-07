@@ -41,7 +41,7 @@ while [ $RETRY_COUNT -le $MAX_RETRIES ]; do
     else
         echo "下载失败，准备重试..."
         sleep $SLEEP_TIME
-        ((RETRY_COUNT++))
+        RETRY_COUNT=$((RETRY_COUNT + 1))
     fi
 done
 

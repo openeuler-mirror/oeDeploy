@@ -10,10 +10,27 @@
       ignore_errors: yes
       changed_when: false
 
-    - name: install docker
+    - name: install and start docker
       include_tasks: install_docker.yaml
       vars:
         docker_package_name: "{{ docker_download_url[ansible_architecture] | basename }}"
+      when: docker_check_output.rc != 0
+
+    - name: check if docker service is running
+      command: docker ps
+
+    - name: mark docker installed status
+      file:
+        path: "{{ docker_download_path }}/docker_already_deploy.flag"
+        state: touch
+        mode: "0644"
+      when: docker_check_output.rc == 0
+
+    - name: clear marks file
+      file:
+        path: "{{ docker_download_path }}/docker_already_deploy.flag"
+        state: absent
+      ignore_errors: yes
       when: docker_check_output.rc != 0
 
     - name: get docker version
@@ -36,9 +53,14 @@
         fail_msg: "Docker 版本必须 >= 20.10，当前版本为 {{ docker_version }}"
         success_msg: "Docker 版本 {{ docker_version }} 符合要求"
 
-    - name: check if docker service is running
-      command: docker ps
-      register: docker_ps_output
+    - name: check if anythingLLM docker container is exists
+      shell: docker ps -a | grep {{ container_name }}
+      ignore_errors: yes
+      register: container_result
+
+    - name: end play if anythingLLM docker container exists
+      meta: end_play
+      when: container_result.rc == 0
 
     - name: check if exists anythingLLM image
       shell: docker images | grep  {{ docker_image }}
