@@ -1,0 +1,33 @@
+- name: copy download.sh to remote
+  copy:
+    src: download_docker.sh
+    dest: "{{ docker_download_path }}/download_docker.sh"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: download docker package
+  shell: >
+    bash  {{ docker_download_path }}/download_docker.sh
+    {{ docker_download_url[ansible_architecture] }}
+    {{ docker_download_path }} >>  {{ docker_download_path }}/download.log
+  register: download_result
+  failed_when: download_result.rc != 0
+
+- name: unarchive docker package
+  unarchive:
+    src: "{{ docker_download_path }}/{{ docker_package_name }}"
+    dest: "{{ docker_download_path }}"
+    remote_src: yes
+
+- name: mv docker file to /usr/bin
+  shell: mv {{ docker_download_path }}/docker/* /usr/bin
+
+- name: configur docker image url
+  template: src=daemon.json.j2 dest=/etc/docker/daemon.json
+
+- name: start docker service
+  shell: >
+    nohup dockerd >> {{ docker_download_path }}/docker.log 2>&1 &
+  register: service_status
+  failed_when: service_status.rc != 0

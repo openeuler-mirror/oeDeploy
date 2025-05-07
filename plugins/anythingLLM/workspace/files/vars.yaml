@@ -1,0 +1,1 @@
+docker_package_name: "{{ docker_download_url[ansible_architecture] | basename }}"

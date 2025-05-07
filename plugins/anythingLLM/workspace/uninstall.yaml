@@ -1,0 +1,34 @@
+---
+- name: uninstall  anythingLLm
+  hosts: all
+  become: yes
+  vars_files:
+    - files/vars.yaml
+
+  tasks:
+    - name: stop and delete docker container
+      shell: docker stop {{ container_name }} && docker rm {{ container_name }}
+      ignore_errors: true
+
+    - name: delete docker image
+      shell: docker rmi {{ docker_image }}
+      ignore_errors: true
+
+    - name: check if docker_already_deploy file exists
+      stat:
+        path: "{{ docker_download_path }}/docker_already_deploy.flag"
+      register: docker_deploy_status
+
+    - name: kill docker process
+      shell: killall dockerd
+      ignore_errors: true
+      when: not docker_deploy_status.stat.exists
+
+    - name: delete docker package
+      shell: >
+        rm -rf  {{ docker_download_path }}/{{ docker_package_name }};
+        rm -rf /usr/bin/docker*;
+        rm -rf /usr/bin/containerd*;
+        rm -rf /usr/bin/ctr;
+        rm -rf /usr/bin/runc;
+      when: not docker_deploy_status.stat.exists

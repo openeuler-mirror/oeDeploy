@@ -1,0 +1,16 @@
+name: anythingLLM
+version: 1.0.0
+description: anythingLLM
+action:
+  install:
+    description: install anythingLLM
+    tasks:
+    - name: install anythingLLM
+      playbook: install.yaml
+      scope: all
+  uninstall:
+    description: uninstall anythingLLM
+    tasks:
+    - name: uninstall anythingLLM
+      playbook: uninstall.yaml
+      scope: all
