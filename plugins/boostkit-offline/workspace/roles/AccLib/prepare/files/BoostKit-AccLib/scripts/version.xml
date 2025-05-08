@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SoftWare>
+    <Hyperscan>
+        <ragel>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ragel-6.10.tar.gz</ragel>
+        <boost>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boost_1_87_0.tar.gz</boost>
+        <pcre>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/pcre-8.43.tar.gz</pcre>
+        <code_arm>https://gitee.com/kunpengcompute/hyperscan.git</code_arm>
+    </Hyperscan>
+    <KAE>
+        <kae_code>https://gitee.com/kunpengcompute/KAE.git</kae_code>
+    </KAE>
+    <libgcrypt>
+        <libgcrypt_url>https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.51.tar.gz</libgcrypt_url>
+    </libgcrypt>
+</SoftWare>

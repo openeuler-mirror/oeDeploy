@@ -62,6 +62,10 @@ build_dir() {
   resources_dir=$target_dir/resources
   mkdir -p $resources_dir/libgcrypt
   cp -af $download_dir/libgpg-error-*.tar.gz $resources_dir/libgcrypt
+
+  patch_dir=$target_dir/patch
+  mkdir -p $patch_dir
+  cp -af $download_dir/*.patch $patch_dir
 }
 
 pushd $DIR

@@ -77,14 +77,9 @@ class Installer(object):
             return Runcmd.sendcmd("lscpu | grep 'BIOS Model name:' | awk '{print $NF}'")
 
     def __check_env(self):
-        with self.__process("检查代理"):
-            Runcmd.sendcmd("curl www.baidu.com")
-
         with self.__process("检查yum源, 并安装必要工具"):
             Runcmd.sendcmd("yum makecache")
-            Runcmd.sendcmd("yum install -y git tar gcc gcc-c++ patch")
-            Runcmd.sendcmd("git config --global https.sslverify false")
-            Runcmd.sendcmd("git config --global http.sslverify false")
+            Runcmd.sendcmd("yum install -y tar gcc gcc-c++ patch")
 
     def __chech_env_in_profile(self, key, value):
         libpath = os.getenv(key)
@@ -125,15 +120,11 @@ class Installer(object):
         Runcmd.sendcmd("rm -rf ./KSL", workspace=f"{self.__ROOT_PATH}")
         Runcmd.sendcmd(f"mkdir -p KSL/rpm", workspace=f"{self.__ROOT_PATH}")
 
-        ksl_info = self.__get_element_text("KSL")
         with self.__process("安装KSL"):
             res = Runcmd.sendcmd("cat /etc/os-release")
             name = re.search("NAME=\"(.+)\"", res).group(1)
             assert name == "openEuler", "仅支持在openEuler上安装"
-            pkg_version = ksl_info.get("version")
-            url = ksl_info.get('url').format(pkg_version)
 
-            Runcmd.sendcmd(f"wget {url} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/KSL/rpm")
             Runcmd.sendcmd("rpm -e boostkit-ksl", check=False)
             Runcmd.sendcmd("rpm -ivh rpm/*.rpm", workspace=f"{self.__ROOT_PATH}/KSL")
 
@@ -146,10 +137,8 @@ class Installer(object):
         info = self.__get_element_text("Hyperscan")
 
         with self.__process("安装ragel"):
-            download = info.get("ragel")
             bag = info.get("ragel").split('/')[-1]
 
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             Runcmd.sendcmd(f"tar -zxf {bag}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
             dir = Runcmd.sendcmd(f"ls | grep ragel | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
@@ -158,17 +147,13 @@ class Installer(object):
             Runcmd.sendcmd(f"ragel -v")
 
         with self.__process("安装boost"):
-            download = info.get("boost")
             bag = info.get("boost").split('/')[-1]
 
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             Runcmd.sendcmd(f"tar -zxf {bag}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
         with self.__process("安装pcre"):
-            download = info.get("pcre")
             bag = info.get("pcre").split('/')[-1]
 
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             Runcmd.sendcmd(f"tar -zxf {bag}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
         with self.__process("安装yum依赖包"):
@@ -186,19 +171,12 @@ class Installer(object):
             stdout = Runcmd.sendcmd("lscpu | grep Architecture")
             platform = "x86" if "x86" in stdout else "arm"
             download = info.get(f"code_{platform}")
-            branch = info.get(f"branch_{platform}")
             dir = download.split('/')[-1].split('.')[0]
 
             res = Runcmd.sendcmd("rpm -qa | grep boostkit-ksl")
             ksl_version = re.search("boostkit-ksl-(\d+.\d+.\d+)", res).group(1)
             if platform == "arm" and check_version(ksl_version, "2.4.0"):
-                Runcmd.sendcmd(f"git clone {download} -b khsel", workspace=f"{self.__ROOT_PATH}/Hyperscan")
-                Runcmd.sendcmd("cp hyperscan/khsel.patch ./", workspace=f"{self.__ROOT_PATH}/Hyperscan")
-                Runcmd.sendcmd(f"git checkout {branch}", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
-                Runcmd.sendcmd(f"mv ../khsel.patch ./", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
-                Runcmd.sendcmd(f"git apply khsel.patch", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
-            else:
-                Runcmd.sendcmd(f"git clone {download} -b {branch}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
+                Runcmd.sendcmd(f"patch -p1 < ../../patch/khsel.patch", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
 
             boost_path = Runcmd.sendcmd("ls | grep boost | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             boost_path = f"{self.__ROOT_PATH}/Hyperscan/{boost_path}"
@@ -241,10 +219,8 @@ class Installer(object):
 
         with self.__process("下载编译KAE源码"):
             download = info.get("kae_code")
-            branch = info.get("kae_code_tag")
             dir = download.split('/')[-1].split('.')[0]
 
-            Runcmd.sendcmd(f"git clone {download} -b {branch} --depth=1", workspace=f"{self.__ROOT_PATH}/KAE")
             Runcmd.sendcmd("bash build.sh cleanup", workspace=f"{self.__ROOT_PATH}/KAE/{dir}")
             Runcmd.sendcmd("bash build.sh driver", workspace=f"{self.__ROOT_PATH}/KAE/{dir}")
             Runcmd.sendcmd("bash build.sh uadk", workspace=f"{self.__ROOT_PATH}/KAE/{dir}")
@@ -292,8 +268,7 @@ class Installer(object):
             return
 
         info = self.__get_element_text("libgcrypt")
-        version = info.get("version")
-        download = info.get('url').format(version)
+        download = info.get('libgcrypt_url')
         name = download.split('/')[-1]
 
         Runcmd.sendcmd("rm -rf ./resources", workspace=f"{self.__ROOT_PATH}")
@@ -305,8 +280,6 @@ class Installer(object):
         Runcmd.sendcmd("mkdir libgpg", workspace=f"{self.__ROOT_PATH}")
 
         with self.__process("安装libgcrypt"):
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate",
-                           workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
             Runcmd.sendcmd(f"tar -xvf {name} -C {self.__ROOT_PATH}/libgpg",
                            workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
             Runcmd.sendcmd("chmod 777 autogen.sh; ./autogen.sh",
