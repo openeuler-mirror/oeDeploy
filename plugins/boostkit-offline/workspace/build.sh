@@ -7,7 +7,7 @@ get_source() {
 
   KSL_version=${KSL_version:-"2.5.0"}
   Hyperscan_branch=${Hyperscan_branch:-"v5.4.2.aarch64"}
-  KAE_tag=${KAE_tag:-"kae2"}
+  $KAE_branch=${$KAE_branch:-"kae2"}
   Libgcrypt_version=${Libgcrypt_version:-"1.51"}
 
   KSL_url=${KSL_url:-"https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boostkit-ksl-${KSL_version}-1.aarch64.rpm"}
@@ -16,8 +16,8 @@ get_source() {
   pcre_url="https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/pcre-8.43.tar.gz"
   Libgcrypt_url="https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-${Libgcrypt_version}.tar.gz"
 
-  Hyperscan_git="https://gitee.com/kunpengcompute/hyperscan.git"
-  KAE_git="https://gitee.com/kunpengcompute/KAE.git"
+  Hyperscan_git=${Hyperscan_git:-"https://gitee.com/kunpengcompute/hyperscan.git"}
+  KAE_git=${KAE_git:-"https://gitee.com/kunpengcompute/KAE.git"}
 }
 
 download() {
@@ -30,6 +30,12 @@ download() {
   wget --no-check-certificate $boost_url
   wget --no-check-certificate $pcre_url
   wget --no-check-certificate $Libgcrypt_url
+
+  git clone $Hyperscan_git -b khsel
+  cp hyperscan/khsel.patch ./
+  git checkout $Hyperscan_branch
+
+  git clone $KAE_git -b $KAE_branch --depth=1
 
   popd
 }
