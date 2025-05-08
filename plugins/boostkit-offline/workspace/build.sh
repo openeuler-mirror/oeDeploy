@@ -40,9 +40,34 @@ download() {
   popd
 }
 
+build_dir() {
+  download_dir=$DIR/download
+  target_dir=$DIR/roles/AccLib/prepare/files/BoostKit-AccLib
+
+  Hyperscan_dir=$target_dir/Hyperscan
+  mkdir -p $Hyperscan_dir
+  cp -af $download_dir/boost_*.tar.gz $Hyperscan_dir
+  cp -af $download_dir/pcre-*.tar.gz $Hyperscan_dir
+  cp -af $download_dir/ragel-*.tar.gz $Hyperscan_dir
+  cp -arf $download_dir/hyperscan $Hyperscan_dir
+
+  KAE_dir=$target_dir/KAE
+  mkdir -p $KAE_dir
+  cp -arf $download_dir/KAE $KAE_dir
+
+  KSL_dir=$target_dir/KSL
+  mkdir -p $KSL_dir/rpm
+  cp -af $download_dir/boostkit-ksl-*.rpm $KSL_dir/rpm
+
+  resources_dir=$target_dir/resources
+  mkdir -p $resources_dir/libgcrypt
+  cp -af $download_dir/libgpg-error-*.tar.gz $resources_dir/libgcrypt
+}
+
 pushd $DIR
 
 get_source()
 download()
+build_dir()
 
 popd
