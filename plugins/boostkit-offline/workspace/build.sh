@@ -33,7 +33,9 @@ download() {
 
   git clone $Hyperscan_git -b khsel
   cp hyperscan/khsel.patch ./
+  pushd hyperscan
   git checkout $Hyperscan_branch
+  popd
 
   git clone $KAE_git -b $KAE_branch --depth=1
 
