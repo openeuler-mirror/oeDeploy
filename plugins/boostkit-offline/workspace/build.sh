@@ -25,11 +25,11 @@ download() {
   mkdir $download_dir
   pushd $download_dir
 
-  wget --no-check-certificate KSL_url
-  wget --no-check-certificate HMPP_url
-  wget --no-check-certificate ragel_url
-  wget --no-check-certificate boost_url
-  wget --no-check-certificate pcre_url
+  wget --no-check-certificate $KSL_url
+  wget --no-check-certificate $HMPP_url
+  wget --no-check-certificate $ragel_url
+  wget --no-check-certificate $boost_url
+  wget --no-check-certificate $pcre_url
 
   popd
 }
