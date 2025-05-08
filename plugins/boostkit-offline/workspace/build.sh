@@ -68,10 +68,17 @@ build_dir() {
   cp -af $download_dir/*.patch $patch_dir
 }
 
+build_tar() {
+  pushd $DIR/roles/AccLib/prepare/files
+  tar -zcvf BoostKit-AccLib.tar.gz BoostKit-AccLib/
+  popd
+}
+
 pushd $DIR
 
 get_source
 download
 build_dir
+build_tar
 
 popd

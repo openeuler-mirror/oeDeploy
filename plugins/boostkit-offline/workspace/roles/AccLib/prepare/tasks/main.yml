@@ -12,6 +12,12 @@
 
 - name: "[File] Transfer local file to remote host"
   copy:
-    src: "BoostKit-AccLib"
+    src: "BoostKit-AccLib.tar.gz"
+    dest: "{{ temp_path }}"
+  tags: file_transfer
+
+- name: "[File] Unpack BoostKit-AccLib.tar.gz"
+  unarchive:
+    src: "{{ temp_path }}/BoostKit-AccLib.tar.gz"
     dest: "{{ temp_path }}"
   tags: file_transfer

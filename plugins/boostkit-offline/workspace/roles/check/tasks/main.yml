@@ -25,24 +25,6 @@
         check_failed: "{{ check_failed or (cpu_implementer.stdout != '0x48') }}"
       tags: hardware_check
 
-    - name: "[Network] Test connectivity to Baidu using curl"
-      command: >-
-        curl -sSf --connect-timeout 5
-        -w "HTTP %{http_code}" -o /dev/null
-        https://www.baidu.com
-      register: network_test
-      ignore_errors: yes
-      changed_when: false
-      tags: network_check
-
-    - name: "[Network] Record network check result"
-      set_fact:
-        check_results: >-
-          {{ check_results + ['Network test: ' + 
-          (network_test is failed | ternary('Failed', 'Success (' + network_test.stdout + ')'))] }}
-        check_failed: "{{ check_failed or (network_test is failed) }}"
-      tags: network_check
-
     - name: "[Python] Validate pip repository accessibility"
       pip:
         name: pip
