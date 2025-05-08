@@ -19,4 +19,8 @@
         <kae_code>https://gitee.com/kunpengcompute/KAE.git</kae_code>
         <kae_code_tag>kae2</kae_code_tag>
     </KAE>
+    <libgcrypt>
+        <version>1.51</version>
+        <url>https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-{}.tar.gz</url>
+    </libgcrypt>
 </SoftWare>

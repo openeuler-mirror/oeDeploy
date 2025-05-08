@@ -308,9 +308,23 @@ class Installer(object):
             print("已经安装了libgpg-error，不用再安装了")
             return
 
+        info = self.__get_element_text("libgcrypt")
+        version = info.get("version")
+        download = info.get('url').format(version)
+        name = download.split('/')[-1]
+
+        Runcmd.sendcmd("rm -rf ./resources", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("mkdir resources", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("cd resources", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("mkdir libgcrypt", workspace=f"{self.__ROOT_PATH}/resources")
+
         Runcmd.sendcmd("rm -rf libgpg", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("mkdir libgpg", workspace=f"{self.__ROOT_PATH}")
+
         with self.__process("安装libgcrypt"):
-            Runcmd.sendcmd(f"unzip libgpg-error-1.51.zip -d {self.__ROOT_PATH}/libgpg",
+            Runcmd.sendcmd(f"wget {download} --no-check-certificate",
+                           workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
+            Runcmd.sendcmd(f"tar -xvf {name} -C {self.__ROOT_PATH}/libgpg",
                            workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
             Runcmd.sendcmd("chmod 777 autogen.sh; ./autogen.sh",
                            workspace=f"{self.__ROOT_PATH}/libgpg/libgpg-error-1.51")
