@@ -217,23 +217,6 @@ class Installer(object):
             Runcmd.sendcmd("mkdir -p build", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
             Runcmd.sendcmd("cmake .. && make -j", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}/build")
 
-    def __install_compress_decompress_tools(self):
-        Runcmd.sendcmd("rm -rf ZIP", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir ZIP", workspace=f"{self.__ROOT_PATH}")
-
-        with self.__process("安装软算测试工具lzbench"):
-            Runcmd.sendcmd("git clone https://gitee.com/kunpeng_compute/lzbench.git --depth=1",
-                           workspace=f"{self.__ROOT_PATH}/ZIP")
-            Runcmd.sendcmd("make -j", workspace=f"{self.__ROOT_PATH}/ZIP/lzbench")
-
-        if "KAE" in str(self.__function_dict.keys()) or "QAT" in str(self.__function_dict.keys()):
-            with self.__process("安装带宽测试工具"):
-                Runcmd.sendcmd(f"make platform='{self.__platform}'",
-                               workspace=f"{self.__ROOT_PATH}/resources/bandwidth")
-                Runcmd.sendcmd(f"cp ./bin/bandwidth {self.__ROOT_PATH}/ZIP",
-                               workspace=f"{self.__ROOT_PATH}/resources/bandwidth")
-                Runcmd.sendcmd("make clean", workspace=f"{self.__ROOT_PATH}/resources/bandwidth")
-
     def __install_kae_dep(self):
         with self.__process("安装KAE相关依赖"):
             Runcmd.sendcmd(
@@ -358,8 +341,6 @@ class Installer(object):
         if "Kunpeng" in res:
             self.__function_dict["KAE"] = self.__install_kae
             self.__function_dict["KQMalloc"] = self.__install_kqmalloc
-        else:
-            self.__function_dict["SOFT_COMPRESS"] = self.__install_compress_decompress_tools
 
     def get_support(self):
         return ' '.join(self.__function_dict.keys())
