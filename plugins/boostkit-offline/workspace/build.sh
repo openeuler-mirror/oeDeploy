@@ -25,11 +25,11 @@ download() {
   mkdir $download_dir
   pushd $download_dir
 
-  wget --no-check-certificate $KSL_url
-  wget --no-check-certificate $ragel_url
-  wget --no-check-certificate $boost_url
-  wget --no-check-certificate $pcre_url
-  wget --no-check-certificate $Libgcrypt_url
+  wget -N --no-check-certificate $KSL_url
+  wget -N --no-check-certificate $ragel_url
+  wget -N --no-check-certificate $boost_url
+  wget -N --no-check-certificate $pcre_url
+  wget -N --no-check-certificate $Libgcrypt_url
 
   git clone $Hyperscan_git -b khsel
   cp hyperscan/khsel.patch ./
