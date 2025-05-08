@@ -1,0 +1,15 @@
+name: boostkit
+description: BoostKit
+action:
+  AccLib-show:
+    description: show available components in AccLib
+    tasks:
+      - name: show available components in AccLib
+        playbook: AccLib-show.yml
+        scope: AccLib
+  AccLib-install:
+    description: install components in AccLib
+    tasks:
+      - name: install components in AccLib
+        playbook: AccLib-install.yml
+        scope: AccLib
