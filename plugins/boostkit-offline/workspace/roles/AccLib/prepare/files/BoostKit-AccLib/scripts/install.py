@@ -117,9 +117,6 @@ class Installer(object):
             raise e
 
     def __install_ksl(self):
-        Runcmd.sendcmd("rm -rf ./KSL", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd(f"mkdir -p KSL/rpm", workspace=f"{self.__ROOT_PATH}")
-
         with self.__process("安装KSL"):
             res = Runcmd.sendcmd("cat /etc/os-release")
             name = re.search("NAME=\"(.+)\"", res).group(1)
@@ -130,9 +127,6 @@ class Installer(object):
 
     def __install_hyperscan_dep(self):
         self.__install_ksl()
-
-        Runcmd.sendcmd("rm -rf ./Hyperscan", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd(f"mkdir -p Hyperscan/resource", workspace=f"{self.__ROOT_PATH}")
 
         info = self.__get_element_text("Hyperscan")
 
@@ -214,10 +208,8 @@ class Installer(object):
         self.__install_kae_dep()
 
         info = self.__get_element_text("KAE")
-        Runcmd.sendcmd("rm -rf ./KAE", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir KAE", workspace=f"{self.__ROOT_PATH}")
 
-        with self.__process("下载编译KAE源码"):
+        with self.__process("编译KAE源码"):
             download = info.get("kae_code")
             dir = download.split('/')[-1].split('.')[0]
 
@@ -271,14 +263,6 @@ class Installer(object):
         download = info.get('libgcrypt_url')
         name = download.split('/')[-1]
 
-        Runcmd.sendcmd("rm -rf ./resources", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir resources", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("cd resources", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir libgcrypt", workspace=f"{self.__ROOT_PATH}/resources")
-
-        Runcmd.sendcmd("rm -rf libgpg", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir libgpg", workspace=f"{self.__ROOT_PATH}")
-
         with self.__process("安装libgcrypt"):
             Runcmd.sendcmd(f"tar -xvf {name} -C {self.__ROOT_PATH}/libgpg",
                            workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
@@ -297,9 +281,6 @@ class Installer(object):
 
     def __install_kqmalloc(self):
         self.__install_kqmalloc_dep()
-
-        Runcmd.sendcmd(f"rm -rf ./KQMalloc", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd(f"mkdir -p KQMalloc/resource", workspace=f"{self.__ROOT_PATH}")
 
         with self.__process("安装kqmalloc"):
             self.__install_ksl()
