@@ -170,7 +170,8 @@ class Installer(object):
             res = Runcmd.sendcmd("rpm -qa | grep boostkit-ksl")
             ksl_version = re.search("boostkit-ksl-(\d+.\d+.\d+)", res).group(1)
             if platform == "arm" and check_version(ksl_version, "2.4.0"):
-                Runcmd.sendcmd(f"patch -p1 -N < ../../patch/khsel.patch", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
+                Runcmd.sendcmd(f"patch -p1 -N < ../../patch/khsel.patch",
+                               workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}", check=False)
 
             boost_path = Runcmd.sendcmd("ls | grep boost | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
             boost_path = f"{self.__ROOT_PATH}/Hyperscan/{boost_path}"
