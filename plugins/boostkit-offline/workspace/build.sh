@@ -7,7 +7,7 @@ get_source() {
 
   KSL_version=${KSL_version:-"2.5.0"}
   Hyperscan_branch=${Hyperscan_branch:-"v5.4.2.aarch64"}
-  $KAE_branch=${$KAE_branch:-"kae2"}
+  KAE_branch=${$KAE_branch:-"kae2"}
   Libgcrypt_version=${Libgcrypt_version:-"1.51"}
 
   KSL_url=${KSL_url:-"https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boostkit-ksl-${KSL_version}-1.aarch64.rpm"}
@@ -70,8 +70,8 @@ build_dir() {
 
 pushd $DIR
 
-get_source()
-download()
-build_dir()
+get_source
+download
+build_dir
 
 popd
