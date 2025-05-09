@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SoftWare>
+    <KSL>
+        <version>{{ KSL_version }}</version>
+        <url>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boostkit-ksl-{}-1.aarch64.rpm</url>
+    </KSL>
+    <Hyperscan>
+        <ragel>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/ragel-6.10.tar.gz</ragel>
+        <boost>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/boost_1_87_0.tar.gz</boost>
+        <pcre>https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/pcre-8.43.tar.gz</pcre>
+        <code_arm>https://gitee.com/kunpengcompute/hyperscan.git</code_arm>
+        <branch_arm>{{ hyperscan_branch }}</branch_arm>
+    </Hyperscan>
+    <KAE>
+        <kae_code>https://gitee.com/kunpengcompute/KAE.git</kae_code>
+        <kae_code_tag>{{ KAE_branch }}</kae_code_tag>
+    </KAE>
+    <libgcrypt>
+        <version>1.51</version>
+        <url>https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-{}.tar.gz</url>
+    </libgcrypt>
+</SoftWare>

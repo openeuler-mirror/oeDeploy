@@ -130,9 +130,8 @@ class Installer(object):
             res = Runcmd.sendcmd("cat /etc/os-release")
             name = re.search("NAME=\"(.+)\"", res).group(1)
             assert name == "openEuler", "仅支持在openEuler上安装"
-            os_version = re.search("VERSION=\"(.+)\"", res).group(1).replace(' ', '').replace(')', '').replace('(', '-')
             pkg_version = ksl_info.get("version")
-            url = ksl_info.get('url').format(f"{name}-{os_version}", pkg_version)
+            url = ksl_info.get('url').format(pkg_version)
 
             Runcmd.sendcmd(f"wget {url} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/KSL/rpm")
             Runcmd.sendcmd("rpm -e boostkit-ksl", check=False)
@@ -159,7 +158,11 @@ class Installer(object):
             Runcmd.sendcmd(f"ragel -v")
 
         with self.__process("安装boost"):
-            Runcmd.sendcmd("yum install -y boost boost-devel")
+            download = info.get("boost")
+            bag = info.get("boost").split('/')[-1]
+
+            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/Hyperscan")
+            Runcmd.sendcmd(f"tar -zxf {bag}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
         with self.__process("安装pcre"):
             download = info.get("pcre")
@@ -197,7 +200,8 @@ class Installer(object):
             else:
                 Runcmd.sendcmd(f"git clone {download} -b {branch}", workspace=f"{self.__ROOT_PATH}/Hyperscan")
 
-            boost_path = "/usr/include"
+            boost_path = Runcmd.sendcmd("ls | grep boost | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
+            boost_path = f"{self.__ROOT_PATH}/Hyperscan/{boost_path}"
             Runcmd.sendcmd(f"ln -s {boost_path}/boost include/boost", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
 
             pcre_path = Runcmd.sendcmd("ls | grep pcre | grep -v tar", workspace=f"{self.__ROOT_PATH}/Hyperscan")
@@ -212,23 +216,6 @@ class Installer(object):
 
             Runcmd.sendcmd("mkdir -p build", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}")
             Runcmd.sendcmd("cmake .. && make -j", workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}/build")
-
-    def __install_compress_decompress_tools(self):
-        Runcmd.sendcmd("rm -rf ZIP", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir ZIP", workspace=f"{self.__ROOT_PATH}")
-
-        with self.__process("安装软算测试工具lzbench"):
-            Runcmd.sendcmd("git clone https://gitee.com/kunpeng_compute/lzbench.git --depth=1",
-                           workspace=f"{self.__ROOT_PATH}/ZIP")
-            Runcmd.sendcmd("make -j", workspace=f"{self.__ROOT_PATH}/ZIP/lzbench")
-
-        if "KAE" in str(self.__function_dict.keys()) or "QAT" in str(self.__function_dict.keys()):
-            with self.__process("安装带宽测试工具"):
-                Runcmd.sendcmd(f"make platform='{self.__platform}'",
-                               workspace=f"{self.__ROOT_PATH}/resources/bandwidth")
-                Runcmd.sendcmd(f"cp ./bin/bandwidth {self.__ROOT_PATH}/ZIP",
-                               workspace=f"{self.__ROOT_PATH}/resources/bandwidth")
-                Runcmd.sendcmd("make clean", workspace=f"{self.__ROOT_PATH}/resources/bandwidth")
 
     def __install_kae_dep(self):
         with self.__process("安装KAE相关依赖"):
@@ -304,9 +291,23 @@ class Installer(object):
             print("已经安装了libgpg-error，不用再安装了")
             return
 
+        info = self.__get_element_text("libgcrypt")
+        version = info.get("version")
+        download = info.get('url').format(version)
+        name = download.split('/')[-1]
+
+        Runcmd.sendcmd("rm -rf ./resources", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("mkdir resources", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("cd resources", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("mkdir libgcrypt", workspace=f"{self.__ROOT_PATH}/resources")
+
         Runcmd.sendcmd("rm -rf libgpg", workspace=f"{self.__ROOT_PATH}")
+        Runcmd.sendcmd("mkdir libgpg", workspace=f"{self.__ROOT_PATH}")
+
         with self.__process("安装libgcrypt"):
-            Runcmd.sendcmd(f"unzip libgpg-error-1.51.zip -d {self.__ROOT_PATH}/libgpg",
+            Runcmd.sendcmd(f"wget {download} --no-check-certificate",
+                           workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
+            Runcmd.sendcmd(f"tar -xvf {name} -C {self.__ROOT_PATH}/libgpg",
                            workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")
             Runcmd.sendcmd("chmod 777 autogen.sh; ./autogen.sh",
                            workspace=f"{self.__ROOT_PATH}/libgpg/libgpg-error-1.51")
@@ -316,86 +317,6 @@ class Installer(object):
 
             if not self.__chech_env_in_profile("LD_LIBRARY_PATH", "/usr/local/lib"):
                 Runcmd.sendcmd("echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> /etc/profile")
-
-    def __install_qat_dep(self):
-        with self.__process("安装QAT依赖包"):
-            Runcmd.sendcmd("yum install -y systemd-devel pciutils libudev-devel readline-devel libxml2-devel "
-                           "boost-devel elfutils-libelf-devel python3 libnl3-devel kernel-devel-$(uname -r) "
-                           "gcc gcc-c++ yasm nasm zlib openssl-devel zlib-devel make")
-
-    def __install_qat(self):
-        self.__install_qat_dep()
-
-        Runcmd.sendcmd(f"rm -rf ./QAT", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir -p QAT/qat_driver", workspace=f"{self.__ROOT_PATH}")
-
-        info = self.__get_element_text("QAT")
-
-        with self.__process("安装部署QAT驱动"):
-            download = info.get("driver")
-            bag = download.split('/')[-1]
-            decompresser = "unzip" if "zip" in bag else "tar -xf"
-            qat_hw_root = f"{self.__ROOT_PATH}/QAT/qat_driver"
-
-            os.putenv("ICP_ROOT", qat_hw_root)
-            Runcmd.sendcmd(f"wget {download} --no-check-certificate", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-            Runcmd.sendcmd(f"{decompresser} {bag}", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-            Runcmd.sendcmd("./configure", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-            Runcmd.sendcmd("make && make install", workspace=f"{self.__ROOT_PATH}/QAT/qat_driver")
-
-            Runcmd.sendcmd("service qat_service status && service qat_service restart")
-
-        with self.__process("安装部署QAT引擎"):
-            download = info.get("code_engine")
-            branch = info.get("branch_engine")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd(f"git clone {download} -b {branch} --depth=1", workspace=f"{self.__ROOT_PATH}/QAT")
-            Runcmd.sendcmd(f"./autogen.sh && ./configure --with-qat_hw-dir={qat_hw_root}",
-                           workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-            Runcmd.sendcmd(f"make && make install", workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-
-        with self.__process("安装部署QATzip"):
-            download = info.get("code_zip")
-            branch = info.get("branch_zip")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd(f"git clone {download} -b {branch} --depth=1", workspace=f"{self.__ROOT_PATH}/QAT")
-            Runcmd.sendcmd(f"./autogen.sh && ./configure --with-ICP_ROOT={qat_hw_root}",
-                           workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-            Runcmd.sendcmd("make clean && make all install", workspace=f"{self.__ROOT_PATH}/QAT/{dir}")
-
-            res = Runcmd.sendcmd("ls /usr/local/lib")
-            assert "qatzip.so" in res, "没有找到qatzip动态库"
-
-        self.__install_compress_decompress_tools()
-
-    def __install_hct_dep(self):
-        with self.__process("安装HCT依赖"):
-            Runcmd.sendcmd(
-                "yum install -y numactl libuuid-devel kernel-`uname -r` kernel-devel-`uname -r` python3-unversioned-command")
-
-    def __install_hct(self):
-        self.__install_hct_dep()
-
-        info = self.__get_element_text("HCT")
-        Runcmd.sendcmd("rm -rf HCT", workspace=f"{self.__ROOT_PATH}")
-        Runcmd.sendcmd("mkdir -p HCT/build", workspace=f"{self.__ROOT_PATH}")
-
-        with self.__process("安装HCT"):
-            download = info.get("devkit")
-            version = info.get("version")
-            dir = download.split('/')[-1].split('.')[0]
-
-            Runcmd.sendcmd(f"git clone {download} -n --filter=blob:none", workspace=f"{self.__ROOT_PATH}/HCT")
-            Runcmd.sendcmd(f"git restore --staged hct/pkg/{version} && git restore hct/pkg/{version}",
-                           workspace=f"{self.__ROOT_PATH}/HCT/{dir}")
-            Runcmd.sendcmd(f"rpm -ivh --nodeps hct-*.rpm", workspace=f"{self.__ROOT_PATH}/HCT/{dir}/hct/pkg/{version}",
-                           check=False)
-            Runcmd.sendcmd(f"cp ./Makefile {self.__ROOT_PATH}/HCT/build",
-                           workspace=f"{self.__ROOT_PATH}/HCT/{dir}/hct/pkg/{version}")
-            Runcmd.sendcmd("make && make install", workspace=f"{self.__ROOT_PATH}/HCT/build")
-            Runcmd.sendcmd("modprobe hct && /opt/hygon/hct/hct/script/hctconfig start")
 
     def __install_kqmalloc_dep(self):
         with self.__process("安装kqmalloc编译依赖"):
@@ -420,12 +341,6 @@ class Installer(object):
         if "Kunpeng" in res:
             self.__function_dict["KAE"] = self.__install_kae
             self.__function_dict["KQMalloc"] = self.__install_kqmalloc
-        elif "INTEL" in res:
-            self.__function_dict["QAT"] = self.__install_qat
-        elif "Hygon" in res:
-            self.__function_dict["HCT"] = self.__install_hct
-        else:
-            self.__function_dict["SOFT_COMPRESS"] = self.__install_compress_decompress_tools
 
     def get_support(self):
         return ' '.join(self.__function_dict.keys())

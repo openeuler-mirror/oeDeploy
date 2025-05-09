@@ -4,6 +4,12 @@
     state: present
   tags: dependency
 
+- name: "[Cleanup] Remove temporary files and directories"
+  file:
+    path: "{{ temp_path }}/BoostKit-AccLib"
+    state: absent
+  tags: cleanup
+
 - name: "[File] Ensure destination directory exists"
   file:
     path: "{{ temp_path }}"
@@ -14,4 +20,10 @@
   copy:
     src: "BoostKit-AccLib"
     dest: "{{ temp_path }}"
+  tags: file_transfer
+
+- name: "[File] Copy version.xml to remote host"
+  template:
+    src: "version.xml.j2"
+    dest: "{{ temp_path }}/BoostKit-AccLib/scripts/version.xml"
   tags: file_transfer
