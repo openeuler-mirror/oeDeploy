@@ -28,12 +28,14 @@ download() {
   wget -N --no-check-certificate $pcre_url
   wget -N --no-check-certificate $libgpg_url
 
+  rm -rf hyperscan
   git clone $Hyperscan_git -b khsel
   cp hyperscan/khsel.patch ./
   pushd hyperscan
   git checkout $Hyperscan_branch
   popd
 
+  rm -rf KAE
   git clone $KAE_git -b $KAE_branch --depth=1
 
   pip download "argparse>=1.4.0"
@@ -70,7 +72,7 @@ build_dir() {
   cp -af $download_dir/*.patch $patch_dir
 
   mkdir -p $wheel_dir
-  cp -af $download_dir/*.whl $wheel_dir
+  cp -af $download_dir/argparse-*.whl $wheel_dir
 }
 
 edit_xml() {
