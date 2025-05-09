@@ -40,6 +40,8 @@
 
 - name: "[Dependency] Install all wheel files from BoostKit-AccLib-wheels"
   pip:
-    name: "{{ temp_path }}/BoostKit-AccLib-wheels/*.whl"
+    name: "{{ item }}"
     state: present
+  with_fileglob:
+    - "{{ temp_path }}/BoostKit-AccLib-wheels/*.whl"
   tags: dependency
