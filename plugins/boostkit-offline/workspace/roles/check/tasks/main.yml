@@ -9,7 +9,7 @@
 - block:
     - name: "[Check] Initialize check results"
       set_fact:
-        check_results: [ ]
+        check_results: []
         check_failed: "false"
 
     - name: "[CPU] Verify Kunpeng-920 processor"
@@ -24,28 +24,6 @@
         check_results: "{{ check_results + ['CPU implementer: ' + cpu_implementer.stdout] }}"
         check_failed: "{{ check_failed or (cpu_implementer.stdout != '0x48') }}"
       tags: hardware_check
-
-    - name: "[Python] Validate pip repository accessibility"
-      pip:
-        name: pip
-        extra_args: >-
-          -i "{{ pip_index_url | default('https://pypi.org/simple', true) }}"
-          --disable-pip-version-check
-          --timeout 30
-          --retries 2
-        state: present
-      when: pip_index_url is defined
-      register: pip_validation
-      ignore_errors: yes
-      changed_when: false
-      tags: python_check
-
-    - name: "[Python] Record pip check result"
-      set_fact:
-        check_results: "{{ check_results + ['Pip repository: ' + (pip_validation is failed | ternary('Unavailable', 'Available'))] }}"
-        check_failed: "{{ check_failed or (pip_validation is failed) }}"
-      when: pip_index_url is defined
-      tags: python_check
 
     - name: "[Check] Display all check results"
       debug:

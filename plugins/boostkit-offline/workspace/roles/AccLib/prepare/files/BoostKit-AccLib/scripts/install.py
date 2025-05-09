@@ -162,14 +162,12 @@ class Installer(object):
         info = self.__get_element_text("Hyperscan")
 
         with self.__process("安装Hyperscan"):
-            stdout = Runcmd.sendcmd("lscpu | grep Architecture")
-            platform = "x86" if "x86" in stdout else "arm"
-            download = info.get(f"code_{platform}")
+            download = info.get("hyperscan_code")
             dir = download.split('/')[-1].split('.')[0]
 
             res = Runcmd.sendcmd("rpm -qa | grep boostkit-ksl")
             ksl_version = re.search("boostkit-ksl-(\d+.\d+.\d+)", res).group(1)
-            if platform == "arm" and check_version(ksl_version, "2.4.0"):
+            if check_version(ksl_version, "2.4.0"):
                 Runcmd.sendcmd(f"patch -p1 -N < ../../patch/khsel.patch",
                                workspace=f"{self.__ROOT_PATH}/Hyperscan/{dir}", check=False)
 
@@ -260,10 +258,11 @@ class Installer(object):
             print("已经安装了libgpg-error，不用再安装了")
             return
 
-        info = self.__get_element_text("libgcrypt")
-        download = info.get('libgcrypt_url')
+        info = self.__get_element_text("Libgcrypt")
+        download = info.get('libgpg')
         name = download.split('/')[-1]
 
+        Runcmd.sendcmd("mkdir libgpg", workspace=f"{self.__ROOT_PATH}")
         with self.__process("安装libgcrypt"):
             Runcmd.sendcmd(f"tar -xvf {name} -C {self.__ROOT_PATH}/libgpg",
                            workspace=f"{self.__ROOT_PATH}/resources/libgcrypt")

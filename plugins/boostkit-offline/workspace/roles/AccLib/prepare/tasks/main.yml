@@ -12,7 +12,9 @@
 
 - name: "[File] Transfer local file to remote host"
   copy:
-    src: "BoostKit-AccLib.tar.gz"
+    src:
+      - "BoostKit-AccLib.tar.gz"
+      - "BoostKit-AccLib-wheels"
     dest: "{{ temp_path }}"
   tags: file_transfer
 
@@ -21,3 +23,9 @@
     src: "{{ temp_path }}/BoostKit-AccLib.tar.gz"
     dest: "{{ temp_path }}"
   tags: file_transfer
+
+- name: "[Dependency] Install all wheel files from BoostKit-AccLib-wheels"
+  pip:
+    name: "{{ temp_path }}/BoostKit-AccLib-wheels/*.whl"
+    state: present
+  tags: dependency
