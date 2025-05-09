@@ -4,6 +4,16 @@
     state: present
   tags: dependency
 
+- name: "[Cleanup] Remove temporary files and directories"
+  file:
+    path: "{{ temp_path }}/{{ item }}"
+    state: absent
+  loop:
+    - "BoostKit-AccLib"
+    - "BoostKit-AccLib.tar.gz"
+    - "BoostKit-AccLib-wheels"
+  tags: cleanup
+
 - name: "[File] Ensure destination directory exists"
   file:
     path: "{{ temp_path }}"
@@ -12,15 +22,19 @@
 
 - name: "[File] Transfer local file to remote host"
   copy:
-    src:
-      - "BoostKit-AccLib.tar.gz"
-      - "BoostKit-AccLib-wheels"
+    src: "BoostKit-AccLib.tar.gz"
     dest: "{{ temp_path }}"
   tags: file_transfer
 
 - name: "[File] Unpack BoostKit-AccLib.tar.gz"
   unarchive:
     src: "{{ temp_path }}/BoostKit-AccLib.tar.gz"
+    dest: "{{ temp_path }}"
+  tags: file_transfer
+
+- name: "[File] Transfer wheels to remote host"
+  copy:
+    src: "BoostKit-AccLib-wheels"
     dest: "{{ temp_path }}"
   tags: file_transfer
 
