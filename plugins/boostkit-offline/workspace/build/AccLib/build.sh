@@ -1,7 +1,7 @@
 #!/bin/bash
 
 get_source() {
-  source "$DIR/source.cfg"
+  source "$DIR/build/AccLib/source.cfg"
 
   KSL_version=${KSL_version:-"2.5.0"}
   Hyperscan_branch=${Hyperscan_branch:-"v5.4.2.aarch64"}
