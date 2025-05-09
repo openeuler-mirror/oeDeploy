@@ -32,11 +32,6 @@
           -o json
       register: worker_pods_info
 
-    - name: Check if Worker Pod(s) exist
-      fail:
-        msg: "No Worker Pod(s) found!"
-      when: (worker_pods_info.stdout | from_json | json_query('items')) | length == 0
-
     - name: Check if every Worker Pod is running
       shell: |
         kubectl get pods -n {{ namespace }} \
@@ -51,6 +46,7 @@
           ==
           (worker_pods_status.stdout | from_json | json_query('items') | length)
         )
+      when: (worker_pods_info.stdout | from_json | json_query('items') | length) > 0
 
     - name: Get Head Pod name
       shell: |
@@ -70,16 +66,17 @@
         kubectl get pods -n {{ namespace }} \
           --selector=ray.io/node-type=worker \
           --field-selector=status.phase=Running \
+          --ignore-not-found \
           -o jsonpath='{.items[*].metadata.name}'
       register: worker_pods_query
-      failed_when: "'No resources found' in worker_pods_query.stderr"
+      failed_when: worker_pods_query.rc != 0
 
     - name: Merge Pod List
       set_fact:
         all_pods: >-
           {{
           (head_pod_query.stdout_lines | default([])) +
-          (worker_pods_query.stdout.split(' ') if worker_pods_query.stdout != '' else [])
+          ((worker_pods_query.stdout | default('')).split(' ') | reject('equalto', '') | list)
           }}
 
     - name: Copy files to all pods
