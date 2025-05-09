@@ -4,6 +4,12 @@
     state: present
   tags: dependency
 
+- name: "[Cleanup] Remove temporary files and directories"
+  file:
+    path: "{{ temp_path }}/BoostKit-AccLib"
+    state: absent
+  tags: cleanup
+
 - name: "[File] Ensure destination directory exists"
   file:
     path: "{{ temp_path }}"
