@@ -70,7 +70,7 @@ build_dir() {
   cp -af $download_dir/*.patch $patch_dir
 
   mkdir -p $wheel_dir
-  cp -af $download/*.whl $wheel_dir
+  cp -af $download_dir/*.whl $wheel_dir
 }
 
 edit_xml() {
