@@ -16,6 +16,15 @@
   - cni.tar
   - kube-controllers.tar
   - node.tar
+  when: runtime == "containerd"
+
+- name: Load calico images on all nodes
+  command: "docker load -i {{ images_dir }}/plugin/calico/{{ item }}"
+  with_items:
+  - cni.tar
+  - kube-controllers.tar
+  - node.tar
+  when: runtime == "docker"
 
 - name: Create calico directory
   file: name=/etc/kubernetes/plugins/calico state=directory

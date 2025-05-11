@@ -3,8 +3,14 @@
   when: 
   - init_cluster_force == "true"
 
-- name: Prepare kubernetes directory
-  file: name=/etc/kubernetes state=directory
+- block:
+  - name: Generate certificateKey
+    command: kubeadm certs certificate-key
+    register: generate_certificate_key_command
+
+  - name: Record certificateKey
+    set_fact:
+      certificate_key: "{{ generate_certificate_key_command.stdout }}"
 
 - name: Create kubeadm configuration file
   template:
@@ -14,20 +20,21 @@
     mode: 0644
 
 - name: Initial the first master node
-  shell: kubeadm init --config=/etc/kubernetes/kubeadm-config.yaml
+  command: kubeadm init --config=/etc/kubernetes/kubeadm-config.yaml --upload-certs
 
-- name: Create kubeconfig directory
-  file: name={{ ansible_env.HOME | default('/root') }}/.kube state=directory
+- block:
+  - name: Create kubeconfig directory
+    file: name={{ ansible_env.HOME | default('/root') }}/.kube state=directory
 
-- name: Master node copy kubeconfig file to .kube directory
-  copy:
-    src: /etc/kubernetes/admin.conf
-    dest: "{{ ansible_env.HOME | default('/root') }}/.kube/config"
-    mode: 0600
-    remote_src: yes
+  - name: Copy kubeconfig file to .kube directory
+    copy:
+      src: /etc/kubernetes/admin.conf
+      dest: "{{ ansible_env.HOME | default('/root') }}/.kube/config"
+      mode: 0600
+      remote_src: yes
 
-- name: Set the permissions for the kubeconfig file
-  file:
-    path: "{{ ansible_env.PWD | default('/root') }}/.kube/config"
-    owner: "{{ ansible_env.SUDO_USER | default('root') }}"
-    mode: '0600'
+  - name: Set the permissions for the kubeconfig file
+    file:
+      path: "{{ ansible_env.PWD | default('/root') }}/.kube/config"
+      owner: "{{ ansible_env.SUDO_USER | default('root') }}"
+      mode: '0600'

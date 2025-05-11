@@ -1,0 +1,42 @@
+- name: Reset first if init_cluster_force == "true"
+  shell: kubeadm reset -f
+  when: 
+  - init_cluster_force == "true"
+
+- block:
+  - name: Read kubeadm-config.yaml content
+    shell: cat /etc/kubernetes/kubeadm-config.yaml | grep certificateKey | awk '{print $2}'
+    register: certificate_key_line
+
+  - name: Get certificateKey
+    set_fact:
+      certificate_key: "{{ certificate_key_line.stdout }}"
+
+  - name: Record kubeadm join command
+    command: "kubeadm token create --print-join-command --certificate-key {{ certificate_key }}"
+    register: kubeadm_master_join_command
+    until: '"kubeadm join" in kubeadm_master_join_command.stdout'
+    retries: 5
+    delay: 5
+  delegate_to: "{{ groups['masters'][0] }}"
+
+- name: Join other master nodes
+  shell: "{{ kubeadm_master_join_command.stdout }}"
+  when: init_cluster_force == "true" or not stat_kubelet_conf.stat.exists
+
+- block:
+  - name: Create kubeconfig directory
+    file: name={{ ansible_env.HOME | default('/root') }}/.kube state=directory
+
+  - name: Copy kubeconfig file to .kube directory
+    copy:
+      src: /etc/kubernetes/admin.conf
+      dest: "{{ ansible_env.HOME | default('/root') }}/.kube/config"
+      mode: 0600
+      remote_src: yes
+
+  - name: Set the permissions for the kubeconfig file
+    file:
+      path: "{{ ansible_env.PWD | default('/root') }}/.kube/config"
+      owner: "{{ ansible_env.SUDO_USER | default('root') }}"
+      mode: '0600'

@@ -1,0 +1,25 @@
+- hosts:
+  - masters
+  - workers
+  - new-workers
+  roles:
+  - prepare/nameserver
+
+- hosts:
+  - new-workers
+  roles:
+  - prepare/base
+  - { role: prepare/containerd, when: "runtime == 'containerd'" }
+  - { role: prepare/docker, when: "runtime == 'docker'" }
+  - prepare/kubernetes
+  - prepare/images
+
+- hosts: 
+  - new-workers
+  roles:
+  - worker
+
+- hosts:
+  - new-workers
+  roles:
+  - plugins/calico

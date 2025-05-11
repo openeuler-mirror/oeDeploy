@@ -1,6 +1,7 @@
 - name: Disable rpcbind service
   shell: >
     systemctl disable --now rpcbind
+  ignore_errors: true
 
 - name: Uninstall packages
   yum:

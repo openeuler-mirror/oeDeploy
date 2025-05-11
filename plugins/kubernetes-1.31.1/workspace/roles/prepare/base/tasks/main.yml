@@ -3,19 +3,33 @@
     arch: "{{ ansible_architecture }}"
 
 - name: Prepare rpm directory
-  file: name=/k8s-install/rpm/ state=directory
+  file: name={{ rpm_dir }} state=directory
 
 - name: Install base package
   yum:
     name:
       - python3-libselinux
+      - python3-netaddr
       - tar
       - socat
       - conntrack-tools
       - libnetfilter_cttimeout
       - libnetfilter_cthelper
       - libnetfilter_queue
+      - ebtables
+      - iptables
     state: present
+
+- name: Copy all rpm packages to rpm directory
+  copy:
+    src: "{{ item }}"
+    dest: "{{ rpm_dir }}"
+    mode: "0644"
+  with_fileglob: "{{ oeversion }}/{{ arch }}/*.rpm"
+
+- name: Install base package
+  shell: yum localinstall -y --disablerepo=\* "{{ rpm_dir }}"/*.rpm --skip-broken
+  ignore_errors: true
 
 - name: Disable swap
   shell: >
@@ -97,3 +111,6 @@
 - name: Effective system parameters
   shell: "sysctl -p /etc/sysctl.d/99-sysctl-k8s.conf"
   ignore_errors: true
+
+- name: Setup hostname
+  shell: "hostnamectl set-hostname {{ inventory_hostname }}"

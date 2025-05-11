@@ -1,0 +1,42 @@
+- name: Copy docker binaries to /usr/bin
+  copy:
+    src: "{{ architecture }}/{{ item }}"
+    dest: /usr/local/bin/
+    mode: "0755"
+  with_items:
+  - docker-init
+  - ctr
+  - containerd
+  - containerd-shim-runc-v2
+  - dockerd
+  - docker-proxy
+  - docker
+  - runc
+  - cri-dockerd
+
+- name: Create docker systemd unit file
+  template: src=docker.service.j2 dest=/etc/systemd/system/docker.service
+
+- name: Enable and start docker service
+  shell: systemctl daemon-reload && systemctl enable --now docker
+
+- name: Waiting for docker to running
+  shell: "systemctl status docker | grep Active"
+  register: docker_status
+  until: '"running" in docker_status.stdout'
+  retries: 8
+  delay: 2
+
+- name: Create docker usergroup
+  shell: |
+    groupadd docker
+    usermod -aG docker $USER
+
+- name: Create cri-docker.service systemd unit file
+  template: src=cri-docker.service.j2 dest=/etc/systemd/system/cri-docker.service
+
+- name: Create cri-docker.socket systemd unit file
+  template: src=cri-docker.socket.j2 dest=/etc/systemd/system/cri-docker.socket
+
+- name: Enable and Start cri-docker service
+  shell: systemctl daemon-reload && systemctl enable --now cri-docker.socket

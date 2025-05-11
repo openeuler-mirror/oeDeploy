@@ -1,9 +1,23 @@
+- name: Prepare kubernetes directory
+  file: name=/etc/kubernetes state=directory
+
 - name: Read kubelet.conf file stat info
   stat: 
     path: /etc/kubernetes/kubelet.conf
   register: stat_kubelet_conf
 
-- include_tasks: master-init.yml
-  when: 
-  - init_cluster_force == "true" or not stat_kubelet_conf.stat.exists
-  - inventory_hostname == groups['masters'][0]
+- block:
+  - include_tasks: master-init.yml
+    when: 
+    - inventory_hostname == groups['masters'][0]
+
+  - include_tasks: master-join.yml
+    when: 
+    - inventory_hostname != groups['masters'][0]
+    - inventory_hostname in groups['masters']
+  when: init_cluster_force == "true" or not stat_kubelet_conf.stat.exists
+
+- name: Remove control-plane NoSchedule taint
+  shell: "kubectl taint node {{ inventory_hostname }} node-role.kubernetes.io/control-plane:NoSchedule-"
+  when:
+  - remove_master_no_schedule_taints == "true"

@@ -8,11 +8,11 @@ bootstrapTokens:
   - signing
   - authentication
 kind: InitConfiguration
+certificateKey: {{ certificate_key }}
 localAPIEndpoint:
   advertiseAddress: {{ CURRENT_HOST_IP }}
   bindPort: 6443
 nodeRegistration:
-  criSocket: unix:///var/run/containerd/containerd.sock
   imagePullPolicy: IfNotPresent
   imagePullSerial: true
   name: {{ inventory_hostname }}
@@ -26,12 +26,31 @@ timeouts:
   tlsBootstrap: 5m0s
   upgradeManifests: 5m0s
 ---
-apiServer: {}
+apiServer: 
+  certSANs:
+  - localhost
+  - kubernetes
+  - kubernetes.default
+  - kubernetes.default.svc
+  - kubernetes.default.svc.cluster
+  - kubernetes.default.svc.cluster.local
+  - 127.0.0.1
+  - 0:0:0:0:0:0:0:1
+  - {{ KUBERNETES_SERVICE_IP }}
+{% if lb_kube_apiserver_ip is defined %}
+  - {{ lb_kube_apiserver_ip | trim }}
+{% endif %}
+{% for host in (groups['masters'] | default([])) | unique %}
+  - {{ hostvars[host]['ansible_host'] }}
+{% endfor %}
 apiVersion: kubeadm.k8s.io/v1beta4
 caCertificateValidityPeriod: 87600h0m0s
 certificateValidityPeriod: "{{certs_expired|int * 24}}h0m0s"
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
+{% if groups['masters'] | length > 1 %}
+controlPlaneEndpoint: {{ CONTROL_PLANE_ENDPOINT }}
+{% endif %}
 controllerManager: {}
 dns: {}
 encryptionAlgorithm: RSA-2048

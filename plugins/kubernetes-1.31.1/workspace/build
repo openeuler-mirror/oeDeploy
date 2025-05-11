@@ -1,0 +1,292 @@
+#!/bin/bash
+# SPDX-License-Identifier: MulanPSL-2.0+
+# Copyright (c) 2020 Huawei Technologies Co., Ltd. All rights reserved.
+
+set -e
+
+SUPPORTED_OE_VERSION=( "22.03-LTS" "24.03-LTS" )
+
+KUBERNETES_VERSION=${KUBERNETES_VERSION:-"1.31.1"}
+CONTAINERD_VERSION=${CONTAINERD_VERSION:-"1.7.22"}
+DOCKER_VERSION=${DOCKER_VERSION:-"27.3.1"}
+CRI_DOCKER_VERSION=${CRI_DOCKER_VERSION:-"0.3.15"}
+CALICO_VERSION=${CALICO_VERSION:-"3.28.2"}
+
+DOCKER_PROXY=${DOCKER_PROXY:-"m.daocloud.io/"}
+# 官方地址：https://repo.openeuler.org 
+OE_REPO_URL=${OE_REPO_URL:-"https://mirrors.aliyun.com/openeuler"}
+# 官方地址：https://download.docker.com/linux/static/stable
+DOCKER_DOWNLOAD_URL=${DOCKER_DOWNLOAD_URL:-"https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/static/stable"}
+# 官方地址：https://dl.k8s.io mirror参考: https://github.com/DaoCloud/public-binary-files-mirror
+DL_K8S_IO_URL=${DL_K8S_IO_URL:-"https://files.m.daocloud.io/dl.k8s.io"}
+# github代理：https://gh-proxy.test.osinfra.cn/  https://gh.idayer.com/  https://ghproxy.cn/
+GITHUB_PROXY=${GITHUB_PROXY:-"https://ghproxy.cn/"}
+
+CURRENT_PATH=$(cd `dirname $0/`;pwd)
+
+HOST_ARCH=$(uname -m)
+case "$HOST_ARCH" in
+    x86_64)
+        HOST_ARCH="amd64"
+        SUPPORTED_ARCH=( "amd64" "arm64" )
+        ;;
+    aarch64)
+        HOST_ARCH="arm64"
+        SUPPORTED_ARCH=( "arm64" "amd64" )
+        ;;
+esac
+
+_rename_arch() {
+    case "$1" in
+    amd64)
+        echo "x86_64"
+        ;;
+    arm64)
+        echo "aarch64"
+        ;;
+    esac
+}
+
+prepare_repo_meta() {
+    local arch=$(_rename_arch $1)
+    local tmp_dir="$CURRENT_PATH/tmp"
+
+    mkdir -p $tmp_dir
+    pushd $tmp_dir
+    for oe_version in "${SUPPORTED_OE_VERSION[@]}"; do
+        # get -primary.xml, for example: 3a11516e8e5eae0dbdbd86555d51052eb6d4f66f350221d93c13c8c84e8c88c1-primary.xml
+        [ ! -e openEuler-$oe_version-$arch-repomd.xml ] && wget --no-check-certificate $OE_REPO_URL/openEuler-$oe_version/everything/$arch/repodata/repomd.xml -O openEuler-$oe_version-$arch-repomd.xml
+        commpressed_primary_xml=`cat openEuler-$oe_version-$arch-repomd.xml | grep "[A-Za-z0-9]-primary.xml.*" | awk -F'repodata/' '{print $2}' | awk -F'"' '{print $1}'`
+        primary_xml=`echo "$commpressed_primary_xml" | awk '{sub(/-primary.xml.zst$|-primary.xml.gz$/, "-primary.xml"); print}'`
+        if [ ! -e $primary_xml ]; then
+            wget --no-check-certificate $OE_REPO_URL/openEuler-$oe_version/everything/$arch/repodata/$commpressed_primary_xml
+            zstd -df $commpressed_primary_xml || gunzip $commpressed_primary_xml
+        fi
+        
+        cp $primary_xml openEuler-$oe_version-$arch-primary.xml
+    done
+    popd
+
+}
+
+_search_rpm() {
+    local oe_version=$1
+    local arch=$2
+    local package=$3
+    cat $CURRENT_PATH/tmp/openEuler-$oe_version-$arch-primary.xml | grep "Packages/$package-[0-9].*.rpm" | awk -F'Packages/' '{print $2}' | awk -F'"' '{print $1}'
+}
+
+prepare_rpm_packages() {
+    local arch=$(_rename_arch $1)
+
+    packages=(
+        python3-libselinux
+        tar
+        socat
+        conntrack-tools
+        libnetfilter_cttimeout
+        libnetfilter_cthelper
+        libnetfilter_queue
+    )
+
+    for oe_version in "${SUPPORTED_OE_VERSION[@]}"; do
+        local tmp_dir="$CURRENT_PATH/tmp/$oe_version/$arch"
+        local dest_dir="$CURRENT_PATH/roles/prepare/base/files/$oe_version/$arch"
+
+        mkdir -p $tmp_dir
+        mkdir -p $dest_dir
+
+        pushd $tmp_dir
+        for package in "${packages[@]}"; do
+            rpm_package=$(_search_rpm "$oe_version" "$arch" "$package" )
+
+            [ ! -e $rpm_package ] && wget --no-check-certificate "$OE_REPO_URL/openEuler-$oe_version/everything/$arch/Packages/$rpm_package"
+            cp $rpm_package $dest_dir
+        done
+
+        popd
+    done
+
+}
+
+_download_and_save_image() {
+    local image=$1
+    local path=$2
+    local arch=$3
+
+    tar_name=`echo "$image" | awk -F'/' '{print $NF}' | awk -F':' '{print $1}'`
+    [ -e "$path/$tar_name.tar" ] && return 0
+
+    if [[ -n "$DOCKER_PROXY" ]]; then
+        docker pull --platform linux/$arch $DOCKER_PROXY$image
+        docker tag $DOCKER_PROXY$image $image
+    else
+        docker pull --platform linux/$arch $image
+    fi
+
+    docker save -o "$path/$tar_name.tar" $image
+}
+
+prepare_containerd_binaries() {
+    local arch=$1
+
+    local tmp_dir="$CURRENT_PATH/tmp/$arch"
+    local ctd_dir="$CURRENT_PATH/roles/prepare/containerd/files/$arch"
+
+    mkdir -p $tmp_dir
+    mkdir -p $ctd_dir
+
+    pushd $tmp_dir
+
+    local containerd_pkg="containerd-$CONTAINERD_VERSION-linux-$arch.tar.gz"
+    [ ! -e $containerd_pkg ] && wget --no-check-certificate "$GITHUB_PROXY"https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERSION/$containerd_pkg
+    tar xzvf $containerd_pkg && echo "Extracted $containerd_pkg successfully" || { rm -f $containerd_pkg; echo "Download containerd failed"; exit 1; }
+    cp $tmp_dir/bin/* $ctd_dir
+    
+    [ ! -e runc.$arch ] && wget --no-check-certificate "$GITHUB_PROXY"https://github.com/opencontainers/runc/releases/download/v1.1.15/runc.$arch
+    cp runc.$arch $ctd_dir/runc
+
+    popd
+}
+
+prepare_docker_binaries() {
+    local arch=$1
+
+    local tmp_dir="$CURRENT_PATH/tmp/$arch"
+    local docker_dir="$CURRENT_PATH/roles/prepare/docker/files/$arch"
+    
+    mkdir -p $tmp_dir
+    mkdir -p $docker_dir
+
+    pushd $tmp_dir
+
+    local docker_pkg="docker-$DOCKER_VERSION.tgz"
+    [ ! -e $docker_pkg ] && wget --no-check-certificate "$DOCKER_DOWNLOAD_URL"/$(_rename_arch $arch)/$docker_pkg
+    tar xzvf $docker_pkg && echo "Extracted $docker_pkg successfully" || { rm -f $docker_pkg; echo "Download $docker_pkg failed"; exit 1; }
+    cp $tmp_dir/docker/* $docker_dir
+
+    local cri_docker_pkg="cri-dockerd-$CRI_DOCKER_VERSION.$arch.tgz"
+    [ ! -e $cri_docker_pkg ] && wget --no-check-certificate "$GITHUB_PROXY"https://github.com/Mirantis/cri-dockerd/releases/download/v$CRI_DOCKER_VERSION/$cri_docker_pkg
+    tar xzvf $cri_docker_pkg && echo "Extracted $cri_docker_pkg successfully" || { rm -f $cri_docker_pkg; echo "Download $cri_docker_pkg failed"; exit 1; }
+    cp $tmp_dir/cri-dockerd/* $docker_dir
+
+    popd
+}
+
+prepare_kubernetes_binaries() {
+    local arch=$1
+
+    local tmp_dir="$CURRENT_PATH/tmp/$arch"
+    local k8s_dir="$CURRENT_PATH/roles/prepare/kubernetes/files/$arch"
+
+    mkdir -p $tmp_dir
+    mkdir -p $k8s_dir
+
+    pushd $tmp_dir
+
+    local crictl_pkg="crictl-v$KUBERNETES_VERSION-linux-$arch.tar.gz"
+    [ ! -e $crictl_pkg ] && wget --no-check-certificate "$GITHUB_PROXY"https://github.com/kubernetes-sigs/cri-tools/releases/download/v$KUBERNETES_VERSION/$crictl_pkg
+    tar Cxzvf $k8s_dir/ $crictl_pkg && echo "Extracted $crictl_pkg successfully" || { rm -f $crictl_pkg; echo "Download crictl failed"; exit 1; }
+
+    local kubernetes_download_url="$DL_K8S_IO_URL/v$KUBERNETES_VERSION/bin/linux/$arch"
+    components=(
+        "kubeadm"
+        "kubelet"
+        "kubectl"
+    )
+    for component in "${components[@]}"; do
+        [ ! -e "$component.$KUBERNETES_VERSION" ] && wget --no-check-certificate "$kubernetes_download_url/$component" -O "$component.$KUBERNETES_VERSION"
+        cp "$component.$KUBERNETES_VERSION" "$k8s_dir/$component"
+    done
+
+    popd
+}
+
+prepare_kubernetes_images() {
+    local dest_dir="$CURRENT_PATH/roles/prepare/images/files/$arch"
+    mkdir -p $dest_dir
+
+    if [ ${#KUBERNETES_IMAGES[@]} -eq 0 ]; then
+        chmod +x "roles/prepare/kubernetes/files/$HOST_ARCH/kubeadm"
+        export KUBERNETES_IMAGES=(`"./roles/prepare/kubernetes/files/$HOST_ARCH/kubeadm" config images list --kubernetes-version=$KUBERNETES_VERSION`) 
+    fi
+
+    for image in "${KUBERNETES_IMAGES[@]}"; do
+        _download_and_save_image $image $dest_dir $arch
+        if [ -z $PAUSE_IMAGE ]; then
+            [[ "$image" == *"pause"* ]] && export PAUSE_IMAGE=$image
+        fi
+    done    
+}
+
+prepare_plugins_calico() {
+    local arch=$1
+    local dest_dir="roles/plugins/calico/files/$arch"
+    mkdir -p $dest_dir
+
+    if [ ${#CALICO_IMAGES[@]} -eq 0 ]; then
+        if [ ! -e tmp/calico-v$CALICO_VERSION.yaml ]; then
+            wget --no-check-certificate "$GITHUB_PROXY"https://raw.githubusercontent.com/projectcalico/calico/v$CALICO_VERSION/manifests/calico.yaml -O tmp/calico-v$CALICO_VERSION.yaml
+        fi
+        cp tmp/calico-v$CALICO_VERSION.yaml roles/plugins/calico/files/calico-v$CALICO_VERSION.yaml
+
+        export CALICO_IMAGES=(`grep "image:" tmp/calico-v$CALICO_VERSION.yaml | uniq | awk '{print $2}'`)
+
+        if [ ${#CALICO_IMAGES[@]} -eq 0 ]; then
+            rm -f tmp/calico-v$CALICO_VERSION.yaml
+            echo "Download calico-v$CALICO_VERSION.yaml failed. Try to run build.sh again..."
+            exit 1
+        fi
+    fi
+
+    for image in "${CALICO_IMAGES[@]}"; do
+        _download_and_save_image $image $dest_dir $arch
+    done
+
+}
+
+prepare_plugins_ingress() {
+    local arch=$1
+    local dest_dir="roles/plugins/ingress/files/$arch"
+    mkdir -p $dest_dir
+
+    if [ ${#INGRESS_IMAGES[@]} -eq 0 ]; then
+	local ingress=$CURRENT_PATH/roles/plugins/ingress/templates/ingress-nginx.yaml.j2
+
+        export INGRESS_IMAGES=(`grep "image:" $ingress | uniq | awk '{print $2}'`)
+
+        if [ ${#INGRESS_IMAGES[@]} -eq 0 ]; then
+            echo "Get ingress images failed, please check $ingress file content."
+            exit 1
+        fi
+    fi
+
+    for image in "${INGRESS_IMAGES[@]}"; do
+        _download_and_save_image $image $dest_dir $arch
+    done
+}
+
+pushd $CURRENT_PATH
+
+declare -a KUBERNETES_IMAGES=()
+declare -a CALICO_IMAGES=()
+declare -a INGRESS_IMAGES=()
+
+for arch in "${SUPPORTED_ARCH[@]}"; do
+    prepare_repo_meta $arch
+    prepare_rpm_packages $arch
+    prepare_containerd_binaries $arch
+    prepare_docker_binaries $arch
+    prepare_kubernetes_binaries $arch
+    prepare_kubernetes_images $arch
+    prepare_plugins_calico $arch
+    prepare_plugins_ingress $arch
+done
+
+sed -i "s|^kubernetes_version=.*|kubernetes_version=\"${KUBERNETES_VERSION}\"|g"    hosts.ini
+sed -i "s|^pause_image=.*|pause_image=\"${PAUSE_IMAGE}\"|g"                         hosts.ini
+sed -i "s|^calico_version=.*|calico_version=\"${CALICO_VERSION}\"|g"                hosts.ini
+sed -i "s|^containerd_version=.*|containerd_version=\"${CONTAINERD_VERSION}\"|g"    hosts.ini
+sed -i "s|^docker_version=.*|docker_version=\"${DOCKER_VERSION}\"|g"                hosts.ini
+
+popd
