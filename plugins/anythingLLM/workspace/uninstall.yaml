@@ -11,7 +11,7 @@
       ignore_errors: true
 
     - name: delete docker image
-      shell: docker rmi {{ docker_image }}
+      shell: docker rmi {{ anythingLLM_image_url[ansible_architecture] }}
       ignore_errors: true
 
     - name: check if docker_already_deploy file exists

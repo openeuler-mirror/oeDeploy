@@ -23,6 +23,11 @@
 - name: mv docker file to /usr/bin
   shell: mv {{ docker_download_path }}/docker/* /usr/bin
 
+- name: create directory /etc/docker
+  shell: >
+    [ -d /etc/docker ];
+    mkdir -p /etc/docker
+
 - name: configur docker image url
   template: src=daemon.json.j2 dest=/etc/docker/daemon.json
 
