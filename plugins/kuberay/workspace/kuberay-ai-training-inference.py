@@ -17,6 +17,8 @@ from tqdm import tqdm
 train_batch_size = {{ training.batch_size }}
 # 定义训练次数
 train_epoch = {{ training.epoch }}
+# 可用的 pod 个数
+train_num_pods = {{ ray_cluster_values.worker.num }} + 1
 
 # 推理数据预处理函数
 def preprocess_for_inference(image_path):
@@ -121,7 +123,7 @@ def train_func_per_worker(config: Dict):
         # 打印每个 epoch 的耗时
         if ray.train.get_context().get_world_rank() == 0:
             elapsed_time = time.time() - start_time
-            print(f"Epoch {epoch} ended, elapsed time: {elapsed_time:.2f} s")
+            print(f"Epoch {epoch + 1} ended, elapsed time: {elapsed_time:.2f} s")
         
         # 报告指标
         metrics = {
@@ -136,7 +138,7 @@ def train_func_per_worker(config: Dict):
         ray.train.report(metrics)
 
 # 主训练函数
-def train_fashion_mnist(num_workers=2, use_gpu=False):
+def train_fashion_mnist(num_workers, use_gpu=False):
     global_batch_size = train_batch_size
     train_config = {
         "lr": 1e-3,
@@ -156,4 +158,4 @@ def train_fashion_mnist(num_workers=2, use_gpu=False):
       print(f"Target picture belongs to class: {class_names[result.metrics['inference_result']]}")
 
 if __name__ == "__main__":
-    train_fashion_mnist(num_workers=4, use_gpu=False)
+    train_fashion_mnist(num_workers=train_num_pods, use_gpu=False)

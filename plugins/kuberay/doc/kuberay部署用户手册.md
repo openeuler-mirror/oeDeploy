@@ -30,7 +30,7 @@ all:
     version: 1.2.2                     # KubeRay chart 的版本
 
     helm_repo_name: "kuberay"          # 本地 Helm 仓库别名
-    helm_repo_url: "https://ray-project.github.io/kuberay-helm" # Helm 仓库 url
+    helm_repo_url: "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/kuberay-helm"
 
     kuberay_operator_values_file: ""
     # 以上配置项 kuberay_operator_values_file 为高级配置：指定一个 values 文件，用于自定义 
@@ -43,8 +43,8 @@ all:
     # 以上配置项 ray_cluster_values_file 为高级配置：指定一个 values 文件，用于自定义 
     # Ray 组件的安装。需填写绝对路径，若留空，则采用以下配置：
     ray_cluster_values:
-      repository: "m.daocloud.io/docker.io/rayproject/ray" # Ray docker 镜像 url
-      tag: 2.9.0                       # Ray docker 仓库 tag
+      repository: "hub.oepkgs.net/oedeploy/rayproject/ray" # Ray docker 镜像 url
+      tag: 2.9.0                       # Ray docker 仓库 tag；使用默认 docker 源时，x86 为 2.9.0, arm 为 2.9.0-aarch64；具体的 tag 请至配置的仓库确认
       head:                            # 头节点资源
         cpu: "1"
         memory: "2G"
@@ -52,10 +52,10 @@ all:
         num: 1
         cpu: "1"
         memory: "1G"
-      training:                        # 模型训练参数
-        pip: "https://pypi.tuna.tsinghua.edu.cn/simple"
-        batch_size: 1024
-        epoch: 5
+    training:                        # 模型训练参数
+      pip: "https://pypi.tuna.tsinghua.edu.cn/simple"
+      batch_size: 1024
+      epoch: 5
 
 ```
 
@@ -81,11 +81,44 @@ kuberay       ray-cluster-kuberay-head-svc   NodePort    10.96.168.232   <none> 
 使用 [http://ip:port/] 链接，即可打开 Dashboard 页面，查看 Ray Job / Serve / Cluster 及资源、日志等信息。其中 IP 为 master 节点 IP，port 为 3.1 中 8265 对应的端口。
 
 
-## Demo: 基于 FashionMNIST 数据集的 MLP 模型训练推理
-
-- 已完成 KubeRay 部署，节点资源要求至少 5U
-- 在 master 节点，执行以下命令，即可一键自动完成模型训练、推理
+## Demo1: 基于 FashionMNIST 数据集的 MLP 模型训练推理
+- 已完成 KubeRay 部署，Pod 资源要求至少 5U。
+- 在 master 节点，执行以下命令，即可一键自动完成模型训练、推理。
     ````bash
-    oedp run train -p kuberay-1.2.2
+    oedp run train -p kuberay
     ````
-  
+
+
+## Demo2: 单 Pod 与多 Pod 运行同个训练模型的时间对比
+在 Kuberay 部署前，通过修改 config.yaml，进行 Pod 资源配置。
+### 1. 将单 Pod 的资源设置为：
+  ````bash
+  head:
+    cpu: "7"
+    memory: "14G"
+  worker:
+    num: 0
+  ````
+  然后执行：
+  ````bash
+  oedp run install -p kuberay
+  oedp run train -p kuberay
+  ````
+### 2. 将多 Pod 的资源设置为：
+  ````bash
+  head:
+    cpu: "7"
+    memory: "14G"
+  worker:
+    num: 2
+    cpu: "5"
+    memory: "10G"
+  ````
+  然后执行：
+  ````bash
+  oedp run install -p kuberay
+  oedp run train -p kuberay
+  ````
+### 3. 对比两者运行时间 
+
+该条件下，单 Pod 运行时间约为 25s，多 Pod 运行时间约为 67s。
