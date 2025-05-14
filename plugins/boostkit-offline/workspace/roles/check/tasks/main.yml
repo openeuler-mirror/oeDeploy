@@ -1,0 +1,44 @@
+- name: "[Check] Skip all checks if skip_check is true"
+  debug:
+    msg: "Skipping all checks"
+  when: >
+    skip_check is defined and 
+    (skip_check == true or skip_check | string == "true")
+  tags: never
+
+- block:
+    - name: "[Check] Initialize check results"
+      set_fact:
+        check_results: []
+        check_failed: "false"
+
+    - name: "[CPU] Verify Kunpeng-920 processor"
+      shell: |
+        grep -m1 "CPU implementer" /proc/cpuinfo | awk '{print $4}'
+      register: cpu_implementer
+      changed_when: false
+      tags: hardware_check
+
+    - name: "[CPU] Record CPU check result"
+      set_fact:
+        check_results: "{{ check_results + ['CPU implementer: ' + cpu_implementer.stdout] }}"
+        check_failed: "{{ check_failed or (cpu_implementer.stdout != '0x48') }}"
+      tags: hardware_check
+
+    - name: "[Check] Display all check results"
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ check_results }}"
+
+    - name: "[Check] Abort if any check failed"
+      fail:
+        msg: >-
+          Pre-deployment checks failed:
+          {% for result in check_results %}
+          - {{ result }}
+          {% endfor %}
+          Please fix the issues and try again.
+      when: check_failed
+  when: >
+    skip_check is not defined or 
+    (skip_check != true and skip_check | string != "true")
