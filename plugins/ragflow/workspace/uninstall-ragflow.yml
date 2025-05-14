@@ -1,4 +1,4 @@
-- name: Delete RAGFlow
+- name: Uninstall RAGFlow
   hosts: all
   become: yes
 

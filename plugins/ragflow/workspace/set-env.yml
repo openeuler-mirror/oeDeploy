@@ -2,9 +2,6 @@
   hosts: all
   become: yes
 
-  vars:
-    MIN_MAX_MAP_COUNT: 262144
-
   tasks:
     - name: Install packages
       yum:

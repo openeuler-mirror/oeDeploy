@@ -18,6 +18,8 @@ all:
     MIN_MEM_GB: 15
     # 最小磁盘
     MIN_DISK_GB: 45
+    # 最小 vm.max_map_count
+    MIN_MAX_MAP_COUNT: 262144
 
     # 容器镜像
     RAGFLOW_ARM_IMAGE_NAME: hub.oepkgs.net/oedeploy/infiniflow/aarch64/ragflow

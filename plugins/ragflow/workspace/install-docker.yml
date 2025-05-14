@@ -5,10 +5,7 @@
   vars:
     MIN_DOCKER_VERSION: "24.0.0"
     DOCKER_PKGS:
-      - docker-client
-      - docker-compose
-      - docker-engine
-    DOCKER_CONF_PATH: /etc/docker/daemon.json
+      - docker
 
   tasks:
     - name: Check if Docker is installed
@@ -57,6 +54,17 @@
           }}
       tags: install
 
+    - name: Copy openEuler2409.repo to /etc/yum.repo.d
+      ansible.builtin.copy:
+        src: openEuler2409.repo
+        dest: /etc/yum.repos.d/openEuler2409.repo
+        owner: root
+        group: root
+        mode: 0644
+      when: requires_installation
+      notify: Clean yum cache
+      tags: install
+
     - name: Install Docker packages
       ansible.builtin.yum:
         name: "{{ DOCKER_PKGS }}"
@@ -94,13 +102,51 @@
       when: requires_installation
       tags: install
 
+    - name: Create /etc/docker directory
+      file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
     - name: Deploy new configuration template
       ansible.builtin.template:
         src: daemon.j2
-        dest: "{{ DOCKER_CONF_PATH }}"
+        dest: /etc/docker/daemon.json
         mode: "0644"
         backup: yes
       notify: Restart docker service
+
+    - name: Set dynamic docker-compose-plugin download URL
+      ansible.builtin.set_fact:
+        download_url: "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/docker-compose-plugin-2.27.1-1.{{ ansible_architecture }}.tar.gz"
+
+    - name: Download docker-compose-plugin tarball
+      ansible.builtin.get_url:
+        url: "{{ download_url }}"
+        dest: /opt/
+        timeout: 900
+      register: download_result
+      until: download_result is success
+      retries: 3
+      delay: 10
+
+    - name: Unarchive docker-compose-plugin package
+      unarchive:
+        src: "/opt/docker-compose-plugin-2.27.1-1.{{ ansible_architecture }}.tar.gz"
+        dest: /opt
+        remote_src: yes
+
+    - name: Copy docker-compose binary file
+      ansible.builtin.command: "cp -rf /opt/docker-compose-plugin-2.27.1-1.{{ ansible_architecture }}/usr/libexec/docker /usr/libexec"
+      changed_when: false
+
+    - name: Start and enable Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
 
   handlers:
     - name: Clean yum cache
