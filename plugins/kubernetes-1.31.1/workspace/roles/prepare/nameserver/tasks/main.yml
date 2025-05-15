@@ -1,0 +1,9 @@
+- name: Insert hosts record
+  lineinfile:
+    path: "/etc/hosts"
+    regexp: "{{ item }}"
+    line: "{{ hostvars[item]['ansible_host'] }} {{ item }}"
+  with_items:
+  - "{{ groups['masters'] }}"
+  - "{{ groups['workers'] }}"
+  - "{{ groups['new-workers'] }}"

@@ -1,1 +1,10 @@
-CURRENT_HOST_IP: "{{ inventory_hostname }}"
+CURRENT_HOST_IP: "{% if hostvars[inventory_hostname]['ansible_host'] is defined %}{{ hostvars[inventory_hostname]['ansible_host'] }}{% else %}{{ inventory_hostname }}{% endif %}"
+
+CONTROL_PLANE_ENDPOINT: >-
+  {% if lb_kube_apiserver_ip is not defined %}
+    {{ CURRENT_HOST_IP | trim }}:{{ lb_kube_apiserver_port | trim }}
+  {% else %}
+    {{ lb_kube_apiserver_ip | trim }}:{{ lb_kube_apiserver_port | trim }}
+  {% endif %}
+
+KUBERNETES_SERVICE_IP: "{{ service_cidr | ipaddr('net') | ipaddr(1) | ipaddr('address') }}"

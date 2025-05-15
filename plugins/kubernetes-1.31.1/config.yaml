@@ -2,33 +2,64 @@ all:
   children:
     masters:
       hosts:
+        # master节点数量须为奇数
         HOST_IP1:                          # e.g. 192.168.10.1
           ansible_host: HOST_IP1           # e.g. 192.168.10.1
           ansible_port: 22
           ansible_user: root
           ansible_password: ""
           architecture: amd64              # e.g. [ amd64, arm64 ]
-          oeversion: 22.03-LTS             # e.g. [ 22.03-LTS, 24.03-LTS ]
+          oeversion: 24.03-LTS             # e.g. [ 22.03-LTS, 24.03-LTS ]
+          runtime: docker                  # e.g. [ docker, containerd ]
+        # HOST_IP2:
+        #   ansible_host: HOST_IP2
+        #   ansible_port: 22
+        #   ansible_user: root
+        #   ansible_password: ""
+        #   architecture: amd64
+        #   oeversion: 24.03-LTS
+        #   runtime: docker
+        # HOST_IP3:
+        #   ansible_host: HOST_IP3
+        #   ansible_port: 22
+        #   ansible_user: root
+        #   ansible_password: ""
+        #   architecture: amd64
+        #   oeversion: 24.03-LTS
+        #   runtime: docker
     workers:
       hosts:
-        HOST_IP2:
-          ansible_host: HOST_IP2
+        HOST_IP4:
+          ansible_host: HOST_IP4
           ansible_port: 22
           ansible_user: root
           ansible_password: ""
           architecture: amd64
-          oeversion: 22.03-LTS
-        HOST_IP3:
-          ansible_host: HOST_IP3
+          oeversion: 24.03-LTS
+          runtime: docker
+        HOST_IP5:
+          ansible_host: HOST_IP5
           ansible_port: 22
           ansible_user: root
           ansible_password: ""
           architecture: amd64
-          oeversion: 22.03-LTS
+          oeversion: 24.03-LTS
+          runtime: docker
+    new-workers:  # new-workers字段不可删除
+      hosts:
   vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
     init_cluster_force: "true"             # e.g. [ "true", "false" ]  强制初始化集群
+    remove_master_no_schedule_taints: "true"
     service_cidr: 10.96.0.0/16             # 服务网段
     pod_cidr: 10.244.0.0/16                # pod ip 网段
     certs_expired: 3650                    # 证书过期时间
+    # lb_kube_apiserver_ip:
+    lb_kube_apiserver_port: 8443
     has_deployed_containerd: "false"       # e.g. [ "true", "false" ]  是否已有 containerd
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # 以下参数需要与build过程中的host.ini保持一致，如果不涉及请忽视
+    kubernetes_version: 1.31.1
+    calico_version: 3.28.2
+    pause_image: "registry.k8s.io/pause:3.10"

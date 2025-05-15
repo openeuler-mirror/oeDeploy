@@ -1,0 +1,6 @@
+# 提权操作
+ansible_become: true
+
+# haproxy负载均衡算法，常见如下：
+# "roundrobin", "leastconn", "source", "uri"
+haproxy_balance_alg: "roundrobin"

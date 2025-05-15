@@ -1,0 +1,23 @@
+global
+    log /dev/log    local1 warning
+    chroot /var/lib/haproxy
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    timeout connect 5s
+    timeout client  10m
+    timeout server  10m
+
+listen kube-master
+    bind :{{ lb_kube_apiserver_port }}
+    mode tcp
+    option tcplog
+    option dontlognull
+    option dontlog-normal
+    balance {{ haproxy_balance_alg }}
+{% for host in groups['masters'] %}
+    server {{ host }} {% if hostvars[host]['ansible_host'] is defined %}{{ hostvars[host]['ansible_host'] }}{% else %}{{ host }}{% endif %}:6443 check check-ssl verify none
+{% endfor %}

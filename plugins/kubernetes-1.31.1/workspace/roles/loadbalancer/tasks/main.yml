@@ -1,0 +1,29 @@
+- name: Install haproxy
+  yum:
+    name: haproxy
+    state: present
+
+- name: Create haproxy directory
+  file: name=/etc/haproxy state=directory
+
+- name: Configuration haproxy
+  template:
+    src: haproxy/haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+
+- name: Systemctl daemon-reload
+  systemd:
+    daemon_reload: yes
+
+- name: Enable haproxy service
+  service:
+    name: haproxy
+    state: restarted
+    enabled: yes
+
+- name: Waiting for haproxy to running
+  shell: "systemctl status haproxy.service|grep Active"
+  register: haproxy_status
+  until: '"running" in haproxy_status.stdout'
+  retries: 8
+  delay: 2

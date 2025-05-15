@@ -9,7 +9,14 @@ action:
         playbook: init-k8s.yml
         vars: variables.yml
         scope: all
-  delete:
+  add-workers:
+    description: add new workers
+    tasks:
+      - name: add new workers
+        playbook: add-node.yml
+        vars: variables.yml
+        scope: all
+  uninstall:
     description: delete kubernetes
     tasks:
       - name: delete kubernetes
