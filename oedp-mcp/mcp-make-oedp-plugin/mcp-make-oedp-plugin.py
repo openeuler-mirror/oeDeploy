@@ -1,8 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Copyright (c) 2024 Huawei Technologies Co., Ltd.
+# oeDeploy is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#     http://license.coscl.org.cn/MulanPSL2
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR
+# PURPOSE.
+# See the Mulan PSL v2 for more details.
+# Create: 2025-03-30
+# ======================================================================================================================
+import argparse
 from mcp.server.fastmcp import FastMCP
 import os
 
 DEFAULT_DIR = "~/.oedp/"
-DEVELOP_GUIDE_PATH = "~/.oedp/mcp/DevelopGuide.md"
+
+develop_guide_path = ""
 
 # Initialize FastMCP server
 mcp = FastMCP("编写一个oeDeploy插件/oedp插件", log_level="ERROR")
@@ -17,6 +32,9 @@ async def make_plugin_auto(plugin: str, parent_dir: str) -> str:
     Returns:
         str: 下一步需要执行的指令
     """
+    # 检查开发文档路径
+    if not os.path.exists(develop_guide_path):
+        return f"[Fail]开发文档不存在: {develop_guide_path}"
     
     # 检查父路径是否存在并转换为绝对路径
     if parent_dir and os.path.exists(parent_dir):
@@ -24,15 +42,23 @@ async def make_plugin_auto(plugin: str, parent_dir: str) -> str:
     else:
         parent_dir = os.path.abspath(os.path.expanduser(DEFAULT_DIR))
     
-    develop_guide_path = os.path.abspath(os.path.expanduser(DEVELOP_GUIDE_PATH))
-    
     return "请帮我执行: {" + f"""
 1. (重要!)仔细阅读oeDeploy插件的开发文档{develop_guide_path},根据用户对eDeploy插件功能的详细描述,完成对oeDeploy插件的开发
 2. 开发完成后,用指定方式打包成tar.gz到{parent_dir}目录下(如果有同名文件则强制覆盖)
 3. 再调用`oedp info -p {parent_dir}/{plugin}`进行测试
-4. 测试通过后,不用执行oedp部署操作
+4. 测试通过后,不用执行oedp install操作
 """ + "}"
 
 if __name__ == "__main__":
     # Initialize and run the server
+    parser = argparse.ArgumentParser(description='oeDeploy plugin maker MCP Server')
+    parser.add_argument('--guide_path', required=True, help='develop guide doc path')
+    args = parser.parse_args()
+    
+    # Assign to global variables
+    develop_guide_path = os.path.abspath(os.path.expanduser(args.guide_path))
+    if not os.path.exists(develop_guide_path):
+        print(f"[Fail]开发文档不存在: {develop_guide_path}")
+        exit(1)
+    
     mcp.run(transport='stdio')
