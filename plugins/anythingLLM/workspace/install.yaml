@@ -63,25 +63,25 @@
       when: container_result.rc == 0
 
     - name: check if exists anythingLLM image
-      shell: docker images | grep  {{ docker_image }}
+      shell: docker images | grep  {{ anythingLLM_image_url[ansible_architecture] }}
       register: image_result
       ignore_errors: yes
 
     - name: pull anythingLLM image
-      shell: docker pull {{ docker_image }}
+      shell: docker pull  {{ anythingLLM_image_url[ansible_architecture] }}
       when: image_result.rc != 0
 
     - name: create STORAGE_LOCATION directory
       file:
         path: "{{ storage_location }}"
         state: directory
-        mode: '0755'
+        mode: '0777'
 
     - name: create .env file
       file:
         path: "{{ storage_location }}/.env"
         state: touch
-        mode: '0644'
+        mode: '0777'
 
     - name: start anythingLLM container
       shell: >
@@ -92,6 +92,6 @@
         -v {{ storage_location }}:/app/server/storage 
         -v {{ storage_location }}/.env:/app/server/.env 
         -e STORAGE_DIR="/app/server/storage"
-        {{ docker_image }}
+        {{ anythingLLM_image_url[ansible_architecture] }}
       register: container_start_result
       failed_when: container_start_result.rc != 0

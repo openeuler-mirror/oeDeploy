@@ -8,12 +8,14 @@ all:
 
   vars:
     docker_download_url:
-      x86_64: https://download.docker.com/linux/static/stable/x86_64/docker-26.1.4.tgz
-      aarch64: https://download.docker.com/linux/static/stable/aarch64/docker-26.1.4.tgz
+      x86_64: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/docker-26.1.4-x86_64.tgz
+      aarch64: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/docker-26.1.4-aarch64.tgz
+    anythingLLM_image_url:
+      aarch64: hub.oepkgs.net/oedeploy/mintplexlabs/aarch64/anythingllm
+      x86_64: hub.oepkgs.net/oedeploy/mintplexlabs/x86_64/anythingllm
     docker_download_path: /tmp
     docker_image_urls: https://docker.m.daocloud.io
 
     container_name: "anythinglLLM-container"
-    docker_image: "mintplexlabs/anythingllm"
     storage_location: "{{ lookup('env', 'HOME') }}/anythingllm"
     host_port: 3001

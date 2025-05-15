@@ -11,13 +11,20 @@
       ignore_errors: true
 
     - name: delete docker image
-      shell: docker rmi {{ docker_image }}
+      shell: docker rmi {{ anythingLLM_image_url[ansible_architecture] }}
       ignore_errors: true
 
     - name: check if docker_already_deploy file exists
       stat:
         path: "{{ docker_download_path }}/docker_already_deploy.flag"
       register: docker_deploy_status
+
+    - name: delete temp file or script
+      shell: >
+        rm -rf {{ docker_download_path }}/download_docker.sh;
+        rm -rf {{ docker_download_path }}/docker.log;
+        rm -rf {{ docker_download_path }}/download.log;
+        rm -rf {{ docker_download_path }}/docker_already_deploy.flag
 
     - name: kill docker process
       shell: killall dockerd
@@ -31,4 +38,5 @@
         rm -rf /usr/bin/containerd*;
         rm -rf /usr/bin/ctr;
         rm -rf /usr/bin/runc;
+        rm -rf /etc/docker/daemon.json
       when: not docker_deploy_status.stat.exists
