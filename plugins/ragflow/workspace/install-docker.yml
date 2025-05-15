@@ -1,0 +1,169 @@
+- name: Install Docker
+  hosts: all
+  become: yes
+
+  vars:
+    MIN_DOCKER_VERSION: "24.0.0"
+    DOCKER_PKGS:
+      - docker
+
+  tasks:
+    - name: Check if Docker is installed
+      ansible.builtin.command: "docker --version"
+      register: docker_check
+      ignore_errors: yes
+      changed_when: false
+      tags: install
+
+    - name: Get raw Docker version
+      ansible.builtin.shell: |
+        docker --version 2>/dev/null | awk -F'[ ,]' '/version/ {print $3}' | tr -d ' '
+      register: docker_version_raw
+      changed_when: false
+      args:
+        executable: /bin/bash
+      when: docker_check is succeeded
+      tags: install
+
+    - name: Extract docker version
+      ansible.builtin.set_fact:
+        installed_docker_version: "{{ docker_version_raw.stdout | trim | default('unknown') }}"
+      when: docker_check is succeeded
+      tags: install
+
+    - name: Validate version format
+      ansible.builtin.assert:
+        that:
+          - installed_docker_version is match('^\\d+\\.\\d+\\.\\d+$')
+        fail_msg: "Docker version extraction failed, current value: {{ installed_docker_version }}"
+      when: docker_check is succeeded and installed_docker_version != 'unknown'
+      tags: install
+
+    - name: Determine installation requirement
+      ansible.builtin.set_fact:
+        requires_installation: >-
+          {{
+            docker_check is failed or
+            (
+              (installed_docker_version | default('0.0.0', true) | trim)
+              is version( 
+                MIN_DOCKER_VERSION,
+                '<'
+              )
+            )
+          }}
+      tags: install
+
+    - name: Copy openEuler2409.repo to /etc/yum.repo.d
+      ansible.builtin.copy:
+        src: openEuler2409.repo
+        dest: /etc/yum.repos.d/openEuler2409.repo
+        owner: root
+        group: root
+        mode: 0644
+      when: requires_installation
+      notify: Clean yum cache
+      tags: install
+
+    - name: Install Docker packages
+      ansible.builtin.yum:
+        name: "{{ DOCKER_PKGS }}"
+        state: latest
+        update_cache: yes
+      when: requires_installation
+      notify: Start docker service
+      tags: install
+
+    - name: Get raw Docker version after installation
+      ansible.builtin.shell: |
+        docker --version 2>/dev/null | awk -F'[ ,]' '/version/ {print $3}' | tr -d ' '
+      register: docker_version_raw
+      changed_when: false
+      args:
+        executable: /bin/bash
+      when: requires_installation
+      tags: install
+
+    - name: Extract docker version after installation
+      ansible.builtin.set_fact:
+        installed_docker_version: "{{ docker_version_raw.stdout | trim | default('unknown') }}"
+      when: requires_installation
+      tags: install
+
+    - name: Validate version after installation
+      ansible.builtin.assert:
+        that: >-
+          {{ 
+            (installed_docker_version | default('0.0.0', true) | trim) 
+            is version(MIN_DOCKER_VERSION, '>=') 
+          }}
+        fail_msg: "Docker version check FAILED after installation!"
+        success_msg: "Docker version check PASSED"
+      when: requires_installation
+      tags: install
+
+    - name: Create /etc/docker directory
+      file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Deploy new configuration template
+      ansible.builtin.template:
+        src: daemon.j2
+        dest: /etc/docker/daemon.json
+        mode: "0644"
+        backup: yes
+      notify: Restart docker service
+
+    - name: Set dynamic docker-compose-plugin download URL
+      ansible.builtin.set_fact:
+        download_url: "https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/docker-compose-plugin-2.27.1-1.{{ ansible_architecture }}.tar.gz"
+
+    - name: Download docker-compose-plugin tarball
+      ansible.builtin.get_url:
+        url: "{{ download_url }}"
+        dest: /opt/
+        timeout: 900
+      register: download_result
+      until: download_result is success
+      retries: 3
+      delay: 10
+
+    - name: Unarchive docker-compose-plugin package
+      unarchive:
+        src: "/opt/docker-compose-plugin-2.27.1-1.{{ ansible_architecture }}.tar.gz"
+        dest: /opt
+        remote_src: yes
+
+    - name: Copy docker-compose binary file
+      ansible.builtin.command: "cp -rf /opt/docker-compose-plugin-2.27.1-1.{{ ansible_architecture }}/usr/libexec/docker /usr/libexec"
+      changed_when: false
+
+    - name: Start and enable Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Clean yum cache
+      ansible.builtin.command: "yum clean all"
+      listen: "Clean yum cache"
+
+    - name: Start docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+      listen: "Start docker service"
+
+    - name: Restart docker service
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+      listen: "Restart docker service"

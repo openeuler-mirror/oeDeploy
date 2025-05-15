@@ -1,0 +1,29 @@
+- name: Check env
+  hosts: all
+
+  tasks:
+    - name: Get disk size
+      set_fact:
+        root_disk_size_gb: "{{ (ansible_mounts | selectattr('mount', '==', '/') | map(attribute='size_total') | first | default(0) | float) / (1024**3) | round(2) }}"
+      any_errors_fatal: true
+
+    - name: Check the number of CPU cores
+      ansible.builtin.assert:
+        that:
+          - ansible_processor_vcpus >= MIN_CPU
+        success_msg: "Current CPU cores: {{ ansible_processor_vcpus }} (meets requirement)."
+        fail_msg: "Current CPU cores: {{ ansible_processor_vcpus }} (does not meet requirement)."
+
+    - name: Check memory size
+      ansible.builtin.assert:
+        that:
+          - ansible_memtotal_mb >= (MIN_MEM_GB * 1024)
+        success_msg: "Current memory: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB (meets requirement)."
+        fail_msg: "Current memory: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB (does not meet requirement)."
+
+    - name: Check disk space
+      ansible.builtin.assert:
+        that:
+          - root_disk_size_gb | float >= MIN_DISK_GB | float
+        success_msg: "Current disk space: {{root_disk_size_gb}} GB (meets requirement)."
+        fail_msg: "Current disk space: {{root_disk_size_gb}} GB (does not meet requirement)."

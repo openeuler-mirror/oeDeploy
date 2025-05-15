@@ -1,0 +1,39 @@
+all:
+  hosts:
+    # 待修改，NODE_NAME 为节点唯一标识。示例值：ragflow_node
+    NODE_NAME:
+      # 待修改，NODE_IP 为节点 IP地址。示例值：192.168.10.1
+      ansible_host: NODE_IP
+      # 待修改，NODE_PORT 为节点端口号。示例值：22
+      ansible_port: NODE_PORT
+      # 待修改，NODE_USER 为节点用户名。示例值：root
+      ansible_user: NODE_USER
+      # 待修改，NODE_PASSWORD 为节点密码。
+      ansible_password: NODE_PASSWORD
+  vars:
+    # 部署节点最小配置要求
+    # 最小 CPU 核心数
+    MIN_CPU: 4
+    # 最小内存
+    MIN_MEM_GB: 15
+    # 最小磁盘
+    MIN_DISK_GB: 45
+    # 最小 vm.max_map_count
+    MIN_MAX_MAP_COUNT: 262144
+
+    # 容器镜像
+    RAGFLOW_ARM_IMAGE_NAME: hub.oepkgs.net/oedeploy/infiniflow/aarch64/ragflow
+    RAGFLOW_X86_IMAGE_NAME: hub.oepkgs.net/oedeploy/infiniflow/x86_64/ragflow
+    RAGFLOW_ARM_IMAGE_TAG: v0.18.0
+    RAGFLOW_X86_IMAGE_TAG: v0.17.2
+    MINIO_IMAGE_NAME: hub.oepkgs.net/oedeploy/minio/minio
+    MINIO_IMAGE_TAG: RELEASE.2023-12-20T01-00-02Z
+    # Docker 镜像加速站
+    DOCKER_IMAGE_URL: https://docker.m.daocloud.io
+
+    # RAGFlow 源码目录
+    RAGFLOW_CODE_DIR: /opt/ragflow
+    # RAGFlow github 地址
+    RAGFLOW_GIT_URL: https://github.com/infiniflow/ragflow.git
+    # github 代理代理
+    GITHUB_PROXY: https://gh.idayer.com/

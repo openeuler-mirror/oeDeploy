@@ -1,0 +1,30 @@
+- name: Uninstall RAGFlow
+  hosts: all
+  become: yes
+
+  vars:
+    target_containers:
+      - ragflow-server
+      - ragflow-minio
+      - ragflow-es-01
+      - ragflow-redis
+      - ragflow-mysql
+
+  tasks:
+    - name: Stop containers
+      shell: "docker stop {{ item }} || true"
+      loop: "{{ target_containers }}"
+      changed_when: false
+      register: stop_output
+
+    - name: Force remove containers
+      shell: "docker rm -f {{ item }} || true"
+      loop: "{{ target_containers }}"
+      register: remove_output
+
+    - name: Check removal status
+      shell: "docker ps -a --filter 'name={{ item }}' --format '{{ '{{.Names}}' }}'"
+      loop: "{{ target_containers }}"
+      register: check_result
+      failed_when: check_result.stdout != ""
+      changed_when: false

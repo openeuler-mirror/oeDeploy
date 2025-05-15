@@ -1,0 +1,54 @@
+- name: Set env
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install packages
+      yum:
+        name:
+          - python3-libselinux
+          - git
+        state: present
+
+    - name: Get value of vm.max_map_count
+      ansible.builtin.command: "sysctl -n vm.max_map_count"
+      register: current_value_raw
+      check_mode: false    # 即使在 --check 模式下，也实际执行
+      changed_when: false
+
+    - name: Extract the value of vm.max_map_count and convert its format
+      set_fact:
+        max_map_count: "{{ current_value_raw.stdout | int | abs }}"
+      when: current_value_raw is defined
+
+    - name: Check value of vm.max_map_count
+      ansible.builtin.set_fact:
+        need_modify: "{{ (max_map_count | int) < (MIN_MAX_MAP_COUNT | int) }}"
+        original_value: "{{ max_map_count }}"
+        final_value: "{{ MIN_MAX_MAP_COUNT }}"
+
+    - name: Deploy custom sysctl config
+      ansible.builtin.template:
+        src: sysctl-config.j2
+        dest: "/etc/sysctl.d/90-vm.max_map_count.conf"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Apply new sysctl settings
+      ansible.builtin.command: "sysctl -p /etc/sysctl.d/90-vm.max_map_count.conf"
+      register: sysctl_apply
+      changed_when: "'= {{ MIN_MAX_MAP_COUNT }}' not in sysctl_apply.stdout"
+
+    - name: Get value of vm.max_map_count again
+      ansible.builtin.command: "sysctl -n vm.max_map_count"
+      register: current_value_raw
+      changed_when: false
+      check_mode: false
+      
+    - name: Check value of vm.max_map_count again
+      ansible.builtin.assert:
+        that:
+          - "current_value_raw.stdout | int == MIN_MAX_MAP_COUNT"
+        success_msg: "set vm.max_map_count successfully"
+        fail_msg: "failed to set vm.max_map_count"
