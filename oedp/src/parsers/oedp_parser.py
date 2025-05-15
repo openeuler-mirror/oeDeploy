@@ -328,12 +328,15 @@ class OeDeployParser:
 
     @staticmethod
     def _get_version():
-        stdout, _, return_code = CommandExecutor.run_single_cmd(['rpm', '-q', 'oedp'])
-        if not return_code:
-            match = re.search(r'-([\d]+\.[\d]+\.[\d]+-\d+)', stdout.strip())
-            if match:
-                return match.group(1)
+        try:
+            stdout, _, return_code = CommandExecutor.run_single_cmd(['rpm', '-q', 'oedp'])
+            if not return_code:
+                match = re.search(r'-([\d]+\.[\d]+\.[\d]+-\d+)', stdout.strip())
+                if match:
+                    return match.group(1)
+                else:
+                    return VERSION
             else:
                 return VERSION
-        else:
+        except Exception:
             return VERSION
