@@ -5,11 +5,13 @@
 ## 1. 环境准备
 
 下载 oeDeploy 代码，将`oeDeploy/oedp-mcp/mcp-make-oedp-plugin`目录拷贝到自定义路径，例如`~/.oedp/mcp/`
+并将用户开发指南`DevelopGuide.md`拷贝到`mcp-make-oedp-plugin`目录
 
 ```bash
 git clone https://gitee.com/openeuler/oeDeploy.git
 mkdir -p ~/.oedp/mcp/
 cp -r oeDeploy/oedp-mcp/mcp-make-oedp-plugin ~/.oedp/mcp/
+cp oeDeploy/doc/DevelopGuide.md ~/.oedp/mcp/mcp-make-oedp-plugin
 ```
 
 配置 python 虚环境，进入`mcp-make-oedp-plugin`目录，完成`uv`初始化并安装依赖。
@@ -32,14 +34,20 @@ uv pip install -e .
     "mcp-make-oedp-plugin": {
       "command": "uv",
       "args": [
-        "--directory", ".oedp/mcp/mcp-make-oedp-plugin",
-        "run", "mcp-make-oedp-plugin.py"
+        "--directory",
+        ".oedp/mcp/mcp-make-oedp-plugin",
+        "run",
+        "mcp-make-oedp-plugin.py",
+        "--guide_path",
+        "~/.oedp/mcp/mcp-make-oedp-plugin/DevelopGuide.md"
       ],
       "disabled": false,
     }
   }
 }
 ````
+
+> 请根据实际情况填写项目目录与用户开发指南的目录，推荐填写绝对路径。
 
 配置完成后，可以在 MCP 列表上看看到`mcp-make-oedp-plugin`，且状态正常。
 
