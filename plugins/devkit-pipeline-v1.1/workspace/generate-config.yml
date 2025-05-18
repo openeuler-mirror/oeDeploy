@@ -1,0 +1,17 @@
+---
+- name: Generate machine-auto.yaml configuration
+  hosts: controller
+  vars:
+    package_name: "{{ pipeline.download_url | basename | regex_replace('\\.tar\\.gz$', '') }}"
+  tasks:
+    - name: Create config directory
+      ansible.builtin.file:
+        path: "{{ pipeline.install_dir }}/{{ package_name }}/linux"
+        state: directory
+        mode: '0755'
+
+    - name: Generate machine-auto.yaml
+      ansible.builtin.template:
+        src: machine-auto.j2
+        dest: "{{ pipeline.install_dir }}/{{ package_name }}/linux/machine-auto.yaml"
+        mode: '0644'

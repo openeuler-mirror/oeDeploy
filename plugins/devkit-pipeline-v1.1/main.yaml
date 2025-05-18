@@ -1,0 +1,19 @@
+name: devkit-pipeline-v1.1
+version: 1.0.0-1
+description: 部署devkit-pipeline-v1.1工具链
+action:
+  install:
+    description: 安装devkit-pipeline-v1.1
+    tasks:
+      - name: 配置SSH免密登录
+        playbook: setup-ssh.yml
+        scope: controller
+      - name: 下载并解压软件包
+        playbook: download-package.yml
+        scope: controller
+      - name: 生成machine-auto.yaml配置文件
+        playbook: generate-config.yml
+        scope: controller
+      - name: 执行部署命令
+        playbook: run-deploy.yml
+        scope: controller

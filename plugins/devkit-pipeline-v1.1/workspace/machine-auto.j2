@@ -1,0 +1,20 @@
+user: {{ pipeline.machine_config.user }}
+pkey: {{ pipeline.machine_config.pkey }}
+scanner:
+{{ pipeline.machine_config.scanner | to_nice_yaml | indent(2) }}
+c_builder_gcc:
+{{ pipeline.machine_config.c_builder_gcc | to_nice_yaml | indent(2) }}
+c_builder_bisheng_compiler:
+{{ pipeline.machine_config.c_builder_bisheng_compiler | to_nice_yaml | indent(2) }}
+java_builder_jdk8:
+{{ pipeline.machine_config.java_builder_jdk8 | to_nice_yaml | indent(2) }}
+java_builder_jdk17:
+{{ pipeline.machine_config.java_builder_jdk17 | to_nice_yaml | indent(2) }}
+compatibility:
+{{ pipeline.machine_config.compatibility | to_nice_yaml | indent(2) }}
+tester:
+{{ pipeline.machine_config.tester | to_nice_yaml | indent(2) }}
+devkit:
+{{ pipeline.machine_config.devkit | to_nice_yaml | indent(2) }}
+clamav:
+{{ pipeline.machine_config.clamav | to_nice_yaml | indent(2) }}

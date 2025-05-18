@@ -1,0 +1,47 @@
+all:
+  children:
+    controller:
+      hosts:
+        # 控制节点只能有一个，可以127.0.0.1
+        192.168.0.10:
+          ansible_host: 192.168.0.10
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+    deploy_nodes:
+      hosts:
+        # 部署节点可以有任意个，允许包含控制节点，但不可以是127.0.0.1
+        192.168.0.10:
+          ansible_host: 192.168.0.10
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+  vars:
+    pipeline:
+      download_url: "https://gitee.com/openeuler/devkit-pipeline/releases/download/v1.1/devkit-pipeline-v1.1.tar.gz"
+      install_dir: "/home/pipeline"
+      machine_config:
+        user: root
+        pkey: /root/.ssh/id_rsa
+        # 以下的节点IP必须来自deploy_nodes
+        # 每个项目中的IP可以有多个
+        # 如果不希望安装某个项目，请将项目和对应的IP删除或注释
+        scanner:
+          - 192.168.0.10
+        c_builder_gcc:
+          - 192.168.0.10
+        c_builder_bisheng_compiler:
+          - 192.168.0.10
+        java_builder_jdk8:
+          - 192.168.0.10
+        java_builder_jdk17:
+          - 192.168.0.10
+        compatibility:
+          - 192.168.0.10
+        tester:
+          - 192.168.0.10
+        devkit:
+          - 192.168.0.10
+        clamav:
+          - 192.168.0.10
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
