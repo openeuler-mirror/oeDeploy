@@ -1,110 +1,104 @@
 # kubernetes-1.31.1 插件使用说明
 
-**本插件的kubernetes部署能力由 [@Ultraji](https://gitee.com/ultraji)  提供**
+**本插件的 kubernetes 部署能力由 [@Ultraji](https://gitee.com/ultraji)  提供**
 
 ## kubernetes-1.31.1 一键部署操作示例
 
-准备若干节点（三层网络互通），OS 版本为 openEuler 24.03 或 22.03 的任意 LTS 版本，规格大于 2U4G。
+1. 准备若干节点（三层网络互通），OS 版本为 openEuler 24.03 或 22.03 的任意 LTS 版本，规格大于 2U4G。
 
-在任意节点上，下载并安装 oeDeploy 的命令行工具`oedp (version >= 1.1.0-2)`。
+2. 在任意节点上，下载并安装 oeDeploy 的命令行工具`oedp (version >= 1.1.0-2)`。
+    ````bash
+    wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.0-2.oe2403sp2.noarch.rpm
+    yum install -y oedp-1.1.0-3.oe2403sp2.noarch.rpm
+    ````
 
-````bash
-wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.0-2.oe2403sp2.noarch.rpm
-yum install -y oedp-1.1.0-2.oe2403sp2.noarch.rpm
-````
+3. 获取并初始化`kubernetes-1.31.1`插件。
+    ```shell
+    oedp repo update
+    oedp init kubernetes-1.31.1
+    ```
 
-获取`kubernetes-1.31.1`插件，并完成初始化。
+4. 执行`info`命令以查看插件详细信息：
+    ```shell
+    oedp info -p kubernetes-1.31.1
+    ```
 
-```shell
-wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins/kubernetes-1.31.1.tar.gz
-oedp init kubernetes-1.31.1.tar.gz
-```
+5. 修改项目配置文件，根据实际情况配置节点信息：
+    ```shell
+    vim kubernetes-1.31.1/config.yaml
+    ```
 
-执行`info`命令以查看插件详细信息：
-
-```shell
-oedp info -p kubernetes-1.31.1
-```
-
-修改项目配置文件，根据实际情况配置节点信息：
-
-```shell
-vim kubernetes-1.31.1/config.yaml
-```
-
-````yaml
-all:
-  children:
-    masters:
-      hosts:
-        192.168.10.1:
-          ansible_host: 192.168.10.1
-          ansible_port: 22
-          ansible_user: root
-          ansible_password: "xxxxxxxx"
-          architecture: amd64              # e.g. [ amd64, arm64 ]
-          oeversion: 24.03-LTS             # e.g. [ 22.03-LTS, 24.03-LTS ]
-          runtime: docker                  # e.g. [ docker, containerd ]
-    workers:
-      hosts:
-        192.168.10.2:
-          ansible_host: 192.168.10.2
-          ansible_port: 22
-          ansible_user: root
-          ansible_password: "xxxxxxxx"
-          architecture: amd64
-          oeversion: 24.03-LTS
-          runtime: docker
-        192.168.10.3:
-          ansible_host: 192.168.10.3
-          ansible_port: 22
-          ansible_user: root
-          ansible_password: "xxxxxxxx"
-          architecture: amd64
-          oeversion: 24.03-LTS
-          runtime: docker
-    new-workers:  # new-workers字段不可删除
-      hosts:
-  vars:
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-
-    init_cluster_force: "true"             # e.g. [ "true", "false" ]  强制初始化集群
-    remove_master_no_schedule_taints: "true"
-    service_cidr: 10.96.0.0/16             # 服务网段
-    pod_cidr: 10.244.0.0/16                # pod ip 网段
-    certs_expired: 3650                    # 证书过期时间
-    # lb_kube_apiserver_ip:
-    lb_kube_apiserver_port: 8443
-    has_deployed_containerd: "false"       # e.g. [ "true", "false" ]  是否已有 containerd
+    ````yaml
+    all:
+      children:
+        masters:
+          hosts:
+            192.168.10.1:
+              ansible_host: 192.168.10.1
+              ansible_port: 22
+              ansible_user: root
+              ansible_password: "xxxxxxxx"
+              architecture: amd64              # e.g. [ amd64, arm64 ]
+              oeversion: 24.03-LTS             # e.g. [ 22.03-LTS, 24.03-LTS ]
+              runtime: docker                  # e.g. [ docker, containerd ]
+        workers:
+          hosts:
+            192.168.10.2:
+              ansible_host: 192.168.10.2
+              ansible_port: 22
+              ansible_user: root
+              ansible_password: "xxxxxxxx"
+              architecture: amd64
+              oeversion: 24.03-LTS
+              runtime: docker
+            192.168.10.3:
+              ansible_host: 192.168.10.3
+              ansible_port: 22
+              ansible_user: root
+              ansible_password: "xxxxxxxx"
+              architecture: amd64
+              oeversion: 24.03-LTS
+              runtime: docker
+        new-workers:  # new-workers字段不可删除
+          hosts:
+      vars:
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
     
-    # 以下参数需要与build过程中的host.ini保持一致，如果不涉及请忽视
-    kubernetes_version: 1.31.1
-    calico_version: 3.28.2
-    pause_image: "registry.k8s.io/pause:3.10"
+        init_cluster_force: "true"             # e.g. [ "true", "false" ]  强制初始化集群
+        remove_master_no_schedule_taints: "true"
+        service_cidr: 10.96.0.0/16             # 服务网段
+        pod_cidr: 10.244.0.0/16                # pod ip 网段
+        certs_expired: 3650                    # 证书过期时间
+        # lb_kube_apiserver_ip:
+        lb_kube_apiserver_port: 8443
+        has_deployed_containerd: "false"       # e.g. [ "true", "false" ]  是否已有 containerd
+        
+        # 以下参数需要与build过程中的host.ini保持一致，如果不涉及请忽视
+        kubernetes_version: 1.31.1
+        calico_version: 3.28.2
+        pause_image: "registry.k8s.io/pause:3.10"
+    
+    ````
 
-````
+6. 执行以下命令以开始自动化部署：
+    ```shell
+    oedp run install -p kubernetes-1.31.1
+    ```
 
-执行以下命令以开始自动化部署：
+7. 执行以下命令以卸载kubernetes：
+    ```shell
+    oedp run uninstall -p kubernetes-1.31.1
+    ```
 
-```shell
-oedp run install -p kubernetes-1.31.1
-```
-
-执行以下命令以卸载kubernetes：
-
-```shell
-oedp run delete -p kubernetes-1.31.1
-```
-
-> -p 参数表示 oeDeploy 项目所在目录
+    > -p 参数表示 oeDeploy 项目所在目录
 
 ## 插件构建指导
 
 1. 环境准备
 
-基于openEuler22.03/24.03的LTS版本，安装依赖软件`tar`、`docker`(version>20.xx)
+基于 openEuler22.03 / 24.03 的 LTS 版本，安装依赖软件`tar`、`docker`(version > 20.xx)
 
-> Tip: 较新的docker版本可以从上游社区获取。docker-25.0.3可以从openEuler24.09的repo中获取，临时修改yum源到openEuler24.09，安装新版本docker后恢复。
+> Tip: 较新的 docker 版本可以从上游社区获取。docker-25.0.3 可以从 openEuler24.09 的 repo 中获取，临时修改 yum 源到 openEuler24.09，安装新版本 docker 后恢复。
 
 2. 构建执行
 

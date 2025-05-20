@@ -1,27 +1,22 @@
 
 # 使用oeDeploy工具快速部署DeepSeek-R1
 
-1. 准备一个openEuler环境（22.03-LTS-SPX、24.03-LTS-SPX），8B模型的建议规格大于8U16G
+1. 准备一个openEuler 环境（22.03-LTS-SPX、24.03-LTS-SPX），8B 模型的建议规格大于 8U16G。
 
-2. 下载oedp命令行工具，并用yum安装
+2. 下载 oedp 命令行工具，并用 yum 安装。
 
    ````bash
-   # x86_64:
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/x86_64/Packages/oedp-1.0.0-20250208.x86_64.rpm
-   yum install -y oedp-1.0.0-20250208.x86_64.rpm
-   # aarch64:
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/aarch64/Packages/oedp-1.0.0-20250208.aarch64.rpm
-   yum install -y oedp-1.0.0-20250208.aarch64.rpm
+   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.0-3.oe2403sp2.noarch.rpm
+   yum install -y oedp-1.1.0-3.oe2403sp2.noarch.rpm
    ````
 
-3. 下载DeepSeek-R1部署插件，并解压到本地
+3. 获取并初始化`DeepSeek-R1`插件。
    ````bash
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/2025.0330/deepseek-r1.tar.gz
-   yum install -y tar
-   tar -zxvf deepseek-r1.tar.gz
+   oedp repo update
+   oedp init deepseek-r1
    ````
 
-4. 根据实际情况修改deepseek-r1/config.yaml。用户可以直接使用这里的示例，不需要任何修改。
+4. 根据实际情况修改 deepseek-r1/config.yaml。用户可以直接使用这里的示例，不需要任何修改。
 
    ````yaml
    all:
@@ -58,12 +53,12 @@
        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
    ````
 
-5. 一键触发DeepSeek-R1自动化部署，oeDeploy工具会下载所需的文件，自动安装部署，并完成对DeepSeek-R1的配置
+5. 一键触发DeepSeek-R1自动化部署，oeDeploy工具会下载所需的文件，自动安装部署，并完成对DeepSeek-R1的配置。
    ````bash
    oedp run install -p deepseek-r1  # -p <tar.gz解压后的路径>
    ````
 
-6. 在部署完成后的节点上，打开DeepSeek-R1交互终端，开始对话
+6. 在部署完成后的节点上，打开DeepSeek-R1交互终端，开始对话。
    ````bash
    ollama run deepseek-r1:8b
    ````
