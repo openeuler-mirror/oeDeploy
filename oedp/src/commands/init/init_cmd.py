@@ -308,7 +308,7 @@ class InitCmd:
         
         self.log.info(f"downloading from {url}")
         cmd = [
-            'curl', '-fL',
+            'curl', '-C', '-', '-fL',
             '--max-time', str(timeout),
             '--connect-timeout', '3',
             '-o', output_file,
