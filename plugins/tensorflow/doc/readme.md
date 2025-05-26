@@ -1,30 +1,28 @@
-# 使用 oeDeploy 基于 k8s 集群部署TensorFlow
+# 使用 oeDeploy 基于 k8s 集群部署 TensorFlow
 
+1. 准备一个 k8s 集群。
 
-
-1. 准备一个k8s集群
-
-2. 下载oedp命令行工具，并用yum安装。如有更新的oedp版本，可以选择新版本。
+2. 下载 oedp 命令行工具，并用 yum 安装。如有更新的 oedp 版本，可以选择新版本。
 
    ````bash
-   # x86_64:
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/x86_64/Packages/oedp-1.0.0-20250208.x86_64.rpm
-   yum install -y oedp-1.0.0-20250208.x86_64.rpm
-   # aarch64:
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/aarch64/Packages/oedp-1.0.0-20250208.aarch64.rpm
-   yum install -y oedp-1.0.0-20250208.aarch64.rpm
+   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.0-3.oe2403sp2.noarch.rpm
+   yum install -y oedp-1.1.0-3.oe2403sp2.noarch.rpm
    ````
 
-3. 根据实际情况，修改config.yaml
-   请确保目标节点为k8s的master节点
-   `kubectl_apply`需要与workspace下的playbook对应。
+3. 获取并初始化`tensorflow`插件。
+    ```shell
+    oedp repo update
+    oedp init tensorflow
+    ```
 
-4. 一键部署
+4. 根据实际情况，修改 config.yaml。请确保目标节点为 k8s 的 master 节点。`kubectl_apply`需要与 workspace 下的 playbook 对应。
+
+5. 一键部署：
    ````bash
    oedp run install -p tensorflow  # -p <插件目录>
    ````
 
-5. 一键卸载
+6. 一键卸载：
    ````bash
    oedp run uninstall -p tensorflow  # -p <插件目录>
    ````

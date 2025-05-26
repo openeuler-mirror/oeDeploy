@@ -2,19 +2,27 @@
 
 ## 1. 环境准备
 
-### 1.1. 部署 Kubernetes 集群
+### 1.1 部署 Kubernetes 集群
 
 在目标集群机器上部署 Kubernetes 1.31.1，此处以 1 master + 2 worker 的标准 K8S 集群为例，其中 master 节点的 IP 为 192.168.1.101。可使用`kubernetes-1.31.1`插件进行自动化部署。
 
-### 1.2. 安装 Helm
+### 1.2 安装 Helm
 
 在 master 节点上安装 Helm，可使用`helm-3.9.0`插件进行自动化安装。
 
 ## 2. 部署 KubeRay
 
-### 2.1. 修改`config.yaml`
+### 2.1 获取`kuberay`插件
 
-以下是`config.yaml`的示例，根据实际情况修改此文件：
+使用以下命令，获取并初始化`kuberay`插件。
+```shell
+oedp repo update
+oedp init kuberay
+```
+
+### 2.2 修改`config.yaml`
+
+以下是`kuberay/config.yaml`的示例，根据实际情况修改此文件：
 
 ```yaml
 all:
@@ -59,13 +67,13 @@ all:
 
 ```
 
-### 2.2. 执行自动化部署
+### 2.3 执行自动化部署
 
 在插件目录下执行`oedp run install`，或在任意位置执行`oedp run install -p [插件目录]`，即可完成自动化部署 KubeRay。
 
 ## 3. 查看 Dashboard
 
-### 3.1. 查询对应端口
+### 3.1 查询对应端口
 
 在 master 节点，使用`kubectl get svc -A`命令查看端口映射：
 ````bash
@@ -77,7 +85,7 @@ kuberay       ray-cluster-kuberay-head-svc   NodePort    10.96.168.232   <none> 
 ````
 其中 8265 对应的端口，即为 Dashboard 的端口。
 
-### 3.2. 打开 Dashboard 页面
+### 3.2 打开 Dashboard 页面
 使用 [http://ip:port/] 链接，即可打开 Dashboard 页面，查看 Ray Job / Serve / Cluster 及资源、日志等信息。其中 IP 为 master 节点 IP，port 为 3.1 中 8265 对应的端口。
 
 

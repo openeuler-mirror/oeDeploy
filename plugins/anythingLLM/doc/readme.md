@@ -1,19 +1,24 @@
-# 使用 oeDeploy 部署AnythingLLM
-1、下载 oedp 命令行工具，并用 yum 安装。如有更新的 oedp 版本，可以选择新版本。
-
+# 使用 oeDeploy 部署 AnythingLLM
+1. 下载 oedp 命令行工具，并用 yum 安装。如有更新的 oedp 版本，可以选择新版本。
    ```bash
-   # x86_64:
-   # aarch64:
+   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.0-3.oe2403sp2.noarch.rpm
+   yum install -y oedp-1.1.0-3.oe2403sp2.noarch.rpm
    ```
 
-3. 根据实际情况，修改 config.yaml。确保部署节点网络正常
+2. 获取并初始化`AnythingLLM`插件。
+    ```shell
+    oedp repo update
+    oedp init anythingLLM
+    ```
+   
+3. 根据实际情况，修改 config.yaml。确保部署节点网络正常。
 
-4. 一键部署
+4. 一键部署：
    ````bash
    oedp run install -p angthingLLM  # -p <插件目录>
    ````
 
-5. 一键卸载
+5. 一键卸载：
    ````bash
    oedp run uninstall -p angthingLLM  # -p <插件目录>
    ````
