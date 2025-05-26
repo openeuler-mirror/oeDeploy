@@ -7,50 +7,52 @@
   tasks:
     - name: Create log directory
       file:
-        path: "{{ log_dir }}/deploy-euler-copilot"
+        path: "{{ log_dir }}"
         state: directory
-        mode: '0644'
+        mode: '0744'
 
-    - name: Install python3-libselinux
+    - name: Install python3-libselinux, git
       yum:
-        name: python3-libselinux
+        name:
+          - python3-libselinux
+          - git
         state: present
 
-    - name: Set environment variables
-      shell: echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /root/.bashrc && source /root/.bashrc
+    - name: git clone euler-copilot-framework
+      ansible.builtin.git:
+        repo: "{{ repo_config.url }}"
+        dest: "{{ repo_config.dest_dir }}"
+        version: "{{ repo_config.version }}"
+        update: yes  # 如果目录存在，则执行 git pull 更新到指定 version
+        force: "{{ repo_config.force }}"
 
-    - name: Pip install requests and ruamel.yaml
-      pip:
-        name:
-          - requests
-          - ruamel.yaml
-        extra_args: >-
-          {% if pypi_index_url %}
-            -i {{ pypi_index_url }} --trusted-host {{ pypi_trusted_host }}
-          {% endif %}
+    - name: Copy values.yaml template
+      ansible.builtin.template:
+        src: values.yaml.j2
+        dest: "{{ repo_config.dest_dir }}/deploy/chart/euler_copilot/values.yaml"
+        mode: "0644"
+        backup: yes
 
-    - name: Copy "deploy-euler-copilot" to hosts
-      copy:
-        src: deploy-euler-copilot
-        dest: "{{ temp_dir }}"
+    - name: Disable deploy-embedding.sh, deploy_deepseek.sh and install_ollama.sh script
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "0770"                    # 可选：设置文件权限
+        owner: root                      # 可选：设置文件所有者
+        group: root                      # 可选：设置文件所属组
+        backup: yes                      # 可选：启用备份
+      loop:
+        - { src: deploy-embedding.sh, dest: "{{ repo_config.dest_dir }}/deploy/scripts/3-install-ollama/install_ollama.sh" }
+        - { src: deploy_deepseek.sh, dest: "{{ repo_config.dest_dir }}/deploy/scripts/4-deploy-deepseek/deploy_deepseek.sh" }
+        - { src: install_ollama.sh, dest: "{{ repo_config.dest_dir }}/deploy/scripts/5-deploy-embedding/deploy-embedding.sh" }
 
-    - name: Copy one-click-deploy.sh to hosts
-      template:
-        src: templates/scripts/0-one-click-deploy/one-click-deploy.sh.j2
-        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh"
-
-    - name: Copy install_authhub.sh to hosts
-      template:
-        src: templates/scripts/7-install-authhub/install_authhub.sh.j2
-        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/7-install-authhub/install_authhub.sh"
-
-    - name: Copy install_eulercopilot.sh to hosts
-      template:
-        src: templates/scripts/8-install-EulerCopilot/install_eulercopilot.sh.j2
-        dest: "{{ temp_dir }}/deploy-euler-copilot/scripts/8-install-EulerCopilot/install_eulercopilot.sh"
+    - name: Add execute permission to all deploy scripts recursively
+      ansible.builtin.file:
+        path: "{{ repo_config.dest_dir }}/deploy/scripts"
+        mode: "a+X"
+        recurse: yes
 
     - name: Execute one-click-deploy.sh
       shell: >
-        sh {{ temp_dir }}/deploy-euler-copilot/scripts/0-one-click-deploy/one-click-deploy.sh
-        >"{{ log_dir }}/deploy-euler-copilot/{{ timestamp }}.out"
-        2>"{{ log_dir }}/deploy-euler-copilot/{{ timestamp }}.err"
+        sh {{ repo_config.dest_dir }}/deploy/scripts/0-one-click-deploy/one-click-deploy.sh
+        &>"{{ log_dir }}/{{ timestamp }}.log"
