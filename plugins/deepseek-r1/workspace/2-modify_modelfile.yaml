@@ -19,7 +19,7 @@
             dest: "{{ modelfile_download_path }}/download.sh"
             owner: root
             group: root
-            mode: '0644'
+            mode: '755'
         
         - name: Execute download.sh
           shell: >
