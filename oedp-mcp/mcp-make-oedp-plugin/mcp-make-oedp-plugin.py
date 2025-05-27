@@ -12,8 +12,8 @@
 # Create: 2025-03-30
 # ======================================================================================================================
 import argparse
-from mcp.server.fastmcp import FastMCP
 import os
+from mcp.server.fastmcp import FastMCP
 
 DEFAULT_DIR = "~/.oedp/"
 
@@ -43,10 +43,9 @@ async def make_plugin_auto(plugin: str, parent_dir: str) -> str:
         parent_dir = os.path.abspath(os.path.expanduser(DEFAULT_DIR))
     
     return "请帮我执行: {" + f"""
-1. (重要!)仔细阅读oeDeploy插件的开发文档{develop_guide_path},根据用户对eDeploy插件功能的详细描述,完成对oeDeploy插件的开发
-2. 开发完成后,用指定方式打包成tar.gz到{parent_dir}目录下(如果有同名文件则强制覆盖)
-3. 再调用`oedp info -p {parent_dir}/{plugin}`进行测试
-4. 测试通过后,不用执行oedp install操作
+1. (重要!)仔细阅读oeDeploy插件的开发文档{develop_guide_path},根据用户对eDeploy插件功能的详细描述,完成对oeDeploy插件的开发.如果{parent_dir}/{plugin}目录已经存在,则清空目录中的文件
+2. 开发完成后,用指定方式打包成tar.gz到{parent_dir}目录下(如果有同名文件则强制覆盖),并调用`oedp info -p {parent_dir}/{plugin}`进行测试
+3. 测试通过后,不需要执行install操作
 """ + "}"
 
 if __name__ == "__main__":
