@@ -20,7 +20,7 @@ all:
 
     ray_cluster_values_file: ""
     ray_cluster_values:
-      repository: "hub.oepkgs.net/oedeploy/rayproject/ray"
+      repository: "hub.oepkgs.net/oedeploy/rayproject/ray-with-pytorch"
       tag: 2.9.0     # 使用默认 docker 源时，x86 为 2.9.0, arm 为 2.9.0-aarch64；具体的 tag 请至配置的仓库确认
       head:
         cpu: "1"
