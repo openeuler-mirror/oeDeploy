@@ -37,7 +37,7 @@
       ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
-        mode: "0770"                    # 可选：设置文件权限
+        mode: "0770"                     # 可选：设置文件权限
         owner: root                      # 可选：设置文件所有者
         group: root                      # 可选：设置文件所属组
         backup: yes                      # 可选：启用备份
@@ -51,8 +51,46 @@
         path: "{{ repo_config.dest_dir }}/deploy/scripts"
         mode: "a+X"
         recurse: yes
+    
+    - name: Download tools based on architecture
+      block:
+        - name: Download aarch64 tools
+          when: ansible_architecture == "aarch64"
+          ansible.builtin.shell: |
+            mkdir -p /home/eulercopilot/tools
+            curl -fL -o /home/eulercopilot/tools/helm-v3.15.0-linux-arm64.tar.gz \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/arm64/helm-v3.15.0-linux-arm64.tar.gz
+            curl -fL -o /home/eulercopilot/tools/k3s-airgap-images-arm64.tar.zst \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/arm64/k3s-airgap-images-arm64.tar.zst
+            curl -fL -o /home/eulercopilot/tools/k3s-arm64 \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/arm64/k3s-arm64
+            curl -fL -o /home/eulercopilot/tools/k3s-install.sh \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/arm64/k3s-install.sh
+          retries: 3
+          delay: 5
+          until: true
 
-    - name: Execute one-click-deploy.sh
+        - name: Download x86_64 tools
+          when: ansible_architecture == "x86_64"
+          ansible.builtin.shell: |
+            mkdir -p /home/eulercopilot/tools
+            curl -fL -o /home/eulercopilot/tools/helm-v3.15.0-linux-amd64.tar.gz \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/amd64/helm-v3.15.0-linux-amd64.tar.gz
+            curl -fL -o /home/eulercopilot/tools/k3s \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/amd64/k3s
+            curl -fL -o /home/eulercopilot/tools/k3s-airgap-images-amd64.tar.zst \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/amd64/k3s-airgap-images-amd64.tar.zst
+            curl -fL -o /home/eulercopilot/tools/k3s-install.sh \
+              https://repo.oepkgs.net/openEuler/rpm/openEuler-22.03-LTS/contrib/eulercopilot/tools/amd64/k3s-install.sh
+          retries: 3
+          delay: 5
+          until: true
+
+    # 临时规避EulerCopilot部署脚本中的一个参数覆盖问题
+    - name: temporary bug fix 
       shell: >
-        sh {{ repo_config.dest_dir }}/deploy/scripts/0-one-click-deploy/one-click-deploy.sh
-        &>"{{ log_dir }}/{{ timestamp }}.log"
+        sed -i 's/local preserve_models="N"/local preserve_models="Y"/g' {{ repo_config.dest_dir }}/deploy/scripts/8-install-EulerCopilot/install_eulercopilot.sh
+    
+    - name: Execute one-click-deploy
+      shell: >
+        yes "" | bash {{ repo_config.dest_dir }}/deploy/scripts/0-one-click-deploy/one-click-deploy.sh >> "{{ log_dir }}/{{ timestamp }}.log"
