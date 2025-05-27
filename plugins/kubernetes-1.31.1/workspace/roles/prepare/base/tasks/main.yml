@@ -18,6 +18,7 @@
       - libnetfilter_queue
       - ebtables
       - iptables
+      - iproute
     state: present
 
 - name: Copy all rpm packages to rpm directory
