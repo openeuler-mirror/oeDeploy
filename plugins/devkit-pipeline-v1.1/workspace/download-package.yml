@@ -1,0 +1,33 @@
+---
+- name: Download and extract devkit-pipeline package
+  hosts: controller
+  gather_facts: false
+  vars:
+    package_name: "{{ pipeline.download_url | basename | regex_replace('\\.tar\\.gz$', '') }}"
+  tasks:
+    - name: Ensure SELinux Python bindings are installed
+      yum:
+        name:
+          - python3-libselinux
+          - tar
+          - wget
+        state: present
+    
+    - name: Create installation directory
+      ansible.builtin.file:
+        path: "{{ pipeline.install_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download package
+      ansible.builtin.get_url:
+        url: "{{ pipeline.download_url }}"
+        dest: "{{ pipeline.install_dir }}/{{ package_name }}.tar.gz"
+        mode: '0644'
+
+    - name: Extract package
+      ansible.builtin.unarchive:
+        src: "{{ pipeline.install_dir }}/{{ package_name }}.tar.gz"
+        dest: "{{ pipeline.install_dir }}"
+        remote_src: yes
+        creates: "{{ pipeline.install_dir }}/{{ package_name }}"

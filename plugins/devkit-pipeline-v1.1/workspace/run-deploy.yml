@@ -1,0 +1,13 @@
+---
+- name: Run deployment command
+  hosts: controller
+  gather_facts: false
+  vars:
+    package_name: "{{ pipeline.download_url | basename | regex_replace('\\.tar\\.gz$', '') }}"
+  tasks:
+    - name: Execute deploy_tool
+      ansible.builtin.shell: |
+        cd {{ pipeline.install_dir }}/{{ package_name }}/linux
+        ./deploy_tool -f ./machine-auto.yaml
+      args:
+        executable: /bin/bash

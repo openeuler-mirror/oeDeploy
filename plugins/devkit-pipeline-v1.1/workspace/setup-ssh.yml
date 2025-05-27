@@ -1,0 +1,32 @@
+---
+- name: Configure SSH key-based authentication
+  hosts: controller
+  gather_facts: false
+  tasks:
+    - name: Check if SSH key exists
+      ansible.builtin.stat:
+        path: /root/.ssh/id_rsa
+      register: ssh_key
+
+    - name: Generate SSH key pair if not exists
+      ansible.builtin.openssh_keypair:
+        path: /root/.ssh/id_rsa
+        type: rsa
+        size: 2048
+        force: false
+      register: keygen_result
+      when: not ssh_key.stat.exists
+
+    - name: Get public key content
+      ansible.builtin.shell: cat /root/.ssh/id_rsa.pub
+      register: public_key
+      when: keygen_result is changed or ssh_key.stat.exists
+
+    - name: Distribute public key to deploy nodes
+      ansible.builtin.authorized_key:
+        user: root
+        key: "{{ public_key.stdout }}"
+        state: present
+      delegate_to: "{{ item }}"
+      loop: "{{ groups['deploy_nodes'] }}"
+      when: public_key is defined and public_key.stdout != ""
