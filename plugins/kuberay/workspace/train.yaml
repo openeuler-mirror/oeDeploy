@@ -89,19 +89,6 @@
           command: "kubectl cp {{ playbook_dir }}/inference.png {{ namespace }}/{{ item }}:/tmp/"
           loop: "{{ all_pods }}"
 
-    - name: Install dependencies in all Pods
-      shell: |
-        kubectl exec {{ pod_name }} -n {{ namespace }} -- \
-          sh -c "pip install torch torchvision scikit-learn {% if pip_source %} -i '{{ pip_source }}' {% endif %}"
-      loop: "{{ all_pods }}"
-      register: pip_install_result
-      args:
-        warn: false
-      failed_when: pip_install_result.rc != 0 and ('ERROR' in pip_install_result.stdout or pip_install_result.stderr != '')
-      loop_control:
-        loop_var: pod_name
-        index_var: ansible_loop_index
-
     - name: Execute training script
       shell: |
         kubectl exec -n {{ namespace }} {{ head_pod_name }} -- \
