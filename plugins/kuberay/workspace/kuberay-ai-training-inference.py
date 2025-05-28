@@ -1,7 +1,6 @@
 import os
 import time
 from typing import Dict
-from filelock import FileLock
 from PIL import Image
 import ray
 from ray.train import ScalingConfig
@@ -50,11 +49,14 @@ class_names = [
 # 获取训练和测试数据加载器
 def get_dataloaders(batch_size):
     transform = transforms.Compose([ToTensor(), Normalize((0.28604,), (0.32025,))])
-    with FileLock(os.path.expanduser("~/data.lock")):
-        training_data = datasets.FashionMNIST(
-            root="~/data", train=True, download=True, transform=transform)
-        test_data = datasets.FashionMNIST(
-            root="~/data", train=False, download=True, transform=transform)
+#     with FileLock("/data/fashion_mnist/data.lock"):
+    dataset_root = "/data/fashion_mnist"
+
+    training_data = datasets.FashionMNIST(
+        root=dataset_root, train=True, download=False, transform=transform)
+    test_data = datasets.FashionMNIST(
+        root=dataset_root, train=False, download=False, transform=transform)
+
     return (
         DataLoader(training_data, batch_size=batch_size, shuffle=True),
         DataLoader(test_data, batch_size=batch_size)

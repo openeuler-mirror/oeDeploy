@@ -51,7 +51,7 @@ all:
     # 以上配置项 ray_cluster_values_file 为高级配置：指定一个 values 文件，用于自定义 
     # Ray 组件的安装。需填写绝对路径，若留空，则采用以下配置：
     ray_cluster_values:
-      repository: "hub.oepkgs.net/oedeploy/rayproject/ray" # Ray docker 镜像 url
+      repository: "hub.oepkgs.net/oedeploy/rayproject/ray-with-pytorch" # Ray docker 镜像 url
       tag: 2.9.0                       # Ray docker 仓库 tag；使用默认 docker 源时，x86 为 2.9.0, arm 为 2.9.0-aarch64；具体的 tag 请至配置的仓库确认
       head:                            # 头节点资源
         cpu: "1"
