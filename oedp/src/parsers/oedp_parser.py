@@ -101,21 +101,15 @@ class OeDeployParser:
 
     def _add_list_command(self):
         """
-        oedp list [-l|--local <path>]
+        oedp list
 
-        列举源中可用的插件。可以指定本地源。
+        列举源中可用的插件。
         """
         drop_command = self.subparsers.add_parser(
             'list',
             prog='oedp list',
             help='List all available plugins',
-            usage='%(prog)s [-l|--local <path>]',
-        )
-        drop_command.add_argument(
-            '-l', '--local',
-            type=str,
-            default=PLUGIN_DIR,
-            help='Specify the local source path',
+            usage='%(prog)s',
         )
         drop_command.set_defaults(func=self._run_list_command)
 
@@ -301,8 +295,7 @@ class OeDeployParser:
 
     @staticmethod
     def _run_list_command(args):
-        source = args.local
-        return ListCmd(source).run()
+        return ListCmd().run()
 
     @staticmethod
     def _run_info_command(args):

@@ -12,49 +12,88 @@
 # ======================================================================================================================
 
 import os
-
+import yaml
 from prettytable import PrettyTable
 
-from src.exceptions.config_exception import ConfigException
+from src.constants.paths import REPO_CACHE_DIR
 from src.utils.log.logger_generator import LoggerGenerator
-from src.utils.main_reader import MainReader
 
 
 class ListCmd:
-    def __init__(self, source: str):
+    def __init__(self):
         """
-        列举源中可用的插件列表。
-
-        :param source: 源路径
+        列举插件源中可用的插件列表。
         """
-        self.source = source
         self.log = LoggerGenerator().get_logger('list_cmd')
 
     def run(self):
         """
-        列举源中可用的插件列表。
+        列举插件源中可用的插件列表。
 
         :return: 是否执行成功
         """
-        self.log.debug(f'Running cmd list: source={self.source}')
-        if not os.path.isdir(self.source):
-            self.log.error(f'{self.source} is not a directory')
+        if not os.path.exists(REPO_CACHE_DIR):
+            self.log.error(f"repo cache directory not found: {REPO_CACHE_DIR}")
             return False
-        plugin_list = []
-        for item in os.listdir(self.source):
-            path = os.path.join(self.source, item)
-            if not item.endswith('.tar.gz'):
-                continue
-            try:
-                main = MainReader(path)
-                name = main.get_name()
-                version = main.get_version()
-                description = main.get_description()
-            except ConfigException:
-                continue
-            plugin_list.append([len(plugin_list) + 1, name, version, description])
-        headers = ['#', 'Plugin', 'Version', 'Description']
-        table = PrettyTable(headers)
-        table.add_rows(plugin_list)
-        self.log.info(table.get_string())
-        return True
+            
+        try:
+            table = self._create_table()
+            has_data = False
+            
+            for filename in os.listdir(REPO_CACHE_DIR):
+                if not filename.endswith('.yaml'):
+                    continue
+                    
+                filepath = os.path.join(REPO_CACHE_DIR, filename)
+                repo_name = os.path.splitext(filename)[0]
+                has_data |= self._process_yaml_file(filepath, repo_name, table)
+                
+            if has_data:
+                self.log.info("\n" + str(table))
+            else:
+                self.log.info("No plugins found in repository cache")
+                
+            return True
+            
+        except Exception as e:
+            self.log.error(f"failed to list plugins: {str(e)}")
+            return False
+            
+    def _create_table(self):
+        """创建并配置输出表格"""
+        table = PrettyTable()
+        table.field_names = ["repo", "name", "version", "type", "size", "description"]
+        table.align["name"] = "l"
+        table.align["description"] = "l"
+        return table
+        
+    def _process_yaml_file(self, filepath, repo_name, table):
+        """处理单个yaml文件并填充表格数据"""
+        try:
+            with open(filepath, 'r') as f:
+                data = yaml.safe_load(f)
+                
+            if not data or 'plugins' not in data:
+                return False
+                
+            has_data = False
+            for plugin in data['plugins']:
+                # 每个plugin是一个字典，key是插件名，value是版本列表
+                for plugin_name, versions in plugin.items():
+                    for version_info in versions:
+                        row = [
+                            repo_name,
+                            version_info.get('name', plugin_name),
+                            version_info.get('version', ''),
+                            version_info.get('type', ''),
+                            version_info.get('size', ''),
+                            version_info.get('description', '')
+                        ]
+                        table.add_row(row)
+                        has_data = True
+                        
+            return has_data
+            
+        except Exception as e:
+            self.log.error(f"failed to process {filepath}: {str(e)}")
+            return False
