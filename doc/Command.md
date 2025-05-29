@@ -1,4 +1,4 @@
-# # `oedp`参数说明
+# # `oedp`命令行设计 & 使用说明
 
 ## `oedp`
 
@@ -23,7 +23,7 @@
 | `--project [path]` | `-p` | N        | 项目路径，默认为当前路径 |
 | `--debug`          | `-d` | N        | 以debug模式运行          |
 
-## `oedp list`（开发中）
+## `oedp list`
 
 列举源中可用的插件
 
@@ -76,7 +76,7 @@ url = file:///root/.oedp/plugins/
 enabled = false
 ````
 
-## `oedp check [action]`
+## `oedp check [action]`（开发中）
 
 检查项目中指定方法的检查项，默认为当前路径
 
@@ -105,9 +105,9 @@ enabled = false
 
 oeDeploy 支持从可访问的插件源自动获取安装部署插件，并初始化到本地。
 
-插件源的根目录下必须有一个索引文件 `index.yaml`，其描述了当前插件源中所有可访问插件的具体路径。
+插件源的根目录下必须有一个索引文件 `index.yaml`，其描述了当前插件源中所有可访问插件的具体信息，包括下载地址。
 
-oeDeploy 提供了脚本 `tools/build_repo/make_repo_index.py`，用于自动生成 `index.yaml`。
+oeDeploy 提供了脚本 `tools/make_repo_index/make_repo_index.py`，用于自动生成 `index.yaml`。
 
 `index.yaml`格式如下：
 
@@ -146,17 +146,17 @@ plugins:
 
 插件字段含义：
 
-| 字段            | 含义                                                                     | 获取方式      |
-| --------------- | ------------------------------------------------------------------------ | ------------- |
-| `name`        | 插件名称。允许插件名称中带有版本号，表示软件本身的版本，而非插件的版本。 | 读取main.yaml |
-| `version`     | 插件版本号。                                                             | 读取main.yaml |
-| `updated`     | 插件更新的时间。允许为空。                                               | 读取main.yaml |
-| `description` | 插件介绍。允许为空。                                                     | 读取main.yaml |
-| `icon`        | 插件图标地址，用于Web端显示。允许为空。                                  | 读取main.yaml |
-| `type`        | 插件类型。保留字段，暂不生效。默认值 `app`。                           | 读取main.yaml |
-| `sha256sum`   | 插件文件sha256数值，用于下载时的完整性校验。                             | 脚本生成      |
-| `size`        | 插件文件大小，单位Bytes。                                                | 脚本生成      |
-| `urls`        | 插件下载地址，可以有多个。所有url地址都必须在当前插件源目录的范围内。    | 脚本生成      |
+| 字段          | 含义                                                         | 获取方式                       |
+| ------------- | ------------------------------------------------------------ | ------------------------------ |
+| `name`        | 插件名称。允许插件名称中带有版本号，表示软件本身的版本，而非插件的版本。 | 读取main.yaml                  |
+| `version`     | 插件版本号。                                                 | 读取main.yaml                  |
+| `updated`     | 插件更新的时间，格式为`%Y-%m-%dT%H:%M:%S%z`。允许为空。      | 读取main.yaml                  |
+| `description` | 插件介绍。允许为空。                                         | 读取main.yaml                  |
+| `icon`        | 插件图标地址，用于Web端显示。允许为空。                      | 读取main.yaml                  |
+| `type`        | 插件类型。保留字段，暂不生效。默认值 `app`。                 | 读取main.yaml                  |
+| `sha256sum`   | 插件文件sha256数值，用于下载时的完整性校验。                 | `sha256sum xxx.tar.gz`命令查询 |
+| `size`        | 插件文件大小，单位Bytes。                                    | 压缩包实际大小                 |
+| `urls`        | 插件下载地址，可以有多个。所有url地址都必须在当前插件源目录的范围内。 | 前缀与相对路径的拼接结果       |
 
 其他字段：
 
@@ -164,7 +164,7 @@ plugins:
 | -------------- | --------------------------------------------------------- | -------- |
 | `apiversion` | 索引文件格式的版本号。保留字段，暂不生效。默认值 `v1`。 | 脚本生成 |
 
-## 插件源构建方式（开发中）
+## 插件源构建方式
 
 执行如下命令，一键生成索引文件 `index.yaml`：
 
@@ -172,15 +172,17 @@ plugins:
 python3 make_repo_index.py [plugins_dir] [url_prefix] [output_dir]
 ````
 
-`plugins_dir`表示当前 Linux 环境下的插件源根目录，脚本会自动识别目录下所有符合条件的 oeDeploy 插件
+- `plugins_dir`表示当前 Linux 环境下的插件源根目录，脚本会自动识别目录下（包括所有子目录）所有符合条件的 oeDeploy 插件（后缀为.tar.gz的压缩包）。
+  oeDeploy 插件合法性的判断标准是：.tar.gz文件中根目录下包含`main.yaml`、`config.yaml`两个文件和`workspace`目录。
+  `name`、`version`、`updated`、`description`、`icon`、`type`信息都从`main.yaml`中读取，如果未读取到，则字段可以缺失。
 
-`url_prefix`表示每个插件源的 url 索引前缀，即对外暴露的插件源根目录
+- `url_prefix`表示每个插件源的 url 索引前缀，即对外暴露的插件源根目录。
 
-`output_dir`表示索引文件 `index.yaml`输出的目录
+- `output_dir`表示索引文件 `index.yaml`输出的目录。
 
 例如，当前 Linux 环境上 `/root/build_workspace/storages/plugins`目录中有多个 oeDeploy 插件，同时映射到 `http://x.x.x.x:8080/plugins`，作为文件服务器对外暴露。
 
-执行如下命令，可以在 `/root/build_workspace/storages/plugins`目录下生成一个 `index.yaml`，其中每个插件的 `urls`字段是其在文件服务器上的访问地址。
+执行如下命令，可以在 `/root/build_workspace/storages/plugins`目录下生成一个 `index.yaml`，其中每个插件的 `urls`字段是其在文件服务器上的真实访问地址，可以直接下载。
 
 ````bash
 python3 make_repo_index.py /root/build_workspace/storages/plugins http://x.x.x.x:8080/plugins /root/build_workspace/storages/plugins
