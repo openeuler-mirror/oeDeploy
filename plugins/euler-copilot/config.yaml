@@ -12,6 +12,8 @@ all:
       ansible_password: PASSWORD
 
   vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
     # 部署日志目录
     log_dir: "/var/log/deploy-euler-copilot"
 

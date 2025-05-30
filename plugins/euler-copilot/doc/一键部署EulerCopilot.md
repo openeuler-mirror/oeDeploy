@@ -87,16 +87,19 @@ cd xxx/euler-copilot
 all:
   hosts:
     host1:
+      # 节点空余内存需要大于16G，建议规格32G以上
       # 部署节点 IP
       ansible_host: HOST_IP
       # 部署节点 SSH 端口
-      ansible_port: PORT
+      ansible_port: 22
       # 部署节点用户
-      ansible_user: USER
+      ansible_user: root  # 目前仅支持root用户
       # 部署节点密码
       ansible_password: PASSWORD
 
   vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
     # 部署日志目录
     log_dir: "/var/log/deploy-euler-copilot"
 
@@ -107,7 +110,7 @@ all:
       # 源码仓放置目录
       dest_dir: "/opt/euler-copilot-framework"
       # 指定分支、tag 和 commit
-      version: "master"
+      version: "release-0.9.5"
       # 是否覆盖本地修改
       force: yes
 
