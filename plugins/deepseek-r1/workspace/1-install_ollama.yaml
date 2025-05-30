@@ -2,6 +2,13 @@
 - name: Install Ollama and run Deepseek
   hosts: all
   vars:
+    ollama_download: "{{
+      ((
+        ollama_download_url.amd64 if ansible_architecture == 'x86_64'
+        else ollama_download_url.arm64 if ansible_architecture == 'aarch64'
+        else ''
+      )) | trim
+    }}"
     ollama_file: "{{ ollama_download | basename }}"
 
   tasks:
@@ -48,7 +55,7 @@
             dest: "{{ ollama_download_path }}/download.sh"
             owner: root
             group: root
-            mode: '0644'
+            mode: '0755'
         
         - name: Execute download.sh
           shell: >
