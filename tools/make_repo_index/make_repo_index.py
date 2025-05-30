@@ -24,12 +24,12 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def is_valid_plugin(tar_path):
-    """检查tar.gz文件是否是合法的oeDeploy插件"""
+def validate_and_extract_plugin_info(tar_path):
+    """验证tar.gz文件是否是合法的oeDeploy插件并提取插件信息"""
     try:
         with tarfile.open(tar_path, 'r:gz') as tar:
             names = tar.getnames()
-            base_name = os.path.basename(tar_path)[:-7]
+            base_name = os.path.basename(tar_path)[:-7]  # 去掉'.tar.gz'后缀
             
             # 检查必须的文件和目录
             required = [
@@ -38,28 +38,23 @@ def is_valid_plugin(tar_path):
                 os.path.join(base_name, 'workspace')
             ]
             
-            return all(item in names for item in required)
-    except Exception as e:
-        logger.error(f"Failed to check plugin validity for {tar_path}: {e}")
-        return False
-
-def get_plugin_info(tar_path):
-    """从tar.gz文件中提取插件信息"""
-    try:
-        with tarfile.open(tar_path, 'r:gz') as tar:
-            base_name = os.path.basename(tar_path)[:-7]
+            # 如果缺少必需文件，立即返回
+            if not all(item in names for item in required):
+                logger.warning(f"Invalid plugin: missing required files in {tar_path}")
+                return False, None
+                
+            # 提取main.yaml内容
             main_path = os.path.join(base_name, 'main.yaml')
-            
-            # 读取main.yaml内容
             tar_file = tar.extractfile(main_path)
             if tar_file is None:
-                raise Exception(f"Failed to extract {main_path}")
+                logger.warning(f"Failed to extract {main_path} from {tar_path}")
+                return False, None
                 
             main_content = yaml.safe_load(tar_file.read())
             
             # 获取基本信息
             info = {
-                'name': main_content.get('name', ''),
+                'name': base_name,  # name字段与插件文件名保持一致
                 'version': main_content.get('version', ''),
                 'updated': main_content.get('updated', ''),
                 'description': main_content.get('description', ''),
@@ -67,10 +62,11 @@ def get_plugin_info(tar_path):
                 'type': main_content.get('type', 'app')
             }
             
-            return info
+            return True, info
+            
     except Exception as e:
-        logger.error(f"Failed to get plugin info from {tar_path}: {e}")
-        return None
+        logger.error(f"Error processing plugin {tar_path}: {e}")
+        return False, None
 
 def calculate_sha256(file_path):
     """计算文件的sha256值"""
@@ -111,12 +107,9 @@ def generate_index(plugins_dir, url_prefix, output_dir):
             tar_path = os.path.join(root, file)
             logger.info(f"Processing plugin: {tar_path}")
             
-            if not is_valid_plugin(tar_path):
-                logger.warning(f"Invalid plugin: {tar_path}")
-                continue
-                
-            plugin_info = get_plugin_info(tar_path)
-            if plugin_info is None:
+            # 一次性完成验证和信息提取
+            valid, plugin_info = validate_and_extract_plugin_info(tar_path)
+            if not valid or plugin_info is None:
                 continue
                 
             # 计算文件大小和sha256
