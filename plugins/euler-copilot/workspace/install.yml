@@ -87,10 +87,52 @@
           until: true
 
     # 临时规避EulerCopilot部署脚本中的一个参数覆盖问题
-    - name: temporary bug fix 
+    - name: temporary bug fix
       shell: >
         sed -i 's/local preserve_models="N"/local preserve_models="Y"/g' {{ repo_config.dest_dir }}/deploy/scripts/8-install-EulerCopilot/install_eulercopilot.sh
     
     - name: Execute one-click-deploy
       shell: >
         yes "" | bash {{ repo_config.dest_dir }}/deploy/scripts/0-one-click-deploy/one-click-deploy.sh >> "{{ log_dir }}/{{ timestamp }}.log"
+
+    - name: Check if all pods in euler-copilot namespace are ready
+      shell: |
+        consecutive_success=0
+        for i in {1..24}; do
+          # Get pod ready statuses
+          pod_ready_status=$(kubectl get pods -n euler-copilot -o jsonpath='{.items[*].status.containerStatuses[*].ready}')
+          
+          # Check if all containers are ready
+          all_ready=true
+          for ready in $pod_ready_status; do
+            if [ "$ready" != "true" ]; then
+              all_ready=false
+              break
+            fi
+          done
+          
+          if $all_ready; then
+            consecutive_success=$((consecutive_success+1))
+            echo "All containers are ready ($consecutive_success/3 consecutive checks)"
+          else
+            consecutive_success=0
+            echo "Not all containers are ready yet. Waiting..."
+          fi
+          
+          if [ $consecutive_success -ge 3 ]; then
+            echo "All containers are ready for 3 consecutive checks"
+            exit 0
+          fi
+          
+          sleep 10
+        done
+        
+        echo "Pod status is still not normal, please check parameter validity or retry"
+        exit 1
+      register: pod_check
+      ignore_errors: true
+
+    - name: Fail if pods are not ready
+      fail:
+        msg: "pod status is not normal, please check parameter validity or retry"
+      when: pod_check.rc != 0
