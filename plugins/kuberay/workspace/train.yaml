@@ -7,12 +7,24 @@
     pip_source: "{{ training.pip }}"
     script_name: "kuberay-ai-training-inference.py"
     script_with_vars_name: "kuberay-ai-training-inference-with-vars.py"
+    test_picture_name: "inference.png"
 
   tasks:
+    - name: Ensure SELinux Python bindings are installed
+      yum:
+        name: python3-libselinux
+        state: present
+
     - name: Copy and render the python file with variables from config.yaml
       template:
         src: "{{ script_name }}"
         dest: "/tmp/{{ script_with_vars_name }}"
+        mode: '0744'
+
+    - name: Copy the test picture to Master Node
+      copy:
+        src: "{{ test_picture_name }}"
+        dest: "/tmp/{{ test_picture_name }}"
         mode: '0744'
 
     - name: Check if Head Pod is running
@@ -86,7 +98,7 @@
           loop: "{{ all_pods }}"
 
         - name: Copy test picture
-          command: "kubectl cp {{ playbook_dir }}/inference.png {{ namespace }}/{{ item }}:/tmp/"
+          command: "kubectl cp /tmp/{{ test_picture_name }} {{ namespace }}/{{ item }}:/tmp/"
           loop: "{{ all_pods }}"
 
     - name: Execute training script

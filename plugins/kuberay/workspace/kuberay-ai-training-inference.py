@@ -49,7 +49,6 @@ class_names = [
 # 获取训练和测试数据加载器
 def get_dataloaders(batch_size):
     transform = transforms.Compose([ToTensor(), Normalize((0.28604,), (0.32025,))])
-#     with FileLock("/data/fashion_mnist/data.lock"):
     dataset_root = "/data/fashion_mnist"
 
     training_data = datasets.FashionMNIST(
@@ -100,7 +99,7 @@ def train_func_per_worker(config: Dict):
     start_time = time.time()
 
     # 训练循环
-    for epoch in range(epochs):
+    for epoch in range(1, epochs+1):
         if ray.train.get_context().get_world_size() > 1:
             train_dataloader.sampler.set_epoch(epoch)
         
@@ -125,7 +124,7 @@ def train_func_per_worker(config: Dict):
         # 打印每个 epoch 的耗时
         if ray.train.get_context().get_world_rank() == 0:
             elapsed_time = time.time() - start_time
-            print(f"Epoch {epoch + 1} ended, elapsed time: {elapsed_time:.2f} s")
+            print(f"Epoch {epoch} ended, elapsed time: {elapsed_time:.2f} s")
         
         # 报告指标
         metrics = {
@@ -134,7 +133,7 @@ def train_func_per_worker(config: Dict):
         }
 
         # 推理结果
-        if epoch == epochs-1 and ray.train.get_context().get_world_rank() == 0:
+        if epoch == epochs and ray.train.get_context().get_world_rank() == 0:
             device = next(model.parameters()).device
             metrics["inference_result"] = run_inference(model, device)
         ray.train.report(metrics)
