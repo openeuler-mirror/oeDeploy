@@ -24,7 +24,7 @@ uv pip install -e .
 
 请确保你的智能体应用（交互界面）支持 MCP 服务，例如 Roo Code 和 Cherry Studio。
 
-打开 MCP 配置页面进行手动配置，或直接编辑 MCP 配置文件。这里需要用户配置大模型 API 的访问地址`model_url`、秘钥`api_key`、模型名称`model_name`，用于 MCP Server 内处理相对复杂的操作。如果大模型的 API 不可用，会导致部分功能受限。相关信息可以从 DeepSeek、硅基流动等模型服务提供商的官网获取。
+打开 MCP 配置页面进行手动配置，或直接编辑 MCP 配置文件。这里需要用户配置大模型 API 的访问地址`model_url`、秘钥`api_key`、模型名称`model_name`，用于 MCP Server 内处理相对复杂的操作。如果大模型的 API 不可用，会导致 MCP Server 初始化失败。相关信息可以从 DeepSeek、硅基流动等模型服务提供商的官网获取。
 
 例如，使用 DeepSeek 官方的 API，可参考如下配置：
 
@@ -53,7 +53,7 @@ uv pip install -e .
 
 ## 3. 自然语言实现一键部署
 
-oeDeploy 插件开发完成后，接下来我们让 AI 帮我们完成 kubernetes-1.31.1 的一键部署。请提前准备3个linux节点，三层网络互通。
+接下来我们让 AI 帮我们完成 kubernetes-1.31.1 的一键部署。请提前准备3个linux节点，三层网络互通。
 
 Roo Code 中新建对话框，发送如下指令：
 
