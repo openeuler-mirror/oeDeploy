@@ -1,6 +1,6 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.1.0
+Version:            1.1.1
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
@@ -69,6 +69,9 @@ fi
 
 
 %changelog
+* Tue Jun 3 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.1-0
+- Add the command 'oedp list' to support querying the plugin list.
+
 * Thur May 15 2025 Yu Diandian <yudiandian@huawei.com> - 1.1.0-3
 - Fix known issues with version query
 
