@@ -7,8 +7,9 @@ all:
       ansible_password: ""
       architecture: amd64          # e.g. [ amd64, arm64 ]
   vars:
-    version: 3.9.0
+    version: 3.17.3
     download_url: https://get.helm.sh/
     temp_path: /tmp
     install_path: /usr/local/bin
     force_install: yes
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
