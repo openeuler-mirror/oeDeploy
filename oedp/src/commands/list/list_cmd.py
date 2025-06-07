@@ -62,9 +62,13 @@ class ListCmd:
     def _create_table(self):
         """创建并配置输出表格"""
         table = PrettyTable()
-        table.field_names = ["repo", "name", "version", "type", "size", "description"]
+        table.field_names = ["repo", "name", "version", "updated", "type", "size", "description"]
         table.align["name"] = "l"
+        table.align["version"] = "l"
+        table.align["updated"] = "l"
+        table.align["size"] = "r"
         table.align["description"] = "l"
+        table._max_width = {"description": 64}
         return table
         
     def _process_yaml_file(self, filepath, repo_name, table):
@@ -85,6 +89,7 @@ class ListCmd:
                             repo_name,
                             version_info.get('name', plugin_name),
                             version_info.get('version', ''),
+                            version_info.get('updated', ''),
                             version_info.get('type', ''),
                             version_info.get('size', ''),
                             version_info.get('description', '')
