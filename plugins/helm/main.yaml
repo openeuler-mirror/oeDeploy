@@ -1,5 +1,5 @@
 name: helm
-description: auto deploy helm (default v3.9.0)
+description: auto deploy helm (default v3.17.3)
 action:
   install:
     description: install helm
