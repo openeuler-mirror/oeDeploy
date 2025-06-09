@@ -104,9 +104,7 @@
     - name: Execute training script
       shell: |
         kubectl exec -n {{ namespace }} {{ head_pod_name }} -- \
-          python -u /tmp/{{ script_with_vars_name }}
-      args:
-        executable: /bin/bash
+          bash -c "timeout 600s python -u /tmp/{{ script_with_vars_name }}"
       register: training_output
       changed_when: false
 
