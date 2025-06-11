@@ -15,8 +15,8 @@ import os
 import glob
 import yaml
 import hashlib
-from typing import List, Dict, Optional
-from datetime import datetime
+from packaging import version
+from typing import Dict, Optional
 
 from src.constants.paths import PLUGIN_DIR, REPO_CACHE_DIR, REPO_CONFIG_PATH
 from src.utils.command.command_executor import CommandExecutor
@@ -183,44 +183,6 @@ class InitCmd:
         except Exception as e:
             self.log.error(f"failed to handle plugin name: {str(e)}")
             return False
-
-    def _check_and_update_repo(self) -> bool:
-        """检查并更新插件仓库
-        """
-        try:
-            # 获取REPO_CONFIG_PATH的修改时间
-            if not os.path.exists(REPO_CONFIG_PATH):
-                self.log.error(f"repo config file not found: {REPO_CONFIG_PATH}")
-                return False
-                
-            config_mtime = os.path.getmtime(REPO_CONFIG_PATH)
-            
-            # 获取REPO_CACHE_DIR中所有.yaml文件
-            yaml_files = glob.glob(os.path.join(REPO_CACHE_DIR, '*.yaml'))
-            
-            if not yaml_files:
-                # 没有缓存文件，需要更新
-                self.log.info("no cached repo files found, updating repo")
-                return self._update_repo()
-                
-            # 找出最老的修改时间
-            oldest_mtime = min(os.path.getmtime(f) for f in yaml_files)
-            
-            if oldest_mtime < config_mtime:
-                # 缓存文件比配置文件旧，需要更新
-                self.log.info("cached repo files are older than config, updating repo")
-                return self._update_repo()
-            
-            # 检查缓存文件是否超过24小时未更新
-            current_time = datetime.now().timestamp()
-            if current_time - oldest_mtime > 86400:  # 86400秒=24小时
-                self.log.info("cached repo files are older than 24 hours, updating repo")
-                return self._update_repo()
-
-            return True
-        except Exception as e:
-            self.log.error(f"failed to check repo update status: {str(e)}")
-            return False
             
     def _update_repo(self) -> bool:
         """执行oedp repo update命令更新仓库"""
@@ -238,7 +200,7 @@ class InitCmd:
     def _find_plugin_in_repos(self) -> Optional[Dict]:
         """在仓库中查找插件"""
         
-        if not self._check_and_update_repo():
+        if not self._update_repo():
             return None
         
         for index_file in glob.glob(os.path.join(REPO_CACHE_DIR, '*.yaml')):
@@ -256,12 +218,8 @@ class InitCmd:
                         
                     for plugin_name, versions in plugin_entry.items():
                         if plugin_name == self.plugin and versions:
-                            # 找到最新版本
-                            latest_version = max(
-                                versions,
-                                key=lambda v: (v['version'], datetime.strptime(v['updated'], "%Y-%m-%dT%H:%M:%S%z") if v.get('updated') else '')
-                            )
-                            return latest_version
+                            # 找到最新版本(当有多个相同version时，返回第一个遇到的)
+                            return max(versions, key=lambda v: version.parse(v['version']))
             except Exception as e:
                 self.log.warning(f"failed to parse index file {index_file}: {str(e)}")
                 continue

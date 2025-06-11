@@ -20,6 +20,7 @@ import yaml
 import hashlib
 import logging
 from datetime import datetime
+from packaging import version
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -154,7 +155,7 @@ def generate_index(plugins_dir, url_prefix, output_dir):
     for plugin_name in sorted(plugins_dict.keys()):
         # 按版本从大到小排序
         versions = sorted(plugins_dict[plugin_name],
-                         key=lambda x: x['version'],
+                         key=lambda x: version.parse(x['version']),
                          reverse=True)
         
         # 添加到最终输出
