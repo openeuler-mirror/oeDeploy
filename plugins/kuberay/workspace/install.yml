@@ -100,15 +100,15 @@
         msg: "Error: KubeRay installation failed"
       when: head_pod.stdout == ""
 
-    - name: Check if Head Pod is running
+    - name: Check if Head Pod is ready
       shell: |
         kubectl get pods -n {{ namespace }} \
           --selector=ray.io/node-type=head \
-          -o jsonpath='{.items[0].status.phase}'
-      register: head_pod_status
-      retries: 20
+          -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}'
+      register: head_pod_ready
+      retries: 30
       delay: 6
-      until: head_pod_status.stdout == "Running"
+      until: head_pod_ready.stdout == "True"
 
     - name: Get Worker Pods info
       shell: |
@@ -117,7 +117,7 @@
           -o json
       register: worker_pods_info
 
-    - name: Check if every Worker Pod is running
+    - name: Check if every Worker Pod is ready
       shell: |
         kubectl get pods -n {{ namespace }} \
           --selector=ray.io/node-type=worker \
@@ -127,7 +127,7 @@
       delay: 6
       until: >
         (
-          (worker_pods_status.stdout | from_json | json_query('items[*].status.phase') | select('equalto', 'Running') | list | length)
+          (worker_pods_status.stdout | from_json | json_query('items[*].status.conditions[?(@.type==`Ready`)].status') | flatten | select('equalto', 'True') | list | length)
           ==
           (worker_pods_status.stdout | from_json | json_query('items') | length)
         )
