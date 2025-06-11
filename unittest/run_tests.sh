@@ -9,13 +9,14 @@ PROJECT_ROOT="$SCRIPT_DIR/../oedp"
 export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
 
 # 执行测试用例
-coverage run -m pytest
+python3 -m coverage run -m pytest
 
 # 检查执行结果
 if [ $? -eq 0 ]; then
     echo "所有测试用例执行成功"
-    coverage report
+    python3 -m coverage report
 else
     echo "部分测试用例执行失败"
+    python3 -m coverage report
     exit 1
 fi
