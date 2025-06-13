@@ -8,7 +8,8 @@ Source0:            %{name}-%{version}.tar.gz
 
 BuildArch:  noarch
 
-Requires: python3, ansible, python3-prettytable, python3-netaddr, python3-packaging, tar
+Requires: python3, ansible, tar, rsync
+Requires: python3-prettytable, python3-netaddr, python3-packaging
 
 %description
 openEuler deploy tool
