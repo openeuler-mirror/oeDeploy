@@ -1,0 +1,31 @@
+all:
+  hosts:
+    # 待修改，NODE_NAME 为节点唯一标识。示例值：dify_node
+    NODE_NAME:
+      # 待修改，NODE_IP 为节点 IP地址。示例值：192.168.10.1
+      ansible_host: NODE_IP
+      # 待修改，NODE_PORT 为节点端口号。示例值：22
+      ansible_port: NODE_PORT
+      # 待修改，NODE_USER 为节点用户名。示例值：root
+      ansible_user: NODE_USER
+      # 待修改，NODE_PASSWORD 为节点密码。
+      ansible_password: NODE_PASSWORD
+  vars:
+    # 目标节点最小配置要求
+    # 最小 CPU 核心数
+    MIN_CPU: 2
+    # 最小内存
+    MIN_MEM_GB: 4
+
+    # Docker 镜像加速站
+    DOCKER_IMAGE_URL: https://docker.m.daocloud.io
+
+    # Dify 源码目录
+    DIFY_CODE_DIR: /opt/dify
+    # Dify github 地址
+    DIFY_GIT_URL: https://github.com/langgenius/dify.git
+    # github 代理代理
+    GITHUB_PROXY: https://gh.idayer.com/
+
+    # 跳过 ssh 校验（如需禁用此功能，请注释以下配置项）
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
