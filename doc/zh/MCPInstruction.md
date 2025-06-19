@@ -1,4 +1,4 @@
-# oeDeploy MCP Server 指南
+# oeDeploy MCP Server 使用说明
 
 MCP（Model Context Protocol，模型上下文协议）是一项开放协议，旨在为 AI 系统与外部数据源、工具之间建立标准化连接接口；其核心是通过客户端—服务器架构，让大语言模型能安全高效地访问本地文件、数据库、API服务等资源，实现跨平台、跨工具的智能交互。
 
