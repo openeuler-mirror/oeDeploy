@@ -56,7 +56,7 @@ def validate_and_extract_plugin_info(tar_path):
             # 获取基本信息
             info = {
                 'name': base_name,  # name字段与插件文件名保持一致
-                'version': main_content.get('version', ''),
+                'version': main_content.get('version', '1.0.0'),
                 'updated': main_content.get('updated', ''),
                 'description': main_content.get('description', ''),
                 'icon': main_content.get('icon', ''),
