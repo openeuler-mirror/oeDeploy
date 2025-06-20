@@ -1,0 +1,44 @@
+- name: Install Dify
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Validate code directory
+      ansible.builtin.stat:
+        path: "{{ DIFY_CODE_DIR }}"
+      register: dir_check
+      tags: always
+
+    - name: Clone Dify code
+      ansible.builtin.git:
+        repo: "{{ GITHUB_PROXY }}{{ DIFY_GIT_URL }}"
+        dest: "{{ DIFY_CODE_DIR }}"
+      when: not dir_check.stat.exists
+
+    - name: Check if file exists
+      ansible.builtin.stat:
+        path: "{{ DIFY_CODE_DIR }}/docker/.env.example"
+      register: file_check
+
+    - name: Fail if file doesn't exist
+      ansible.builtin.fail:
+        msg: "文件 {{ DIFY_CODE_DIR }}/docker/.env.example 不存在"
+      when: not file_check.stat.exists or not file_check.stat.isreg
+
+    - name: Copy file in specified directory
+      ansible.builtin.copy:
+        src: "{{ DIFY_CODE_DIR }}/docker/.env.example"
+        dest: "{{ DIFY_CODE_DIR }}/docker/.env"
+        remote_src: yes
+        mode: preserve
+        force: yes
+      when: file_check.stat.exists
+
+    - name: Launch Docker stack with retry
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ DIFY_CODE_DIR }}/docker"
+      register: stack_result
+      retries: 5
+      delay: 30
+      until: stack_result is succeeded  

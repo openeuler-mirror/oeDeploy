@@ -1,0 +1,24 @@
+- name: Check env
+  hosts: all
+
+  tasks:
+    - name: Check the number of CPU cores
+      ansible.builtin.assert:
+        that:
+          - ansible_processor_vcpus >= MIN_CPU
+        success_msg: "Current CPU cores: {{ ansible_processor_vcpus }} (meets requirement)."
+        fail_msg: "Current CPU cores: {{ ansible_processor_vcpus }} (does not meet requirement)."
+
+    - name: Check memory size
+      ansible.builtin.assert:
+        that:
+          - ansible_memtotal_mb >= (MIN_MEM_GB * 1024)
+        success_msg: "Current memory: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB (meets requirement)."
+        fail_msg: "Current memory: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB (does not meet requirement)."
+
+    - name: Install packages
+      yum:
+        name:
+          - python3-libselinux
+          - git
+        state: present

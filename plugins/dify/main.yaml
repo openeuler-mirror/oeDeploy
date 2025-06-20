@@ -1,0 +1,21 @@
+name: dify
+description: install and uninstall Dify
+action:
+  install:
+    description: Install Dify
+    tasks:
+      - name: Check env
+        playbook: check-env.yaml
+        scope: all
+      - name: Install Docker
+        playbook: install-docker.yaml
+        scope: all
+      - name: Install Dify
+        playbook: install-dify.yaml
+        scope: all
+  uninstall:
+    description: Uninstall Dify
+    tasks:
+      - name: Uninstall Dify
+        playbook: uninstall-dify.yaml
+        scope: all
