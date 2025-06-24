@@ -73,7 +73,7 @@ all:
           ansible_host: 172.27.76.114     # master node IP
           ansible_port: 22
           ansible_user: root
-          ansible_password: PASSWORD
+          ansible_password: ""
           architecture: amd64             # amd64 or arm64
           oeversion: 24.03-LTS            # 22.03-LTS or 24.03-LTS
     workers:
@@ -82,14 +82,14 @@ all:
           ansible_host: 172.27.70.60      # worker node IP
           ansible_port: 22
           ansible_user: root
-          ansible_password: PASSWORD
+          ansible_password: ""
           architecture: amd64
           oeversion: 24.03-LTS
         172.27.72.90:                     # worker node IP
           ansible_host: 172.27.72.90      # worker node IP
           ansible_port: 22
           ansible_user: root
-          ansible_password: PASSWORD
+          ansible_password: ""
           architecture: amd64
           oeversion: 24.03-LTS
   vars:

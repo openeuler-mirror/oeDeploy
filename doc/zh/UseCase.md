@@ -139,7 +139,7 @@
         ansible_host: 192.168.124.17   # 远端IP
         ansible_port: 22               # 端口号
         ansible_user: root             # 用户名
-        ansible_password: passwd       # 密码
+        ansible_password: ""       # 密码
 
     vars:
       docker_download_url:
@@ -239,7 +239,7 @@
        #   ansible_host: 127.0.0.1      # 远端IP
        #   ansible_port: 22             # 端口号
        #   ansible_user: root           # 用户名
-       #   ansible_password: PASSWORD   # 密码
+       #   ansible_password: ""   # 密码
      vars:
        deepseek_version: 8b
        # ollama 官方下载地址: https://ollama.com/download/ollama-linux-amd64.tgz，注意区分amd64和arm64
@@ -371,7 +371,7 @@
           # 部署节点用户
           ansible_user: root  # 目前仅支持 root 用户
           # 部署节点密码
-          ansible_password: PASSWORD
+          ansible_password: ""
 
       vars:
         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
@@ -482,7 +482,7 @@
           ansible_host: 192.168.1.101      # master 节点的 IP
           ansible_port: 22                 # ssh 的端口
           ansible_user: root               # ssh 的用户，非root用户需要 sudo 权限
-          ansible_password: PASSWORD       # 上述用户的密码
+          ansible_password: ""       # 上述用户的密码
       vars:
         temp_path: /tmp
         namespace: kuberay                 # 命名空间

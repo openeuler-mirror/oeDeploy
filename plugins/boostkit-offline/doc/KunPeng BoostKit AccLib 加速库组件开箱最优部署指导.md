@@ -152,7 +152,7 @@ A 同学的部署节点如下：
          ansible_host: 10.0.1.1        # 本机 IP
          ansible_port: 22              # ssh 使用 22 端口
          ansible_user: root            # 安全性允许的情况下，使用 root 用户登录
-         ansible_password: "12345678"  # 本机 root 密码
+         ansible_password: ""  # 本机 root 密码
          # 不使用代理
      children:
        AccLib:
@@ -207,7 +207,7 @@ B 女士的部署节点如下：
          ansible_host: 10.0.2.2        # 云服务器 IP
          ansible_port: 22
          ansible_user: root
-         ansible_password: "12345678"  # 服务器密码
+         ansible_password: ""  # 服务器密码
          # 使用网络代理
          proxy_env:
            http_proxy: http://user:password@proxy.example.com:8080
@@ -250,7 +250,7 @@ B 女士的部署节点如下：
          ansible_host: 10.0.2.2        # 云服务器 IP
          ansible_port: 22
          ansible_user: root
-         ansible_password: "12345678"  # 服务器密码
+         ansible_password: ""  # 服务器密码
          # 使用网络代理
          proxy_env:
            http_proxy: http://user:password@proxy.example.com:8080
