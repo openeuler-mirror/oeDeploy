@@ -17,17 +17,22 @@
     name: python3-libselinux
     state: present
 
-- name: Copy prepare.sh to hosts
-  copy:
+- name: install rsync
+  yum:
+    name: rsync
+    state: present
+
+- name: Sync prepare.sh to hosts using rsync
+  synchronize:
     src: prepare.sh
     dest: "{{ dir_path }}"
-    mode: '0755'
+    rsync_opts: "--chmod=755"
 
 - name: Copy lib to hosts
-  copy:
+  synchronize:
     src: lib
     dest: "{{ dir_path }}"
-    mode: '0644'
+    rsync_opts: "--chmod=644"
 
 - name: Copy config.cfg to hosts
   template:

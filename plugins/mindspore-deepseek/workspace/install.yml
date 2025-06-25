@@ -4,21 +4,25 @@
   roles:
     - prepare
   any_errors_fatal: true
+  gather_facts: false
 
 - hosts:
     - masters
   roles:
     - start/ray-master
   any_errors_fatal: true
+  gather_facts: false
 
 - hosts:
     - workers
   roles:
     - start/ray-worker
   any_errors_fatal: true
+  gather_facts: false
 
 - hosts:
     - masters
   roles:
     - start/deepseek
   any_errors_fatal: true
+  gather_facts: false
