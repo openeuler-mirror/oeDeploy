@@ -4,7 +4,7 @@ all:
       ansible_host: IP   # 远端IP
       ansible_port: 22             # 端口号
       ansible_user: root           # 用户名
-      ansible_password: passwd   # 密码
+      ansible_password: ""   # 密码
 
   vars:
     docker_download_url:

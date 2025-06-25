@@ -37,7 +37,7 @@
               ansible_host: 192.168.10.1
               ansible_port: 22
               ansible_user: root
-              ansible_password: "xxxxxxxx"
+              ansible_password: ""
               architecture: amd64              # e.g. [ amd64, arm64 ]
               oeversion: 24.03-LTS             # e.g. [ 22.03-LTS, 24.03-LTS ]
               runtime: docker                  # e.g. [ docker, containerd ]
@@ -47,7 +47,7 @@
               ansible_host: 192.168.10.2
               ansible_port: 22
               ansible_user: root
-              ansible_password: "xxxxxxxx"
+              ansible_password: ""
               architecture: amd64
               oeversion: 24.03-LTS
               runtime: docker
@@ -55,7 +55,7 @@
               ansible_host: 192.168.10.3
               ansible_port: 22
               ansible_user: root
-              ansible_password: "xxxxxxxx"
+              ansible_password: ""
               architecture: amd64
               oeversion: 24.03-LTS
               runtime: docker

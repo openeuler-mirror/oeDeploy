@@ -95,7 +95,7 @@ all:
       # 部署节点用户
       ansible_user: root  # 目前仅支持root用户
       # 部署节点密码
-      ansible_password: PASSWORD
+      ansible_password: ""
 
   vars:
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

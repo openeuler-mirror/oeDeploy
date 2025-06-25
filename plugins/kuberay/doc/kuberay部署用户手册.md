@@ -31,7 +31,7 @@ all:
       ansible_host: 192.168.1.101      # master 节点的 IP
       ansible_port: 22                 # ssh 的端口
       ansible_user: root               # ssh 的用户，非root用户需要 sudo 权限
-      ansible_password: PASSWORD       # 上述用户的密码
+      ansible_password: ""       # 上述用户的密码
   vars:
     temp_path: /tmp
     namespace: kuberay                 # 命名空间

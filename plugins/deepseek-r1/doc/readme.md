@@ -30,7 +30,7 @@
        #   ansible_host: 127.0.0.1      # 远端IP
        #   ansible_port: 22             # 端口号
        #   ansible_user: root           # 用户名
-       #   ansible_password: PASSWORD   # 密码
+       #   ansible_password: ""   # 密码
      vars:
        deepseek_version: 8b
        # ollama官方下载地址: https://ollama.com/download/ollama-linux-amd64.tgz，注意区分amd64和arm64
