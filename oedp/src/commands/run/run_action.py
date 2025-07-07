@@ -18,7 +18,7 @@ from src.utils.log.logger_generator import LoggerGenerator
 
 
 class RunAction:
-    def __init__(self, action: str, tasks: list, project: str, debug: bool):
+    def __init__(self, action: str, tasks: list, project: str, debug: bool, time: bool = False, local: bool = False):
         """
         执行指定项目的指定方法。
 
@@ -26,11 +26,15 @@ class RunAction:
         :param action: 方法名称
         :param tasks: 方法代码路径
         :param debug: 是否启用调试模式
+        :param time: 是否记录任务时间
+        :param local: 是否部署到本地
         """
         self.action = action
         self.tasks = tasks
         self.project = project
         self.debug = debug
+        self.time = time
+        self.local = local
         self.log = LoggerGenerator().get_logger('run_action')
 
     def run(self) -> bool:
@@ -60,6 +64,7 @@ class RunAction:
         if self.debug and task.get('disabled_in_debug', False):
             self.log.info(f'Skipping task "{task.get("name", "unamed task")}"')
             return True
+        
         self.log.info(f'Running task {task.get("name", "")}')
         workspace = os.path.join(project, 'workspace')
         playbook = os.path.join(workspace, task['playbook'])
@@ -67,6 +72,7 @@ class RunAction:
             self.log.error(f'Playbook does not exist: {os.path.abspath(playbook)}')
             return False
         inventory = os.path.join(project, 'config.yaml')
+
         cmd = ['ansible-playbook', playbook, '-i', inventory]
         if 'vars' in task:
             variables = os.path.join(workspace, task['vars'])
@@ -76,9 +82,17 @@ class RunAction:
             cmd.extend(['-e', f'@{variables}'])
         if 'scope' in task and task['scope'] != 'all':
             cmd.extend(['--limit', task['scope']])
+        if self.local:
+            cmd.extend(['--connection=local'])
+        
+        env = os.environ.copy()
+        if self.time:
+            env['ANSIBLE_CALLBACK_WHITELIST'] = 'profile_tasks'
+
         self.log.debug(f'Executing cmd: {cmd}')
         try:
-            out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True)
+            out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True, env=env)
+            self.log.debug('Execution log:\n' + out)
             if ret != 0:
                 self.log.error(f'Execute cmd failed [code:{ret}]:\nSTDOUT: {out}\nSTDERR: {err}')
                 return False

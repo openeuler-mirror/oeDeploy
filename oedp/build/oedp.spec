@@ -1,9 +1,10 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.1.1
+Version:            1.1.2
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
+URL:                https://gitee.com/openeuler/oeDeploy
 Source0:            %{name}-%{version}.tar.gz
 
 BuildArch:  noarch
@@ -70,6 +71,9 @@ fi
 
 
 %changelog
+* Tue Jul 5 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.2-0
+- Add local deployment mode and runtime printing.
+
 * Tue Jun 3 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.1-0
 - Add the command 'oedp list' to support querying the plugin list.
 
