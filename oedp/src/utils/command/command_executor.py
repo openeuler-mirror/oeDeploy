@@ -23,9 +23,14 @@ class CommandExecutor:
     """
 
     @staticmethod
-    def run_single_cmd(cmd, timeout=600, raise_exception=False, show_error=True, encoding=None, print_on_console=False, env=None):
-        if encoding is None:
-            encoding = sys.getdefaultencoding()
+    def run_single_cmd(cmd, **kwargs):
+        timeout = kwargs.get('timeout', 600)
+        raise_exception = kwargs.get('raise_exception', False)
+        show_error = kwargs.get('show_error', True)
+        encoding = kwargs.get('encoding', None)
+        print_on_console = kwargs.get('print_on_console', False)
+        env = kwargs.get('env', None)
+        
         if env is not None and not isinstance(env, dict):
             raise ValueError("env parameter must be a dictionary or None")
         process_env = os.environ.copy()

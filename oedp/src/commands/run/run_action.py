@@ -18,23 +18,25 @@ from src.utils.log.logger_generator import LoggerGenerator
 
 
 class RunAction:
-    def __init__(self, action: str, tasks: list, project: str, debug: bool, time: bool = False, local: bool = False):
+    def __init__(self, action: str, tasks: list, project: str, **kwargs):
         """
         执行指定项目的指定方法。
 
-        :param project: 项目目录路径
         :param action: 方法名称
-        :param tasks: 方法代码路径
-        :param debug: 是否启用调试模式
-        :param time: 是否记录任务时间
-        :param local: 是否部署到本地
+        :param tasks: 任务列表
+        :param project: 项目目录路径
+        :param kwargs: 可选参数，包括:
+            - debug: bool, 是否启用调试模式 (默认False)
+            - time: bool, 是否记录任务时间 (默认False)
+            - local: bool, 是否部署到本地 (默认False)
+            以及其他自定义参数
         """
         self.action = action
         self.tasks = tasks
         self.project = project
-        self.debug = debug
-        self.time = time
-        self.local = local
+        self.debug = kwargs.get('debug', False)
+        self.time = kwargs.get('time', False)
+        self.local = kwargs.get('local', False)
         self.log = LoggerGenerator().get_logger('run_action')
 
     def run(self) -> bool:

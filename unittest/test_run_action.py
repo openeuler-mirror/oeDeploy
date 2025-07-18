@@ -12,10 +12,9 @@
 # ======================================================================================================================
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.commands.run.run_action import RunAction
-from src.utils.command.command_executor import CommandExecutor
-import os
+
 
 class TestRunAction(unittest.TestCase):
     def setUp(self):
@@ -34,7 +33,7 @@ class TestRunAction(unittest.TestCase):
         mock_exists.return_value = False
         tasks = [self.valid_task]
         
-        runner = RunAction(self.action_name, tasks, self.project_path, False)
+        runner = RunAction(self.action_name, tasks, self.project_path, debug=False)
         result = runner.run()
         
         self.assertFalse(result)
@@ -45,7 +44,7 @@ class TestRunAction(unittest.TestCase):
         mock_cmd.return_value = ("", "Permission denied", 1)
         tasks = [self.valid_task]
         
-        runner = RunAction(self.action_name, tasks, self.project_path, False)
+        runner = RunAction(self.action_name, tasks, self.project_path, debug=False)
         result = runner.run()
         
         self.assertFalse(result)
@@ -57,7 +56,7 @@ class TestRunAction(unittest.TestCase):
         mock_exists.return_value = True
         mock_cmd.return_value = ("", "", 0)  # 模拟命令执行成功
         disabled_task = {**self.valid_task, "disabled": True}
-        runner = RunAction(self.action_name, [disabled_task], self.project_path, False)
+        runner = RunAction(self.action_name, [disabled_task], self.project_path, debug=False)
     
         with self.assertLogs(level='INFO') as log:
             result = runner.run()
@@ -74,7 +73,7 @@ class TestRunAction(unittest.TestCase):
         mock_cmd.return_value = ("", "", 0)
         
         disabled_task = {**self.valid_task, "disabled_in_debug": True}
-        runner = RunAction(self.action_name, [disabled_task], self.project_path, True)
+        runner = RunAction(self.action_name, [disabled_task], self.project_path, debug=True)
         
         with self.assertLogs(level='INFO') as log:
             result = runner.run()
@@ -93,7 +92,7 @@ class TestRunAction(unittest.TestCase):
             self.valid_task,
             {**self.valid_task, "name": "task2", "playbook": "config.yml"}
         ]
-        runner = RunAction(self.action_name, tasks, self.project_path, False)
+        runner = RunAction(self.action_name, tasks, self.project_path, debug=False)
         result = runner.run()
         
         self.assertTrue(result)
@@ -112,7 +111,7 @@ class TestRunAction(unittest.TestCase):
             "vars": "custom_vars.yml",
             "scope": "web_servers"
         }
-        runner = RunAction(self.action_name, [task], self.project_path, False)
+        runner = RunAction(self.action_name, [task], self.project_path, debug=False)
         result = runner.run()
         
         self.assertTrue(result)
@@ -129,7 +128,7 @@ class TestRunAction(unittest.TestCase):
         mock_cmd.return_value = ("", "", 0)
         
         # 非字典格式的任务
-        runner = RunAction(self.action_name, ["invalid_task"], self.project_path, False)
+        runner = RunAction(self.action_name, ["invalid_task"], self.project_path, debug=False)
         result = runner.run()
         
         self.assertFalse(result)
@@ -146,7 +145,7 @@ class TestRunAction(unittest.TestCase):
             "playbook": "install.yml",
             "vars": "missing_vars.yml"
         }
-        runner = RunAction(self.action_name, [task], self.project_path, False)
+        runner = RunAction(self.action_name, [task], self.project_path, debug=False)
         result = runner.run()
         
         self.assertFalse(result)
@@ -158,7 +157,7 @@ class TestRunAction(unittest.TestCase):
         mock_exists.return_value = True
         mock_cmd.side_effect = Exception("Command failed")
         
-        runner = RunAction(self.action_name, [self.valid_task], self.project_path, False)
+        runner = RunAction(self.action_name, [self.valid_task], self.project_path, debug=False)
         result = runner.run()
         
         self.assertFalse(result)
@@ -170,7 +169,7 @@ class TestRunAction(unittest.TestCase):
         mock_exists.return_value = True
         mock_cmd.return_value = ("", "", 0)
         
-        runner = RunAction(self.action_name, [self.valid_task], self.project_path, False)
+        runner = RunAction(self.action_name, [self.valid_task], self.project_path, debug=False)
         
         with self.assertLogs(level='INFO') as log:
             result = runner.run()
@@ -192,7 +191,7 @@ class TestRunAction(unittest.TestCase):
             {"name": "all_scope", "playbook": "install.yml", "scope": "all"},
             {"name": "custom_scope", "playbook": "install.yml", "scope": "web_servers"}
         ]
-        runner = RunAction(self.action_name, tasks, self.project_path, False)
+        runner = RunAction(self.action_name, tasks, self.project_path, debug=False)
         result = runner.run()
         
         self.assertTrue(result)
@@ -205,7 +204,7 @@ class TestRunAction(unittest.TestCase):
         mock_exists.return_value = True
         mock_cmd.return_value = ("", "", 0)
         
-        runner = RunAction(self.action_name, [], self.project_path, False)
+        runner = RunAction(self.action_name, [], self.project_path, debug=False)
         result = runner.run()
         
         self.assertTrue(result)
@@ -219,7 +218,7 @@ class TestRunAction(unittest.TestCase):
         mock_cmd.return_value = ("", "", 0)
         
         task = {"playbook": "install.yml"}
-        runner = RunAction(self.action_name, [task], self.project_path, False)
+        runner = RunAction(self.action_name, [task], self.project_path, debug=False)
         
         with self.assertLogs(level='INFO') as log:
             result = runner.run()
@@ -243,7 +242,7 @@ class TestRunAction(unittest.TestCase):
             {"name": "failed_task", "playbook": "failed.yml"},
             {"name": "skipped_task", "playbook": "skipped.yml"}
         ]
-        runner = RunAction(self.action_name, tasks, self.project_path, False)
+        runner = RunAction(self.action_name, tasks, self.project_path, debug=False)
         result = runner.run()
         
         self.assertFalse(result)
@@ -260,7 +259,7 @@ class TestRunAction(unittest.TestCase):
             {"name": "normal_task", "playbook": "normal.yml"},
             {"name": "debug_disabled_task", "playbook": "debug.yml", "disabled_in_debug": True}
         ]
-        runner = RunAction(self.action_name, tasks, self.project_path, True)
+        runner = RunAction(self.action_name, tasks, self.project_path, debug=True)
         
         with self.assertLogs(level='INFO') as log:
             result = runner.run()
@@ -282,7 +281,7 @@ class TestRunAction(unittest.TestCase):
             "vars": "vars1.yml",
             "scope": "nodes"
         }
-        runner = RunAction(self.action_name, [task], self.project_path, False)
+        runner = RunAction(self.action_name, [task], self.project_path, debug=False)
         result = runner.run()
         
         self.assertTrue(result)
