@@ -21,17 +21,21 @@ from decimal import Decimal
 
 
 class RunCmd:
-    def __init__(self, action: str, project: str, debug: bool):
+    def __init__(self, action: str, project: str, debug: bool = False, time: bool = False, local: bool = False):
         """
         执行一个项目中的方法。
 
         :param action: 方法名称
         :param project: 项目目录路径
         :param debug: 是否启用调试模式
+        :param time: 是否记录任务时间
+        :param local: 是否部署到本地
         """
         self.action = action
         self.project = project
         self.debug = debug
+        self.time = time
+        self.local = local
         self.log = LoggerGenerator().get_logger('run_cmd')
 
     def run(self):
@@ -54,7 +58,12 @@ class RunCmd:
                 self.log.error(f'Failed to get tasks info: {action}')
                 return False
             tasks = action['tasks']
-            return RunAction(self.action, tasks, self.project, self.debug).run()
+            return RunAction(
+                self.action, tasks, self.project,
+                debug=self.debug,
+                time=self.time,
+                local=self.local
+            ).run()
         finally:
             end_time = time.time()
             seconds = Decimal(f"{format(end_time - start_time, '.1f')}")

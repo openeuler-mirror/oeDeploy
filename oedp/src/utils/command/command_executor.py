@@ -23,19 +23,29 @@ class CommandExecutor:
     """
 
     @staticmethod
-    def run_single_cmd(cmd, timeout=600, raise_exception=False, show_error=True, encoding=None, print_on_console=False):
-        if encoding is None:
-            encoding = sys.getdefaultencoding()
+    def run_single_cmd(cmd, **kwargs):
+        timeout = kwargs.get('timeout', 600)
+        raise_exception = kwargs.get('raise_exception', False)
+        show_error = kwargs.get('show_error', True)
+        encoding = kwargs.get('encoding', None)
+        print_on_console = kwargs.get('print_on_console', False)
+        env = kwargs.get('env', None)
+        
+        if env is not None and not isinstance(env, dict):
+            raise ValueError("env parameter must be a dictionary or None")
+        process_env = os.environ.copy()
+        if env:
+            process_env.update(env)
 
         try:
             pipe = subprocess.Popen(
                 cmd, universal_newlines=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=True,
-                encoding=encoding
+                encoding=encoding, env=process_env
             )
         except (ValueError, OSError) as error_except:
             if raise_exception:
                 raise error_except
-            return "", "", pipe.returncode
+            return "", str(error_except), 1  # 返回默认错误码，避免访问未赋值的pipe变量
 
         try:
             stdout, stderr = CommandExecutor._get_stdout_stderr(pipe, timeout, print_on_console)
@@ -58,9 +68,14 @@ class CommandExecutor:
 
     @staticmethod
     def run_mult_cmd(cmds, timeout=600, raise_exception=False, show_error=True, encoding=None, print_on_console=False,
-                     file_descriptor=None):
+                     file_descriptor=None, env=None):
         if encoding is None:
             encoding = sys.getdefaultencoding()
+        if env is not None and not isinstance(env, dict):
+            raise ValueError("env parameter must be a dictionary or None")
+        process_env = os.environ.copy()
+        if env:
+            process_env.update(env)
 
         pipes = []
         for cmd in cmds:
@@ -69,7 +84,7 @@ class CommandExecutor:
             try:
                 pipe = subprocess.Popen(
                     cmd, stdin=last_pipe_stdout, universal_newlines=True, stderr=subprocess.PIPE,
-                    stdout=stdout_target, start_new_session=True, encoding=encoding
+                    stdout=stdout_target, start_new_session=True, encoding=encoding, env=process_env
                 )
             except (ValueError, OSError) as error_except:
                 if raise_exception:

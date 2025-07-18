@@ -147,7 +147,7 @@ class OeDeployParser:
             'run',
             prog='oedp run',
             help='run an action on a project',
-            usage='%(prog)s <action> [-p|--project <path>]'
+            usage='%(prog)s <action> [-p|--project <path>] [-d|--debug] [-t|--time] [-l|--local]'
         )
         deploy_command.add_argument(
             'action',
@@ -164,6 +164,16 @@ class OeDeployParser:
             '-d', '--debug',
             action='store_true',
             help='Enable debug mode'
+        )
+        deploy_command.add_argument(
+            '-t', '--time',
+            action='store_true',
+            help='Enable timing for each task'
+        )
+        deploy_command.add_argument(
+            '-l', '--local',
+            action='store_true',
+            help='Force deploy to localhost'
         )
         deploy_command.set_defaults(func=self._run_run_command)
 
@@ -307,7 +317,9 @@ class OeDeployParser:
         action = args.action
         project = args.project
         debug = args.debug
-        return RunCmd(action, project, debug).run()
+        time = args.time
+        local = args.local
+        return RunCmd(action, project, debug, time, local).run()
 
     @staticmethod
     def _run_check_command(args):
