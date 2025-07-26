@@ -1,6 +1,11 @@
 name: anythingLLM
 version: 1.0.0
-description: anythingLLM
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/anythingLLM
+description: oeDeploy plugin for anythingLLM fast deployment
+description_zh: 用于anythingLLM快速部署的oeDeploy插件
+description_en: oeDeploy plugin for anythingLLM fast deployment
+type: app
+localhost_available: true
 action:
   install:
     description: install anythingLLM

@@ -1,0 +1,21 @@
+name: openEuler-Intelligence
+version: 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/openEuler-Intelligence
+description: oeDeploy plugin for openEuler-Intelligence fast deployment
+description_zh: 帮助开发者在本地快速部署openEuler-Intelligence工具的oeDeploy插件
+description_en: The oeDeploy plugin helps developers quickly deploy the openEuler-Intelligence locally
+type: app
+localhost_available: true
+action:
+  install:
+    description: install openEuler-Intelligence
+    tasks:
+      - name: install openEuler-Intelligence
+        playbook: install.yml
+        scope: all
+  uninstall:
+    description: uninstall openEuler-Intelligence
+    tasks:
+      - name: uninstall openEuler-Intelligence
+        playbook: uninstall.yml
+        scope: all

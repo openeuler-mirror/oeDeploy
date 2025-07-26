@@ -1,5 +1,14 @@
-name: boostkit
-description: BoostKit
+name: boostkit-offline
+version: 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/boostkit-offline
+description: oeDeploy plugin for boostkit acclib fast deployment
+description_zh: 鲲鹏BoostKit加速库提供基于ARM指令深度优化和基于鲲鹏KAE（鲲鹏硬件加速引擎）开发的加速库
+description_en: >
+  The Kunpeng BoostKit acceleration library offers acceleration libraries that 
+  are deeply optimized based on ARM instructions and developed based on Kunpeng 
+  KAE (Kunpeng Hardware Acceleration Engine)
+type: app
+localhost_available: true
 action:
   AccLib-show:
     description: show available components in AccLib

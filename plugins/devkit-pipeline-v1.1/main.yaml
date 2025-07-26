@@ -1,6 +1,11 @@
 name: devkit-pipeline-v1.1
-version: 1.0.0-1
-description: 部署devkit-pipeline-v1.1工具链
+version: 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/devkit-pipeline-v1.1
+description: oeDeploy plugin for devkit-pipeline-v1.1 fast deployment
+description_zh: 帮助开发者在本地快速部署devkit-pipeline-v1.1工具的oeDeploy插件
+description_en: The oeDeploy plugin helps developers quickly deploy the devkit-pipeline-v1.1 tool locally
+type: app
+localhost_available: true
 action:
   install:
     description: 安装devkit-pipeline-v1.1

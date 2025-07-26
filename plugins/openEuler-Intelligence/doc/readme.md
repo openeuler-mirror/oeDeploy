@@ -78,7 +78,7 @@ yum install -y oedp-xxx.rpm
 获取插件并进入插件目录：
 
 ```shell
-cd xxx/euler-copilot
+cd xxx/openEuler-Intelligence
 ```
 
 根据实际情况修改 `config.yaml` 文件，示例如下：
@@ -159,7 +159,7 @@ all:
 ### 2.2 执行一键部署命令
 
 ```shell
-oedp run install -p ./euler-copilot
+oedp run install -p ./openEuler-Intelligence
 ```
 
 等待脚本执行完成即可。
@@ -173,7 +173,7 @@ oedp run install -p ./euler-copilot
 在插件目录下，执行以下命令：
 
 ```shell
-oedp run uninstall -p ./euler-copilot
+oedp run uninstall -p ./openEuler-Intelligence
 ```
 
 等待脚本执行完成即可。
