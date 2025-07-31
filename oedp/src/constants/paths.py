@@ -31,6 +31,7 @@ PROJECT_WORKSPACE_DIR = 'workspace'
 """
 /var
 `-- oedp
+    |-- details
     |-- plugin
     |   |-- k8s
     |   `-- kubeflow
@@ -39,9 +40,11 @@ PROJECT_WORKSPACE_DIR = 'workspace'
 """
 # oedp 除配置外的家目录
 OEDP_HOME = "/var/oedp"
-# 插件缓存目录
+# /var/oedp/details 插件源配置信息缓存目录
+PLUGIN_DETAILS_DIR = join(OEDP_HOME, "details")
+# /var/oedp/plugin 插件缓存目录
 PLUGIN_DIR = join(OEDP_HOME, 'plugin')
-# 日志文件所在目录
+# /var/oedp/log 日志文件所在目录
 LOG_DIR = join(OEDP_HOME, "log")
 
 # oedp 配置家目录

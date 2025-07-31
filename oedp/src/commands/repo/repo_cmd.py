@@ -11,13 +11,16 @@
 # Create: 2025-04-19
 # ======================================================================================================================
 
-import os
 import configparser
+import os
+import shutil
+import tarfile
+import tempfile
 from prettytable import PrettyTable
 from typing import Set
 from src.utils.command.command_executor import CommandExecutor
 from src.utils.log.logger_generator import LoggerGenerator
-from src.constants.paths import REPO_CONFIG_PATH, REPO_CACHE_DIR
+from src.constants.paths import REPO_CONFIG_PATH, REPO_CACHE_DIR, PLUGIN_DETAILS_DIR
 
 class RepoCmd:
     """插件源管理命令处理器"""
@@ -223,12 +226,24 @@ class RepoCmd:
             self.log.error(f"repo config file not found: {REPO_CONFIG_PATH}")
             return False
             
-        try:
-            os.makedirs(REPO_CACHE_DIR, mode=0o755, exist_ok=True)
-            return True
-        except Exception as e:
-            self.log.error(f"failed to create cache directory: {str(e)}")
+        if not os.path.exists(REPO_CACHE_DIR):
+            self.log.error(f"cache directory not found: {REPO_CACHE_DIR}")
             return False
+            
+        if not os.path.exists(PLUGIN_DETAILS_DIR):
+            self.log.error(f"details directory not found: {PLUGIN_DETAILS_DIR}")
+            return False
+        
+        # 清空details目录
+        for item in os.listdir(PLUGIN_DETAILS_DIR):
+            item_path = os.path.join(PLUGIN_DETAILS_DIR, item)
+            try:
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
+            except Exception as e:
+                self.log.error(f"failed to delete {item_path}: {str(e)}")
+                return False
+        return True
     
     def _read_repo_config(self) -> configparser.ConfigParser:
         """读取repo配置文件
@@ -262,14 +277,76 @@ class RepoCmd:
                    config.getboolean(section, 'enabled')):
                 continue
                 
-            url = config.get(section, 'url').rstrip('/') + '/index.yaml'
+            index_url = config.get(section, 'url').rstrip('/') + '/index.yaml'
             output_file = os.path.join(REPO_CACHE_DIR, f"{section}.yaml")
             
-            success = self._download_with_retry(url, output_file, section)
-            if success:
-                downloaded_files.add(output_file)
+            success = self._download_with_retry(index_url, output_file, section)
+            if not success:
+                continue
+            downloaded_files.add(output_file)
+
+            details_url = config.get(section, 'url').rstrip('/') + '/index-details.tar.gz'
+            details_tmp_file = os.path.join(tempfile.gettempdir(), f"{section}-details.tar.gz")
+            details_tmp_dir = os.path.join(tempfile.gettempdir(), f"{section}-details")
+            
+            # 下载details文件
+            if not self._download_with_retry(details_url, details_tmp_file, f"{section}-details"):
+                continue
                 
+            # 解压到临时目录
+            try:
+                os.makedirs(details_tmp_dir, exist_ok=True)
+                try:
+                    with tarfile.open(details_tmp_file, 'r:gz') as tar:
+                        tar.extractall(path=details_tmp_dir)
+                except Exception as e:
+                    self.log.error(f"failed to extract {details_tmp_file}: {str(e)}")
+                    continue
+                
+                # 考虑root用户与非root用户交替执行的情况，需要将权限设置为777(目录)和666(文件)
+                self._set_permissions_for_details(details_tmp_dir)
+                
+                # 拷贝压缩文件下的子目录到details，每个子目录代表一个插件
+                index_details_dir = os.path.join(details_tmp_dir, "index-details")
+                if not os.path.exists(index_details_dir):
+                    continue
+                self._copy_details(index_details_dir)
+                            
+            except Exception as e:
+                self.log.error(f"failed to process details for {section}: {str(e)}")
+            finally:
+                # 清理临时文件
+                try:
+                    if os.path.exists(details_tmp_file):
+                        os.remove(details_tmp_file)
+                    if os.path.exists(details_tmp_dir):
+                        shutil.rmtree(details_tmp_dir)
+                except Exception as e:
+                    self.log.warning(f"failed to clean up temp files: {str(e)}")
+
         return downloaded_files
+
+    def _set_permissions_for_details(self, details_dir: str):
+        try:
+            os.chmod(details_dir, 0o777)
+            for root, dirs, files in os.walk(details_dir):
+                for d in dirs:
+                    os.chmod(os.path.join(root, d), 0o777)
+                for f in files:
+                    os.chmod(os.path.join(root, f), 0o666)
+        except Exception as e:
+            self.log.warning(f"failed to set permissions for {details_dir}: {str(e)}")
+    
+    def _copy_details(self, index_details_dir):
+        for item in os.listdir(index_details_dir):
+            src_path = os.path.join(index_details_dir, item)
+            if not os.path.isdir(src_path):
+                continue
+            dst_path = os.path.join(PLUGIN_DETAILS_DIR, item)
+            try:
+                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+            except Exception as e:
+                self.log.error(f"failed to copy {item} to details dir: {str(e)}")
     
     def _cleanup_old_cache_files(self, downloaded_files: Set[str]):
         """清理旧的缓存文件
@@ -362,14 +439,14 @@ class RepoCmd:
             
             if return_code == 0:
                 try:
-                    self.log.info(f"updated index for repo: {repo_name}")
+                    self.log.info(f"download success for: {repo_name}")
                     return True
                 except Exception as e:
-                    self.log.error(f"failed to set permissions for {output_file}: {str(e)}")
+                    self.log.error(f"failed to download {output_file}: {str(e)}")
                     return False
             
             if attempt < max_retries - 1:
-                self.log.warning(f"retrying download for repo {repo_name} (attempt {attempt + 1}/{max_retries})")
+                self.log.warning(f"retrying download for {repo_name} (attempt {attempt + 1}/{max_retries})")
                 
-        self.log.error(f"failed to download index for repo {repo_name} after {max_retries} attempts:\n{stderr}")
+        self.log.error(f"failed to download index for {repo_name} after {max_retries} attempts:\n{stderr}")
         return False

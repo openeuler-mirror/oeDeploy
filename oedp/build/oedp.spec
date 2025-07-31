@@ -25,6 +25,7 @@ openEuler deploy tool
 
 
 %install
+mkdir -p -m 700 %{buildroot}%{_var}/oedp/details
 mkdir -p -m 700 %{buildroot}%{_var}/oedp/log
 mkdir -p -m 700 %{buildroot}%{_var}/oedp/plugin
 mkdir -p -m 700 %{buildroot}%{_var}/oedp/python
@@ -53,6 +54,7 @@ fi
 
 %files
 %attr(0555,root,root) %dir %{_var}/oedp
+%attr(0777,root,root) %dir %{_var}/oedp/details
 %attr(0777,root,root) %dir %{_var}/oedp/log
 %attr(0777,root,root) %dir %{_var}/oedp/plugin
 %attr(0555,root,root) %dir %{_var}/oedp/python
@@ -71,6 +73,9 @@ fi
 
 
 %changelog
+* Sun Jul 27 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.3-0
+- Downlowd details when repo updating.
+
 * Tue Jul 5 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.2-0
 - Add local deployment mode and runtime printing.
 
