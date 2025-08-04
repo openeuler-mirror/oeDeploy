@@ -58,7 +58,8 @@ class LoggerGenerator:
         file_handler = logging.handlers.RotatingFileHandler(
             filename=LOG_CONFIG_OBJ.log_file_path,
             maxBytes=LOG_CONFIG_OBJ.file_max_size,
-            backupCount=LOG_CONFIG_OBJ.backup_count
+            backupCount=LOG_CONFIG_OBJ.backup_count,
+            delay=False  # 确保立即写入文件
         )
         file_handler.setLevel(LOG_CONFIG_OBJ.file_log_level)
         file_formatter = logging.Formatter(LOG_CONFIG_OBJ.file_log_format)

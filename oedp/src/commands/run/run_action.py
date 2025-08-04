@@ -93,7 +93,8 @@ class RunAction:
 
         self.log.debug(f'Executing cmd: {cmd}')
         try:
-            out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True, env=env)
+            log_file = os.path.join(project, 'run.log')
+            out, err, ret = CommandExecutor.run_single_cmd(cmd, print_on_console=True, env=env, log_path=log_file)
             self.log.debug('Execution log:\n' + out)
             if ret != 0:
                 self.log.error(f'Execute cmd failed [code:{ret}]:\nSTDOUT: {out}\nSTDERR: {err}')

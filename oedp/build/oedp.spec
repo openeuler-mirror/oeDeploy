@@ -75,6 +75,7 @@ fi
 %changelog
 * Sun Jul 27 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.3-0
 - Downlowd details when repo updating.
+- The operation log will be recorded in the plugin directory.
 
 * Tue Jul 5 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.2-0
 - Add local deployment mode and runtime printing.
