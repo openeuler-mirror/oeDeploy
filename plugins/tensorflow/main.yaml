@@ -1,6 +1,13 @@
 name: tensorflow
 version: 1.0.0
-description: tensorflow
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/tensorflow
+description: oeDeploy plugin for tensorflow fast deployment
+description_zh: 帮助开发者在本地快速部署tensorflow的oeDeploy插件。请确保当前节点是kubernetes集群的master节点。
+description_en: >
+  The oeDeploy plugin that helps developers quickly deploy tensorflow locally. 
+  Please ensure that the current node is the master node of the kubernetes cluster.
+type: app
+localhost_available: true
 action:
   install:
     description: install tensorflow

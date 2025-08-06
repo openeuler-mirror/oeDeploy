@@ -1,6 +1,11 @@
 name: deepseek-r1
 version: 1.0.0
-description: deepseek-r1 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/deepseek-r1
+description: oeDeploy plugin for deepseek-r1 8b fast deployment
+description_zh: 帮助开发者在本地快速部署deepseek-r1 8b模型的oeDeploy插件
+description_en: The oeDeploy plugin that helps developers quickly deploy the deepseek-r1 8b model locally.
+type: app
+localhost_available: true
 action:
   install:
     description: install DeepSeek-R1
