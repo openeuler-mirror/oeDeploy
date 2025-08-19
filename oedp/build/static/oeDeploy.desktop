@@ -1,5 +1,5 @@
 [Desktop Entry]
-Version=1.1.2
+Version=1.1.3
 Type=Application
 Name=oeDeploy
 Exec=xdg-open /usr/share/applications/oeDeploy.html
