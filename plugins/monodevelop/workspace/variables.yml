@@ -1,0 +1,4 @@
+# MonoDevelop 插件变量配置
+monodevelop_package: "monodevelop"
+monodevelop_repo_name: "monodevelop-official"
+ansible_python_interpreter: /usr/bin/python3

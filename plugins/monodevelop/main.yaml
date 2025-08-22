@@ -1,0 +1,21 @@
+name: monodevelop
+version: 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/monodevelop
+description: oeDeploy plugin for MonoDevelop installation and management
+description_zh: 帮助开发者在openEuler系统上安装和管理MonoDevelop IDE的oeDeploy插件。
+description_en: The oeDeploy plugin that helps developers install and manage MonoDevelop IDE on openEuler systems.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install MonoDevelop
+    tasks:
+      - name: install MonoDevelop
+        playbook: install-monodevelop.yml
+        scope: monodevelop_hosts
+  uninstall:
+    description: uninstall MonoDevelop
+    tasks:
+      - name: uninstall MonoDevelop
+        playbook: uninstall-monodevelop.yml
+        scope: monodevelop_hosts

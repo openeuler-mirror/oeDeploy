@@ -1,0 +1,17 @@
+all:
+  children:
+    monodevelop_hosts:
+      hosts:
+        HOST_IP:
+          ansible_host: HOST_IP
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+          architecture: amd64
+          oeversion: 20.03-LTS-SP4
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # MonoDevelop 相关配置
+    monodevelop_repo_url: "https://repo.oepkgs.net/openeuler/rpm/openEuler-20.03-LTS-SP4/contrib/others/$basearch/"
+    libgdiplus_repo_url: "https://repo.oepkgs.net/openeuler/rpm/openEuler-20.03-LTS-SP4/extras/$basearch/"

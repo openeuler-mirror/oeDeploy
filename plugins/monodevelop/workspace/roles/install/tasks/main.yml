@@ -1,0 +1,59 @@
+- name: Check kernel version compatibility
+  shell: uname -r
+  register: kernel_version
+  changed_when: false
+
+- name: Fail if kernel version is not 4.19.x
+  fail:
+    msg: "Unsupported kernel version: {{ kernel_version.stdout }}. Only kernel versions starting with 4.19 are supported for MonoDevelop installation."
+  when: not kernel_version.stdout.startswith('4.19')
+  
+- name: Check Python 3 availability
+  shell: which python3
+  register: python3_path
+  changed_when: false
+
+- name: Set ansible_python_interpreter if Python 3 is available
+  set_fact:
+    ansible_python_interpreter: "{{ python3_path.stdout }}"
+  when: python3_path.stdout != ""
+
+- name: Add MonoDevelop repository with disabled GPG check
+  copy:
+    content: |
+      [monodevelop]
+      name=MonoDevelop Repository
+      baseurl={{ monodevelop_repo_url }}
+      enabled=1
+      gpgcheck=0
+    dest: /etc/yum.repos.d/monodevelop.repo
+
+- name: Add openEuler extras repository
+  copy:
+    content: |
+      [openeuler-extras]
+      name=openEuler Extras Repository
+      baseurl={{ libgdiplus_repo_url }}
+      enabled=1
+      gpgcheck=0
+    dest: /etc/yum.repos.d/libgdiplus.repo
+
+- name: Clean dnf cache
+  shell: dnf clean all
+
+- name: Make dnf cache
+  shell: dnf makecache
+
+- name: Install MonoDevelop
+  package:
+    name: monodevelop
+    state: present
+
+- name: Verify MonoDevelop installation
+  shell: which monodevelop
+  register: monodevelop_path
+  changed_when: false
+
+- name: Display installation result
+  debug:
+    msg: "MonoDevelop installed successfully at {{ monodevelop_path.stdout }}"
