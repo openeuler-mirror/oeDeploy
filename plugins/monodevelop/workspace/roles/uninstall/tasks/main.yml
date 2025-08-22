@@ -1,0 +1,25 @@
+- name: Check if MonoDevelop is installed
+  shell: rpm -q monodevelop
+  register: monodevelop_installed
+  ignore_errors: true
+  changed_when: false
+
+- name: Uninstall MonoDevelop
+  package:
+    name: monodevelop
+    state: absent
+  when: monodevelop_installed.rc == 0
+
+- name: Clean dnf cache
+  shell: dnf clean all
+  when: monodevelop_installed.rc == 0
+
+- name: Display uninstallation result
+  debug:
+    msg: "MonoDevelop was successfully uninstalled"
+  when: monodevelop_installed.rc == 0
+
+- name: Display not installed message
+  debug:
+    msg: "MonoDevelop is not installed"
+  when: monodevelop_installed.rc != 0

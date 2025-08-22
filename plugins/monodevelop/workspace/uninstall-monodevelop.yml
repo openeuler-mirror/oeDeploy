@@ -1,0 +1,3 @@
+- hosts: monodevelop_hosts
+  roles:
+    - uninstall
