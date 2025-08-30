@@ -1,0 +1,7 @@
+# .NET 8 插件变量配置
+dotnet8_repo_name: "dotnet-8-official"
+ansible_python_interpreter: /usr/bin/python3
+
+# 环境类型配置
+production_environment: "production"
+development_environment: "development"

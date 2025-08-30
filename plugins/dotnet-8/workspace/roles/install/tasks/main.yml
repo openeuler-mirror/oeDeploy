@@ -1,0 +1,60 @@
+- name: Check Python 3 availability
+  shell: which python3
+  register: python3_path
+  changed_when: false
+
+- name: Set ansible_python_interpreter if Python 3 is available
+  set_fact:
+    ansible_python_interpreter: "{{ python3_path.stdout }}"
+  when: python3_path.stdout != ""
+
+- name: Add .NET 8 repository with disabled GPG check
+  copy:
+    content: |
+      [dotnet-8]
+      name=.NET 8 Repository
+      baseurl={{ dotnet8_repo_url }}
+      enabled=1
+      gpgcheck=0
+    dest: /etc/yum.repos.d/dotnet-8.repo
+
+- name: Clean dnf cache
+  shell: dnf clean all
+
+- name: Make dnf cache
+  shell: dnf makecache
+
+- name: Install .NET 8 packages for production environment
+  package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ dotnet8_production_packages }}"
+  when: environment_type == 'production'
+
+- name: Install .NET 8 packages for development environment
+  package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ dotnet8_development_packages }}"
+  when: environment_type == 'development'
+
+- name: Verify .NET 8 installation
+  shell: dotnet --version
+  register: dotnet_version
+  changed_when: false
+  ignore_errors: yes
+
+- name: Display installation result
+  debug:
+    msg: ".NET 8 installed successfully. Version: {{ dotnet_version.stdout | default('Unknown') }}"
+
+- name: Set environment variables for .NET
+  copy:
+    content: |
+      # .NET 8 environment variables
+      export DOTNET_ROOT=/usr/share/dotnet
+      export PATH=$PATH:/usr/share/dotnet
+    dest: /etc/profile.d/dotnet.sh
+
+- name: Reload environment variables
+  shell: source /etc/profile.d/dotnet.sh
