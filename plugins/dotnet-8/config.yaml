@@ -1,0 +1,42 @@
+all:
+  children:
+    dotnet8_hosts:
+      hosts:
+        HOST_IP:
+          ansible_host: HOST_IP
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+          architecture: amd64
+          oeversion: 25.09
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # .NET 8 相关配置
+    dotnet8_repo_url: "https://repo.oepkgs.net/openeuler/rpm/openEuler-25.09/contrib/dotnet/$basearch/"
+    
+    # 包列表 - 生产环境
+    dotnet8_production_packages:
+      - "dotnet-host-8.0.4"
+      - "dotnet-hostfxr-8.0-8.0.4"
+      - "dotnet-runtime-8.0-8.0.4"
+      - "aspnetcore-runtime-8.0-8.0.4"
+    
+    # 包列表 - 开发环境（包含SDK和调试包）
+    dotnet8_development_packages:
+      - "dotnet-host-8.0.4"
+      - "dotnet-hostfxr-8.0-8.0.4"
+      - "dotnet-runtime-8.0-8.0.4"
+      - "dotnet-runtime-dbg-8.0-8.0.4"
+      - "aspnetcore-runtime-8.0-8.0.4"
+      - "aspnetcore-runtime-dbg-8.0-8.0.4"
+      - "dotnet-sdk-8.0-8.0.104"
+      - "dotnet-sdk-dbg-8.0-8.0.104"
+      - "dotnet-apphost-pack-8.0-8.0.4"
+      - "dotnet-targeting-pack-8.0-8.0.4"
+      - "aspnetcore-targeting-pack-8.0-8.0.4"
+      - "dotnet-templates-8.0-8.0.104"
+      - "netstandard-targeting-pack-2.1-8.0.104"
+    
+    # 环境类型（production/development）
+    environment_type: "development"

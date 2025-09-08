@@ -1,0 +1,23 @@
+name: dotnet-8
+version: 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/dotnet-8
+description: oeDeploy plugin for .NET 8 installation
+description_zh: 帮助开发者在本地快速安装.NET 8的oeDeploy插件。
+description_en: The oeDeploy plugin that helps developers quickly install .NET 8 locally.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install .NET 8
+    tasks:
+      - name: install .NET 8
+        playbook: install-dotnet8.yml
+        vars: variables.yml
+        scope: all
+  uninstall:
+    description: uninstall .NET 8
+    tasks:
+      - name: uninstall .NET 8
+        playbook: uninstall-dotnet8.yml
+        vars: variables.yml
+        scope: all

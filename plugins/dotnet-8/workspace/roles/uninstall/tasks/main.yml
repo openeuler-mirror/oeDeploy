@@ -1,0 +1,32 @@
+- name: Remove .NET 8 packages for production environment
+  package:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ dotnet8_production_packages }}"
+  when: environment_type == 'production'
+  ignore_errors: yes
+
+- name: Remove .NET 8 packages for development environment
+  package:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ dotnet8_development_packages }}"
+  when: environment_type == 'development'
+  ignore_errors: yes
+
+- name: Remove .NET 8 repository file
+  file:
+    path: /etc/yum.repos.d/dotnet-8.repo
+    state: absent
+
+- name: Remove .NET environment variables
+  file:
+    path: /etc/profile.d/dotnet.sh
+    state: absent
+
+- name: Clean dnf cache
+  shell: dnf clean all
+
+- name: Display uninstallation result
+  debug:
+    msg: ".NET 8 uninstallation completed"

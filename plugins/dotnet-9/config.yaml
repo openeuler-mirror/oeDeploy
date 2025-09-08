@@ -1,0 +1,42 @@
+all:
+  children:
+    dotnet9_hosts:
+      hosts:
+        HOST_IP:
+          ansible_host: HOST_IP
+          ansible_port: 22
+          ansible_user: root
+          ansible_password: ""
+          architecture: amd64
+          oeversion: 25.09
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # .NET 9 相关配置
+    dotnet9_repo_url: "https://repo.oepkgs.net/openeuler/rpm/openEuler-25.09/contrib/dotnet/$basearch/"
+    
+    # 包列表 - 生产环境
+    dotnet9_production_packages:
+      - "dotnet-host-9.0.8"
+      - "dotnet-hostfxr-9.0-9.0.8"
+      - "dotnet-runtime-9.0-9.0.8"
+      - "aspnetcore-runtime-9.0-9.0.8"
+    
+    # 包列表 - 开发环境（包含SDK和调试包）
+    dotnet9_development_packages:
+      - "dotnet-host-9.0.8"
+      - "dotnet-hostfxr-9.0-9.0.8"
+      - "dotnet-runtime-9.0-9.0.8"
+      - "dotnet-runtime-dbg-9.0-9.0.8"
+      - "aspnetcore-runtime-9.0-9.0.8"
+      - "aspnetcore-runtime-dbg-9.0-9.0.8"
+      - "dotnet-sdk-9.0-9.0.109"
+      - "dotnet-sdk-dbg-9.0-9.0.109"
+      - "dotnet-apphost-pack-9.0-9.0.8"
+      - "dotnet-targeting-pack-9.0-9.0.8"
+      - "aspnetcore-targeting-pack-9.0-9.0.8"
+      - "dotnet-templates-9.0-9.0.109"
+      - "netstandard-targeting-pack-2.1-9.0.109"
+    
+    # 环境类型（production/development）
+    environment_type: "development"

@@ -1,0 +1,23 @@
+name: dotnet-9
+version: 1.0.0
+url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/dotnet-9
+description: oeDeploy plugin for .NET 9 installation
+description_zh: 帮助开发者在本地快速安装.NET 9的oeDeploy插件。
+description_en: The oeDeploy plugin that helps developers quickly install .NET 9 locally.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install .NET 9
+    tasks:
+      - name: install .NET 9
+        playbook: install-dotnet9.yml
+        vars: variables.yml
+        scope: all
+  uninstall:
+    description: uninstall .NET 9
+    tasks:
+      - name: uninstall .NET 9
+        playbook: uninstall-dotnet9.yml
+        vars: variables.yml
+        scope: all

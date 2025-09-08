@@ -1,0 +1,7 @@
+# .NET 9 插件变量配置
+dotnet9_repo_name: "dotnet-9-official"
+ansible_python_interpreter: /usr/bin/python3
+
+# 环境类型配置
+production_environment: "production"
+development_environment: "development"
