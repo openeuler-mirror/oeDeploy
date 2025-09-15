@@ -344,7 +344,9 @@ class RepoCmd:
                 continue
             dst_path = os.path.join(PLUGIN_DETAILS_DIR, item)
             try:
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+                if os.path.exists(dst_path) and os.path.isdir(dst_path):
+                    shutil.rmtree(dst_path)
+                shutil.copytree(src_path, dst_path)
             except Exception as e:
                 self.log.error(f"failed to copy {item} to details dir: {str(e)}")
     
