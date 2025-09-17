@@ -1,6 +1,6 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.1.3
+Version:            1.1.4
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
@@ -73,6 +73,9 @@ fi
 
 
 %changelog
+* Wed Sep 17 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.4-0
+- Add Python 3.8 compatibility
+
 * Sun Jul 27 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.3-0
 - Downlowd details when repo updating.
 - The operation log will be recorded in the plugin directory.
