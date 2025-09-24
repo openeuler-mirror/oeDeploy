@@ -16,7 +16,7 @@ set -ex
 source $(dirname $0)/constants.sh
 if [ ! -z $1 ]; then
     [ ! -d "$(dirname $1)" ] && mkdir "$(dirname $1)"
-    exec >> "$1" 2>&1
+    exec >>"$1" 2>&1
 fi
 
 echo -e "\e[1;32m [INFO] Start to build RPM \e[0m"
