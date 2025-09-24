@@ -23,7 +23,6 @@ from src.commands.run.run_cmd import RunCmd
 from src.commands.repo.repo_cmd import RepoCmd
 from src.constants.const import VERSION
 from src.constants.paths import PLUGIN_DIR
-
 from src.utils.command.command_executor import CommandExecutor
 
 
@@ -33,19 +32,28 @@ class OeDeployParser:
     """
 
     def __init__(self):
-        self.parser = argparse.ArgumentParser(
-            prog='oedp',
-            usage='%(prog)s <command> [<args>]',
-            description='oeDeploy tool for openEuler.',
-            formatter_class=argparse.RawDescriptionHelpFormatter
-        )
-        self.parser.add_argument('-v', '--version', action='version', version=f'oedp {self._get_version()}')
+        self.parser = self._create_main_parser()
         self.subparsers = self.parser.add_subparsers(
             dest='command',
             title='Available commands',
             required=True,
             metavar='<command>'
         )
+        self._setup_commands()
+
+    def _create_main_parser(self):
+        """创建主解析器"""
+        parser = argparse.ArgumentParser(
+            prog='oedp',
+            usage='%(prog)s <command> [<args>]',
+            description='oeDeploy tool for openEuler.',
+            formatter_class=argparse.RawDescriptionHelpFormatter
+        )
+        parser.add_argument('-v', '--version', action='version', version=f'oedp {self._get_version()}')
+        return parser
+
+    def _setup_commands(self):
+        """设置所有子命令"""
         self._add_init_command()
         self._add_list_command()
         self._add_info_command()
