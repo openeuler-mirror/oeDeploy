@@ -107,12 +107,19 @@ class MainReader:
         :param action: 方法名称
         :return: 方法详情
         """
-        if 'action' not in self.main:
+        actions = self.main.get('action')
+        
+        # 检查action是否存在且为字典类型
+        if not isinstance(actions, dict):
             raise ConfigException(f'No such action named {action}')
-        if not isinstance(self.main['action'], dict):
+        
+        # 检查指定的action是否存在
+        if action not in actions:
             raise ConfigException(f'No such action named {action}')
-        if action not in self.main['action']:
-            raise ConfigException(f'No such action named {action}')
-        if not isinstance(self.main['action'][action], dict):
+        
+        # 检查action详情是否为字典类型
+        action_detail = actions[action]
+        if not isinstance(action_detail, dict):
             return {}
-        return self.main['action'][action]
+        
+        return action_detail
