@@ -20,7 +20,29 @@ uv venv --system-site-packages
 uv pip install -e .
 ```
 
-## 2. MCP 配置
+## 2. 传输协议支持
+
+MCP Server 支持两种传输协议：
+
+### 2.1 stdio 传输（默认）
+适用于本地命令行工具集成，如 Roo Code、Cherry Studio 等。
+
+### 2.2 HTTP 传输
+适用于网络访问和远程调用，支持通过 HTTP 协议访问 MCP 服务。
+
+支持的传输协议：
+- `--transport streamable-http`: 启用 HTTP 流传输协议（推荐）
+- `--transport http`: 启用 HTTP 传输协议（向后兼容）
+- `--transport sse`: 启用 Server-Sent Events 传输协议
+- `--transport stdio`: 标准输入输出传输（默认）
+
+HTTP 传输模式支持以下参数：
+- `--host`: 指定监听主机地址（默认: 0.0.0.0）
+- `--port`: 指定监听端口（默认: 8080）
+
+## 3. MCP 配置
+
+### 3.1 stdio 传输配置
 
 请确保你的智能体应用（交互界面）支持 MCP 服务，例如 Roo Code 和 Cherry Studio。
 
@@ -47,11 +69,46 @@ uv pip install -e .
 }
 ````
 
-配置完成后，可以在 MCP 列表上看看到`mcp-oedp`，且状态正常。
+### 3.2 HTTP 传输配置
+
+对于支持 HTTP MCP 协议的客户端，可以直接通过 HTTP 访问：
+
+```bash
+# 启动 HTTP 流传输模式（推荐）
+uv --directory .oedp/mcp/mcp-oedp run mcp-oedp.py \
+  --model_url "https://api.deepseek.com" \
+  --api_key "<your key>" \
+  --model_name "deepseek-chat" \
+  --transport streamable-http \
+  --host 0.0.0.0 \
+  --port 8080
+
+# 或者使用向后兼容的 HTTP 模式
+uv --directory .oedp/mcp/mcp-oedp run mcp-oedp.py \
+  --model_url "https://api.deepseek.com" \
+  --api_key "<your key>" \
+  --model_name "deepseek-chat" \
+  --transport http \
+  --host 0.0.0.0 \
+  --port 8080
+```
+
+**注意**:
+- `streamable-http` 是推荐的 HTTP 传输协议
+- `http` 提供向后兼容性，会自动尝试多种 HTTP 实现方式
+- 自定义主机和端口配置在某些 FastMCP 版本中可能有限制
+
+如果遇到 HTTP 传输问题，建议：
+
+1. 首先尝试使用 `streamable-http` 传输模式
+2. 使用 stdio 传输模式进行本地开发
+3. 通过反向代理（如 nginx）来处理自定义主机/端口需求
+
+配置完成后，可以在 MCP 列表上看到`mcp-oedp`，且状态正常。
 
 > 如果 MCP Server 状态异常，请根据提示信息检查 python 组件依赖是否满足。
 
-## 3. 自然语言实现一键部署
+## 4. 自然语言实现一键部署
 
 接下来我们让 AI 帮我们完成 kubernetes-1.31.1 的一键部署。请提前准备3个linux节点，三层网络互通。
 
