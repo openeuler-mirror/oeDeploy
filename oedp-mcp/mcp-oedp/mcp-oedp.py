@@ -17,6 +17,8 @@ import json
 import os
 import subprocess
 import yaml
+import signal
+import sys
 from typing import Optional, Dict, Any
 from openai import OpenAI
 from mcp.server.fastmcp import FastMCP
@@ -544,8 +546,18 @@ SYSTEM_CONTENT = """你现在是一名资深的软件工程师,你熟悉多种�
 你擅长解决技术问题,并具有优秀的逻辑思维能力.请在这个角色下为我解答以下问题.openEuler是我默认的Linux开发环境."""
 
 
+def signal_handler(sig, frame):
+    """处理信号，优雅关闭服务器"""
+    print("Shutting down server gracefully...")
+    sys.exit(0)
+
+
 def main():
     """主函数"""
+    # 注册信号处理器以实现优雅关闭
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='oeDeploy MCP Server')
     parser.add_argument('--model_url', required=True, help='Model url')
