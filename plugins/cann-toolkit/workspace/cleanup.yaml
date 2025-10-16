@@ -1,0 +1,131 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Check if C++ environment variables are configured
+      shell: grep -q "CPLUS_INCLUDE_PATH.*c++" /root/.bashrc
+      register: cpp_env_check
+      failed_when: false
+      changed_when: false
+      become: no
+
+    - name: Remove C++ environment variable configuration
+      lineinfile:
+        path: /root/.bashrc
+        regexp: ".*CPLUS_INCLUDE_PATH.*c\\+\\+.*"
+        state: absent
+        backup: yes
+      when: cpp_env_check.rc == 0
+      become: no
+      register: cpp_env_removed
+
+    - name: Display C++ environment variable removal result
+      debug:
+        msg:
+          - "========================================"
+          - "C++环境变量配置已从.bashrc中移除"
+          - "========================================"
+      when: cpp_env_removed.changed
+
+    - name: Check if Ascend software repository exists
+      stat:
+        path: "{{ ascend_repo.path }}"
+      register: ascend_repo_stat
+
+    - name: Remove Ascend software repository
+      file:
+        path: "{{ ascend_repo.path }}"
+        state: absent
+      when: ascend_repo_stat.stat.exists
+      register: repo_removed
+
+    - name: Display Ascend software repository removal result
+      debug:
+        msg:
+          - "========================================"
+          - "昇腾软件源已移除"
+          - "路径: {{ ascend_repo.path }}"
+          - "========================================"
+      when: repo_removed.changed
+
+    - name: Update yum cache
+      yum:
+        update_cache: yes
+      when: repo_removed.changed
+
+    - name: Check if system dependency packages need to be uninstalled
+      debug:
+        msg:
+          - "========================================"
+          - "注意: 系统依赖包不会被自动卸载"
+          - "这些包可能被其他应用程序使用:"
+          - "{{ system_packages | join(', ') }}"
+          - "如需卸载，请手动执行:"
+          - "sudo yum remove {{ system_packages | join(' ') }}"
+          - "========================================"
+
+    - name: Check if Python third-party libraries need to be uninstalled
+      debug:
+        msg:
+          - "========================================"
+          - "注意: Python第三方库不会被自动卸载"
+          - "这些库可能被其他应用程序使用:"
+          - "{{ python_packages | join(', ') }}"
+          - "如需卸载，请手动执行:"
+          - "pip3 uninstall {{ python_packages | join(' ') }}"
+          - "========================================"
+
+    - name: Check if sample code directory exists
+      stat:
+        path: "{{ samples_config.clone_path }}"
+      register: samples_dir_stat
+
+    - name: Ask whether to delete sample code directory
+      debug:
+        msg:
+          - "========================================"
+          - "发现用例代码目录: {{ samples_config.clone_path }}"
+          - "如需删除，请手动执行:"
+          - "rm -rf {{ samples_config.clone_path }}"
+          - "========================================"
+      when: samples_dir_stat.stat.exists
+
+    - name: Clean yum cache
+      shell: yum clean all
+      register: yum_clean_result
+
+    - name: Display yum cache cleanup result
+      debug:
+        msg:
+          - "========================================"
+          - "yum缓存已清理"
+          - "========================================"
+      when: yum_clean_result.changed
+
+    - name: Display environment variable update reminder
+      debug:
+        msg:
+          - "========================================"
+          - "环境清理已完成"
+          - "已移除C++环境变量配置和昇腾软件源"
+          - "如果修改了环境变量，请执行："
+          - "source /root/.bashrc"
+          - "或者重新登录bash会话"
+          - "========================================"
+      when: cpp_env_removed.changed or repo_removed.changed
+
+    - name: Display cleanup completion information
+      debug:
+        msg:
+          - "========================================"
+          - "环境清理操作完成"
+          - "已执行的清理操作:"
+          - "- 移除C++环境变量配置"
+          - "- 移除昇腾软件源"
+          - "- 清理yum缓存"
+          - "未自动执行的操作（需手动处理）:"
+          - "- 卸载系统依赖包"
+          - "- 卸载Python第三方库"
+          - "- 删除用例代码目录"
+          - "========================================"

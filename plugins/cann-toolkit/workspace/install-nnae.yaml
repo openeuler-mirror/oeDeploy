@@ -1,0 +1,61 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Install NNAE neural network acceleration engine
+      shell: script -q -c 'yum install -y "{{ cann_packages.nnae }}"' /dev/null
+      register: nnae_install_result
+
+    - name: Display NNAE installation result
+      debug:
+        msg:
+          - "========================================"
+          - "CANN NNAE 神经网络加速引擎安装操作完成"
+          - "包名: {{ cann_packages.nnae }}"
+          - "状态: {{ 'Success' if nnae_install_result.rc == 0 else 'Failed' }}"
+          - "========================================"
+
+    - name: Check if NNAE environment variable script exists
+      stat:
+        path: "{{ env_scripts.nnae }}"
+      register: nnae_env_script
+
+    - name: Display NNAE installation error message
+      debug:
+        msg:
+          - "========================================"
+          - "错误: NNAE安装可能有问题"
+          - "找不到环境变量脚本: {{ env_scripts.nnae }}"
+          - "请检查安装包是否正确安装"
+          - "========================================"
+      when: not nnae_env_script.stat.exists
+
+    - name: Fail if NNAE environment variable script not found
+      fail:
+        msg: "NNAE环境变量脚本不存在，安装失败"
+      when: not nnae_env_script.stat.exists
+
+    - name: Check if NNAE environment variables are configured
+      shell: grep -q "{{ env_scripts.nnae }}" /root/.bashrc
+      register: nnae_env_check
+      failed_when: false
+      changed_when: false
+      become: no
+      when: nnae_env_script.stat.exists and not skip_env_config
+
+    - name: Configure NNAE environment variables to .bashrc
+      lineinfile:
+        path: /root/.bashrc
+        line: "source {{ env_scripts.nnae }}"
+        create: yes
+        backup: yes
+      when: nnae_env_script.stat.exists and nnae_env_check.rc != 0 and not skip_env_config
+      become: no
+      register: nnae_env_configured
+
+    - name: Display environment variable configuration reminder
+      debug:
+        msg: "{{ env_reminder_message }}"
+      when: nnae_env_configured.changed
+

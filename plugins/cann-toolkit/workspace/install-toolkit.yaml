@@ -1,0 +1,60 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Install Toolkit development kit package
+      shell: script -q -c 'yum install -y "{{ cann_packages.toolkit }}"' /dev/null
+      register: toolkit_install_result
+
+    - name: Display Toolkit installation result
+      debug:
+        msg:
+          - "========================================"
+          - "CANN Toolkit 开发套件包安装操作完成"
+          - "包名: {{ cann_packages.toolkit }}"
+          - "状态: {{ 'Success' if toolkit_install_result.rc == 0 else 'Failed' }}"
+          - "========================================"
+
+    - name: Check if Toolkit environment variable script exists
+      stat:
+        path: "{{ env_scripts.toolkit }}"
+      register: toolkit_env_script
+
+    - name: Display Toolkit installation error message
+      debug:
+        msg:
+          - "========================================"
+          - "错误: Toolkit安装可能有问题"
+          - "找不到环境变量脚本: {{ env_scripts.toolkit }}"
+          - "请检查安装包是否正确安装"
+          - "========================================"
+      when: not toolkit_env_script.stat.exists
+
+    - name: Fail if Toolkit environment variable script not found
+      fail:
+        msg: "Toolkit环境变量脚本不存在，安装失败"
+      when: not toolkit_env_script.stat.exists
+
+    - name: Check if Toolkit environment variables are configured
+      shell: grep -q "{{ env_scripts.toolkit }}" /root/.bashrc
+      register: toolkit_env_check
+      failed_when: false
+      changed_when: false
+      become: no
+      when: toolkit_env_script.stat.exists and not skip_env_config
+
+    - name: Configure Toolkit environment variables to .bashrc
+      lineinfile:
+        path: /root/.bashrc
+        line: "source {{ env_scripts.toolkit }}"
+        create: yes
+        backup: yes
+      when: toolkit_env_script.stat.exists and toolkit_env_check.rc != 0 and not skip_env_config
+      become: no
+      register: toolkit_env_configured
+
+    - name: Display environment variable configuration reminder
+      debug:
+        msg: "{{ env_reminder_message }}"
+      when: toolkit_env_configured.changed
