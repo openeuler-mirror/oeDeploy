@@ -1,0 +1,83 @@
+# CANN工具链固定配置信息
+# 这些配置相对固定，通常不需要用户调整
+
+# Python第三方库列表
+python_packages:
+  - attrs
+  - cython
+  - 'numpy>=1.19.2,<=1.24.0'
+  - decorator
+  - sympy
+  - cffi
+  - pyyaml
+  - pathlib2
+  - psutil
+  - protobuf==3.20.0
+  - scipy
+  - requests
+  - absl-py
+
+# Python包安装配置
+pip_config:
+  trusted_host: mirrors.huaweicloud.com
+  index_url: https://mirrors.huaweicloud.com/repository/pypi/simple
+
+# 昇腾软件源配置
+ascend_repo:
+  url: https://repo.oepkgs.net/ascend/cann/ascend.repo
+  path: /etc/yum.repos.d/ascend.repo
+
+# 硬件型号与Kernels算子包的映射关系
+kernels_packages:
+  "310b": "Ascend-cann-kernels-310b"
+  "310p": "Ascend-cann-kernels-310p"
+  "910": "Ascend-cann-kernels-910"
+  "910b": "Ascend-cann-kernels-910b"
+  "Atlas-A3": "Atlas-A3-cann-kernels"
+
+# CANN组件包名称
+cann_packages:
+  toolkit: "Ascend-cann-toolkit"
+  nnae: "Ascend-cann-nnae"
+  nnal: "Ascend-cann-nnal"
+  nnrt: "Ascend-cann-nnrt"
+
+# 环境变量脚本路径
+env_scripts:
+  toolkit: "/usr/local/Ascend/ascend-toolkit/set_env.sh"
+  nnae: "/usr/local/Ascend/nnae/set_env.sh"
+  nnal_atb: "/usr/local/Ascend/nnal/atb/set_env.sh"
+  nnal_sip: "/usr/local/Ascend/nnal/asdsip/set_env.sh"
+  nnrt: "/usr/local/Ascend/nnrt/set_env.sh"
+
+# 用例代码配置
+samples_config:
+  repo_url: "https://gitee.com/ascend/samples.git"
+  branch: "v1.5-8.2.RC1"
+  clone_path: "/root/samples"
+  test_cases:
+    - path: "/root/samples/operator/ascendc/0_introduction/3_add_kernellaunch/AddKernelInvocationNeo"
+      command: "sudo bash run.sh -r cpu"
+    - path: "/root/samples/operator/ascendc/0_introduction/3_add_kernellaunch/AddKernelInvocationTilingNeo"
+      command: "sudo bash run.sh -r cpu"
+    - path: "/root/samples/operator/ascendc/0_introduction/5_addn_kernellaunch"
+      command: "sudo bash run.sh -r cpu"
+    - path: "/root/samples/operator/ascendc/0_introduction/13_matmulleakyrelu_kernellaunch/MatmulLeakyReluInvocation"
+      command: "sudo bash run.sh -r cpu"
+    - path: "/root/samples/operator/ascendc/0_introduction/11_matmul_kernellaunch/MatmulInvocationNeo"
+      command: "sudo bash run.sh -r cpu"
+
+# 系统依赖包
+system_packages:
+  - gcc-c++
+  - libstdc++-devel
+  - python3-libselinux
+
+# 环境变量提示信息
+env_reminder_message:
+  - "========================================"
+  - "环境变量配置已完成"
+  - "请执行以下命令使环境变量生效："
+  - "source /root/.bashrc"
+  - "或者重新登录bash会话"
+  - "========================================"

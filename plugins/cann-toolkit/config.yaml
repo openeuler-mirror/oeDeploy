@@ -1,0 +1,31 @@
+all:
+  hosts:
+    target-host:
+      ansible_host: 127.0.0.1      # 目标主机IP地址
+      ansible_port: 22             # SSH端口号
+      ansible_user: root           # 用户名（只能使用root用户或具有sudo权限的用户）
+      ansible_password: ""         # 密码
+  vars:
+    # SSH连接配置
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # ========== CANN工具链配置参数 ==========
+    
+    # 硬件型号配置
+    # 可选范围: 310b, 310p, 910, 910b, Atlas-A3
+    hardware_model: "Atlas-A3"
+    
+    # NNAL神经网络加速库类型配置
+    # 可选范围: ATB, SiP
+    nnal_type: "ATB"
+    
+    # ========== 高级配置（可选） ==========
+    
+    # 是否强制重新安装（即使已安装）
+    force_install: false
+    
+    # 是否跳过环境变量配置（如果用户已手动配置）
+    skip_env_config: false
+    
+    # 是否启用详细日志输出
+    verbose_logging: true

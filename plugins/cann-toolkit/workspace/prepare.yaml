@@ -1,0 +1,106 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Check if running as root or with sudo privileges
+      fail:
+        msg: "此插件需要root用户或具有sudo权限的用户执行"
+      when: ansible_user_id != "root" and ansible_become is not defined
+
+    - name: Install system dependency packages
+      yum:
+        name: "{{ system_packages }}"
+        state: present
+      register: system_packages_result
+
+    - name: Display system dependency packages installation result
+      debug:
+        msg:
+          - "========================================"
+          - "系统依赖包安装完成"
+          - "已安装: {{ system_packages | join(', ') }}"
+          - "========================================"
+      when: system_packages_result.changed
+
+    - name: Get C++ header file path
+      shell: |
+        find /usr/include/c++ -maxdepth 1 -type d -name "[0-9]*" | head -1
+      register: cpp_version_path
+      changed_when: false
+
+    - name: Set C++ version variables
+      set_fact:
+        cpp_version: "{{ cpp_version_path.stdout | basename }}"
+        cpp_base_path: "{{ cpp_version_path.stdout }}"
+      when: cpp_version_path.stdout != ""
+
+    - name: Check if C++ environment variables are configured
+      shell: grep -q "CPLUS_INCLUDE_PATH.*{{ cpp_version }}" /root/.bashrc
+      register: cpp_env_check
+      failed_when: false
+      changed_when: false
+      become: no
+
+    - name: Configure C++ related environment variables to .bashrc
+      lineinfile:
+        path: /root/.bashrc
+        line: "export CPLUS_INCLUDE_PATH={{ cpp_base_path }}:{{ cpp_base_path }}/backward:{{ cpp_base_path }}/x86_64-openEuler-linux/:$CPLUS_INCLUDE_PATH"
+        create: yes
+        backup: yes
+      when: cpp_env_check.rc != 0 and cpp_version is defined
+      become: no
+
+    - name: Install Python third-party libraries
+      pip:
+        name: "{{ python_packages }}"
+        extra_args: "--trusted-host {{ pip_config.trusted_host }} -i {{ pip_config.index_url }}"
+        state: present
+      register: pip_install_result
+
+    - name: Display Python packages installation result
+      debug:
+        msg:
+          - "========================================"
+          - "Python第三方库安装完成"
+          - "已安装: {{ python_packages | join(', ') }}"
+          - "========================================"
+      when: pip_install_result.changed
+
+    - name: Check if Ascend software repository exists
+      stat:
+        path: "{{ ascend_repo.path }}"
+      register: ascend_repo_stat
+
+    - name: Configure Ascend software repository
+      get_url:
+        url: "{{ ascend_repo.url }}"
+        dest: "{{ ascend_repo.path }}"
+        mode: '0644'
+      when: not ascend_repo_stat.stat.exists
+      register: repo_config_result
+
+    - name: Update yum cache
+      yum:
+        update_cache: yes
+      when: repo_config_result.changed
+
+    - name: Display Ascend software repository configuration result
+      debug:
+        msg:
+          - "========================================"
+          - "昇腾软件源配置完成"
+          - "源文件路径: {{ ascend_repo.path }}"
+          - "========================================"
+      when: repo_config_result.changed
+
+    - name: Display environment preparation completion message
+      debug:
+        msg:
+          - "========================================"
+          - "环境准备已完成"
+          - "已安装系统依赖包、Python第三方库"
+          - "已配置C++环境变量和昇腾软件源"
+          - "如果配置了新的环境变量，请执行："
+          - "source /root/.bashrc"
+          - "========================================"

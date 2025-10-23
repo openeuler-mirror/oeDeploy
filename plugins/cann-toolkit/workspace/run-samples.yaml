@@ -1,0 +1,131 @@
+---
+- hosts: all
+  become: no
+  gather_facts: no
+  tasks:
+    - name: Check if sample code directory already exists
+      stat:
+        path: "{{ samples_config.clone_path }}"
+      register: samples_dir_stat
+
+    - name: Display sample code already exists information
+      debug:
+        msg:
+          - "========================================"
+          - "用例代码目录已存在"
+          - "路径: {{ samples_config.clone_path }}"
+          - "将跳过克隆步骤"
+          - "========================================"
+      when: samples_dir_stat.stat.exists
+
+    - name: Clone sample code repository
+      git:
+        repo: "{{ samples_config.repo_url }}"
+        dest: "{{ samples_config.clone_path }}"
+        version: "{{ samples_config.branch }}"
+        force: yes
+      register: git_clone_result
+      when: not samples_dir_stat.stat.exists
+
+    - name: Display clone result
+      debug:
+        msg:
+          - "========================================"
+          - "用例代码克隆完成"
+          - "仓库: {{ samples_config.repo_url }}"
+          - "分支: {{ samples_config.branch }}"
+          - "路径: {{ samples_config.clone_path }}"
+          - "========================================"
+      when: git_clone_result.changed
+
+    - name: Update existing sample code repository
+      git:
+        repo: "{{ samples_config.repo_url }}"
+        dest: "{{ samples_config.clone_path }}"
+        version: "{{ samples_config.branch }}"
+        force: yes
+      register: git_update_result
+      when: samples_dir_stat.stat.exists
+
+    - name: Display update result
+      debug:
+        msg:
+          - "========================================"
+          - "用例代码更新完成"
+          - "分支: {{ samples_config.branch }}"
+          - "========================================"
+      when: git_update_result.changed
+
+    - name: Check if environment variables are configured
+      shell: |
+        source /root/.bashrc
+        if [ -z "$ASCEND_TOOLKIT_HOME" ]; then
+          echo "ASCEND_TOOLKIT_HOME not set"
+          exit 1
+        fi
+        echo "Environment configured"
+      register: env_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display environment variable check result
+      debug:
+        msg:
+          - "========================================"
+          - "环境变量检查结果:"
+          - "{{ env_check.stdout }}"
+          - "如果环境变量未配置，请先执行安装操作"
+          - "========================================"
+      when: env_check.rc != 0
+
+    - name: Execute sample code
+      shell: |
+        cd {{ item.path }}
+        source /root/.bashrc
+        {{ item.command }}
+      register: sample_result
+      failed_when: false
+      loop: "{{ samples_config.test_cases }}"
+      when: env_check.rc == 0
+
+    - name: Display sample execution result
+      debug:
+        msg:
+          - "========================================"
+          - "用例执行结果 - {{ item.item.path }}"
+          - "命令: {{ item.item.command }}"
+          - "返回码: {{ item.rc }}"
+          - "输出:"
+          - "{{ item.stdout }}"
+          - "错误信息:"
+          - "{{ item.stderr }}"
+          - "========================================"
+      loop: "{{ sample_result.results }}"
+      when: sample_result.results is defined
+
+    - name: Calculate sample execution statistics
+      set_fact:
+        success_count: "{{ sample_result.results | selectattr('rc', 'equalto', 0) | list | length }}"
+        total_count: "{{ sample_result.results | length }}"
+      when: sample_result.results is defined
+
+    - name: Display sample execution summary
+      debug:
+        msg:
+          - "========================================"
+          - "用例执行总结"
+          - "成功: {{ success_count | default(0) }}/{{ total_count | default(0) }}"
+          - "失败: {{ (total_count | default(0) | int) - (success_count | default(0) | int) }}"
+          - "========================================"
+      when: sample_result.results is defined
+
+    - name: Display sample path information
+      debug:
+        msg:
+          - "========================================"
+          - "用例代码路径信息"
+          - "主目录: {{ samples_config.clone_path }}"
+          - "用例列表:"
+          - "{% for case in samples_config.test_cases %}  - {{ case.path }}{% endfor %}"
+          - "您可以手动进入这些目录执行用例"
+          - "========================================"

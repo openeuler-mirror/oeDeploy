@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Set Kernels package name variable
+      set_fact:
+        kernels_package_name: "{{ kernels_packages[hardware_model] }}"
+
+    - name: Validate hardware model configuration
+      fail:
+        msg: "不支持的硬件型号: {{ hardware_model }}. 支持的型号: {{ kernels_packages.keys() | list | join(', ') }}"
+      when: hardware_model not in kernels_packages
+
+    - name: Uninstall Kernels operator package
+      shell: script -q -c 'yum remove -y "{{ kernels_package_name }}"' /dev/null
+      register: kernels_uninstall_result
+      failed_when: false
+
+    - name: Display Kernels uninstallation result
+      debug:
+        msg:
+          - "========================================"
+          - "CANN Kernels 算子包卸载操作完成"
+          - "硬件型号: {{ hardware_model }}"
+          - "包名: {{ kernels_package_name }}"
+          - "状态: {{ 'Success' if kernels_uninstall_result.rc == 0 else 'Failed' }}"
+          - "========================================"
+

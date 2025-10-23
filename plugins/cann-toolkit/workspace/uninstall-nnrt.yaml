@@ -1,0 +1,46 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Uninstall NNRT neural network runtime environment
+      shell: script -q -c 'yum remove -y "{{ cann_packages.nnrt }}"' /dev/null
+      register: nnrt_uninstall_result
+      failed_when: false
+
+    - name: Display NNRT uninstallation result
+      debug:
+        msg:
+          - "========================================"
+          - "CANN NNRT 神经网络运行时环境卸载操作完成"
+          - "包名: {{ cann_packages.nnrt }}"
+          - "状态: {{ 'Success' if nnrt_uninstall_result.rc == 0 else 'Failed' }}"
+          - "========================================"
+
+    - name: Check if NNRT environment variables are configured
+      shell: grep -q "{{ env_scripts.nnrt }}" /root/.bashrc
+      register: nnrt_env_check
+      failed_when: false
+      changed_when: false
+      become: no
+
+    - name: Remove NNRT environment variable configuration
+      lineinfile:
+        path: /root/.bashrc
+        regexp: ".*{{ env_scripts.nnrt }}.*"
+        state: absent
+        backup: yes
+      when: nnrt_env_check.rc == 0
+      become: no
+      register: nnrt_env_removed
+
+    - name: Display environment variable removal reminder
+      debug:
+        msg:
+          - "========================================"
+          - "NNRT环境变量配置已从.bashrc中移除"
+          - "请执行以下命令使更改生效："
+          - "source /root/.bashrc"
+          - "========================================"
+      when: nnrt_env_removed.changed
+

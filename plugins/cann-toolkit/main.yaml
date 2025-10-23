@@ -1,0 +1,153 @@
+name: cann-toolkit
+version: 1.0.0
+description: CANN (Compute Architecture for Neural Networks) Toolkit deployment plugin
+description_zh: 昇腾CANN工具链一键部署插件，支持Toolkit开发套件包、Kernels算子包、NNAL神经网络加速库、NNAE神经网络加速引擎、NNRT神经网络运行时环境的安装和卸载
+description_en: Ascend CANN Toolkit deployment plugin for one-click installation and uninstallation of Toolkit, Kernels, NNAL, NNAE, and NNRT components
+type: app
+localhost_available: true
+action:
+  install:
+    description: 一键安装CANN开发环境（环境准备, 安装Toolkit, Kernels算子包, NNAL, NNAE, NNRT）
+    tasks:
+      - name: 环境准备
+        playbook: prepare.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 安装Toolkit开发套件包
+        playbook: install-toolkit.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 安装Kernels算子包
+        playbook: install-kernels.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 安装NNAL神经网络加速库
+        playbook: install-nnal.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 安装NNAE神经网络加速引擎
+        playbook: install-nnae.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 安装NNRT神经网络运行时环境
+        playbook: install-nnrt.yaml
+        vars: variables.yaml
+        scope: all
+  uninstall:
+    description: 一键卸载CANN开发环境（卸载NNRT, NNAE, NNAL, Kernels算子包, Toolkit, 环境清理）
+    tasks:
+      - name: 卸载NNRT神经网络运行时环境
+        playbook: uninstall-nnrt.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 卸载NNAE神经网络加速引擎
+        playbook: uninstall-nnae.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 卸载NNAL神经网络加速库
+        playbook: uninstall-nnal.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 卸载Kernels算子包
+        playbook: uninstall-kernels.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 卸载Toolkit开发套件包
+        playbook: uninstall-toolkit.yaml
+        vars: variables.yaml
+        scope: all
+      - name: 环境清理
+        playbook: cleanup.yaml
+        vars: variables.yaml
+        scope: all
+  run-samples:
+    description: 执行用例代码
+    tasks:
+      - name: 下载并执行用例代码
+        playbook: run-samples.yaml
+        vars: variables.yaml
+        scope: all
+  sub:env-prepare:
+    description: 环境准备
+    tasks:
+      - name: 环境准备
+        playbook: prepare.yaml
+        vars: variables.yaml
+        scope: all
+  sub:install-toolkit:
+    description: 安装Toolkit开发套件包（依赖环境准备）
+    tasks:
+      - name: 安装Toolkit开发套件包
+        playbook: install-toolkit.yaml
+        vars: variables.yaml
+        scope: all
+  sub:install-kernels:
+    description: 安装Kernels算子包（依赖Toolkit）
+    tasks:
+      - name: 安装Kernels算子包
+        playbook: install-kernels.yaml
+        vars: variables.yaml
+        scope: all
+  sub:install-nnal:
+    description: 安装NNAL神经网络加速库
+    tasks:
+      - name: 安装NNAL神经网络加速库
+        playbook: install-nnal.yaml
+        vars: variables.yaml
+        scope: all
+  sub:install-nnae:
+    description: 安装NNAE神经网络加速引擎
+    tasks:
+      - name: 安装NNAE神经网络加速引擎
+        playbook: install-nnae.yaml
+        vars: variables.yaml
+        scope: all
+  sub:install-nnrt:
+    description: 安装NNRT神经网络运行时环境
+    tasks:
+      - name: 安装NNRT神经网络运行时环境
+        playbook: install-nnrt.yaml
+        vars: variables.yaml
+        scope: all
+  sub:env-cleanup:
+    description: 环境清理（环境准备的逆过程）
+    tasks:
+      - name: 环境清理
+        playbook: cleanup.yaml
+        vars: variables.yaml
+        scope: all
+  sub:uninstall-toolkit:
+    description: 卸载Toolkit开发套件包
+    tasks:
+      - name: 卸载Toolkit开发套件包
+        playbook: uninstall-toolkit.yaml
+        vars: variables.yaml
+        scope: all
+  sub:uninstall-kernels:
+    description: 卸载Kernels算子包
+    tasks:
+      - name: 卸载Kernels算子包
+        playbook: uninstall-kernels.yaml
+        vars: variables.yaml
+        scope: all
+  sub:uninstall-nnal:
+    description: 卸载NNAL神经网络加速库
+    tasks:
+      - name: 卸载NNAL神经网络加速库
+        playbook: uninstall-nnal.yaml
+        vars: variables.yaml
+        scope: all
+  sub:uninstall-nnae:
+    description: 卸载NNAE神经网络加速引擎
+    tasks:
+      - name: 卸载NNAE神经网络加速引擎
+        playbook: uninstall-nnae.yaml
+        vars: variables.yaml
+        scope: all
+  sub:uninstall-nnrt:
+    description: 卸载NNRT神经网络运行时环境
+    tasks:
+      - name: 卸载NNRT神经网络运行时环境
+        playbook: uninstall-nnrt.yaml
+        vars: variables.yaml
+        scope: all
