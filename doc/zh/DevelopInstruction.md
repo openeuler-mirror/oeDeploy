@@ -12,12 +12,13 @@ oeDeploy 插件目录名称，即插件名称，可以包含版本号（表示�
 
 插件目录下包含如下内容：
 
-| 文件或者目录名 | 类型 | 介绍                                                                                                                                                      |
-| -------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| config.yaml    | yaml | 对用户暴露的唯一配置文件。包含主机相关的配置，如 ip、密码、密钥、端口号等，还包含了软件部署相关的配置项。                                                 |
-| main.yaml      | yaml | 包含了插件的各种信息，例如名称、版本号、描述，也包含了每个部署操作（action）执行时的具体步骤，每个步骤都对应一个脚本或者playbook（以workspace为根目录）。 |
-| doc            | 目录 | 承载插件相关的用户文档。该目录非必需。                                                                                                                    |
-| workspace      | 目录 | 承载了软件安装部署所使用的所有文件、源码、二进制、脚本、playbook等等。目录内结构不做限制。                                                                |
+| 文件或者目录名 | 类型     | 介绍                                                         |
+| -------------- | -------- | ------------------------------------------------------------ |
+| config.yaml    | yaml     | 对用户暴露的唯一配置文件。包含主机相关的配置，如 ip、密码、密钥、端口号等，还包含了软件部署相关的配置项。 |
+| main.yaml      | yaml     | 包含了插件的各种信息，例如名称、版本号、描述，也包含了每个部署操作（action）执行时的具体步骤，每个步骤都对应一个脚本或者playbook（以workspace为根目录）。 |
+| doc            | 目录     | 承载插件相关的用户文档以及其他资料。该目录非必需。           |
+| doc/readme.md  | markdown | 插件相关的用户文档。插件商店会读取这个文件并显示到界面上，是用户获取插件信息最直接的入口，因此强烈建议编写此文档。 |
+| workspace      | 目录     | 承载了软件安装部署所使用的所有文件、源码、二进制、脚本、playbook等等。目录内结构不做限制。 |
 
 ## 3 `main.yaml`
 
@@ -28,6 +29,8 @@ oeDeploy 插件目录名称，即插件名称，可以包含版本号（表示�
 
 ### 3.1 `main.yaml`格式说明：
 
+- `type`表示插件类型，默认值为`app`，保留字段，暂不生效。
+- `localhost_available`表示是否支持本地部署，只要不是"多节点分组部署"的情况，都可以为`true`。
 - `action`字段中包含了一个或者多个操作。
 - 每一个具体操的key是操作名称，`description` 项是该操作的介绍，`tasks`中承载该操作所需执行的具体步骤（一个列表），当该操作被用户触发，将按顺序执行每一步骤。
 - 每一个步骤包含如下几个字段：
@@ -48,34 +51,38 @@ ansible-playbook <playbook>.yaml -i config.yaml -e @<vars>.yaml --limit <scope>
 name: kubernetes-1.31.1  # 插件名称
 version: 1.0.0           # 插件版本号
 description: install kubernetes 1.31.1  # 插件描述
+description_zh: 帮助开发者在本地快速部署kubernetes-1.31.1的oeDeploy插件                             # 中文介绍
+description_en: The oeDeploy plugin that helps developers quickly deploy kubernetes-1.31.1 locally. # 英文介绍
+type: app                   # 保留字段，暂不生效
+localhost_available: true   # 是否支持本地部署，只要不是"多节点分组部署"的情况，都可以为true
 action:
   install:                              # 操作install
     description: install kubernetes     # 操作install的描述
     tasks:
       - name: prepare for install       # 操作install的第1个步骤
-        playbook: set-env.yml           # 当前步骤所执行的playbook文件（基于workspace目录的相对路径）
+        playbook: set-env.yaml           # 当前步骤所执行的playbook文件（基于workspace目录的相对路径）
         scope: all                      # 执行当前步骤的主机组名称（在config.yaml中定义）
       - name: install kubernetes        # 操作install的第2个步骤
-        playbook: init-k8s.yml          # 当前步骤所执行的playbook文件（基于workspace目录的相对路径）
-        vars: variables.yml             # 当前步骤所读取的配置文件（基于workspace目录的相对路径）
+        playbook: init-k8s.yaml          # 当前步骤所执行的playbook文件（基于workspace目录的相对路径）
+        vars: variables.yaml             # 当前步骤所读取的配置文件（基于workspace目录的相对路径）
         scope: all                      # 执行当前步骤的主机组名称（在config.yaml中定义）
   delete:
     description: delete kubernetes
     tasks:
       - name: delete kubernetes
-        playbook: delete-k8s.yml
+        playbook: delete-k8s.yaml
         scope: all
   clean:
     description: clean cache files
     tasks:
       - name: clean cache files
-        playbook: clean-k8s.yml
+        playbook: clean-k8s.yaml
         scope: all
 ```
 
 - 在这个示例中，当用户执行了 `oedp run install` 命令，工具会按顺序执行如下命令：
-  `ansible-playbook set-env.yml -i config.yaml --limit all`
-  `ansible-playbook init-k8s.yml -i config.yaml -e @variables.yml --limit all`
+  `ansible-playbook set-env.yaml -i config.yaml --limit all`
+  `ansible-playbook init-k8s.yaml -i config.yaml -e @variables.yaml --limit all`
 - 用户可以通过`oedp run install`、`oedp run delete`、`oedp run clean`命令行来触发对应的操作。
 
 ## 4 `config.yaml`
@@ -84,14 +91,18 @@ action:
 
 - `config.yaml`包含部署环境的节点信息（主机组），以及部署软件相关的参数配置。
 - `config.yaml`遵循 ansible 的 inventory 文件配置规则，工具在执行 ansible playbook 时直接作为 inventory 传入。
-- 需要注意，`config.yaml`是对普通用户暴露的唯一配置文件，应当注意美观，避免歧义，并保留尽可能详细的注释说明。
-- 在`playbook`模式下，通过如下命令行的方式导入`config.yaml`中的配置：
+- 需要注意，`config.yaml`是对普通用户暴露的唯一配置文件，应当注意美观，避免歧义，并保留尽可能详细的注释说明。ansible 相关的参数应该统一位于`vars`字段中的前部或者后部。
+- 在`playbook`模式下，当用户触发部署操作时，是通过如下命令行的方式导入`config.yaml`中的配置：
 
 ```bash
 ansible-playbook <playbook>.yaml -i config.yaml -e @<vars>.yaml --limit <scope>
 ```
 
+> 对于相对来说比较固定、不需要用户修改的配置项，可以在`<vars>.yaml`呈现，而不是在`config.yaml`
+
 ### 4.1 `config.yaml`示例1：本地部署
+
+> 除了极少数只能部署在本地的情况，一般不使用`ansible_connection: local`
 
 ```yaml
 all:
@@ -240,7 +251,7 @@ all:
 
 这里有一个用于部署nginx服务的 oeDeploy 插件
 
-`config.yaml`内容如下：
+`main.yaml`内容如下：
 
 ```yaml
 name: nginx
@@ -251,9 +262,11 @@ action:
     description: Install nginx and start service
     tasks:
       - name: Install nginx via yum
-        playbook: install.yml
+        playbook: install.yaml
+        scope: all
       - name: Configure and start nginx
-        playbook: configure.yml
+        playbook: configure.yaml
+        scope: all
 ```
 
 `config.yaml`的内容如下：
@@ -261,10 +274,10 @@ action:
 ```yaml
 all:
   hosts:
-    127.0.0.1:
+    target-host:
       ansible_host: 127.0.0.1
       ansible_port: 22
-      ansible_user: root # 必须为root用户
+      ansible_user: root # 建议使用root用户或具有sudo权限的用户
       ansible_password: ""
   vars:
     nginx_port: 80
@@ -273,11 +286,11 @@ all:
 
 `workspace`目录下包含如下文件：
 
-1. `install.yml`：用于安装nginx及其他依赖软件
-2. `configure.yml`：用于配置nginx参数并启动nginx服务
-3. `nginx.conf.j2`：作为配置nginx参数的模板。虽然未在`config.yaml`中体现，但会在`configure.yml`中被使用。
+1. `install.yaml`：用于安装nginx及其他依赖软件
+2. `configure.yaml`：用于配置nginx参数并启动nginx服务
+3. `nginx.conf.j2`：作为配置nginx参数的模板。虽然未在`main.yaml`中直接体现，但会在`configure.yaml`中被使用。
 
-`install.yml`的内容如下：
+`install.yaml`的内容如下：
 
 ```yaml
 ---
@@ -295,7 +308,7 @@ all:
         enabled: yes
 ```
 
-`configure.yml`的内容如下：
+`configure.yaml`的内容如下：
 
 ```yaml
 ---
@@ -373,5 +386,48 @@ tar zcvf kubernetes-1.31.1.tar.gz kubernetes-1.31.1/
 
 ## 7 插件开发Tips
 
-- 如果 ansible 脚本中涉及文件的跨节点拷贝，建议在拷贝之前，在目标节点上安装软件包`python3-libselinux`
-- 为了部署的流畅性，建议在`config.yaml`中的`vars`字段增加配置项`ansible_ssh_common_args: '-o StrictHostKeyChecking=no'`，从而关闭严格的 HostKey 校验。
+- 如果 ansible 的部署操作需要 sudo 权限（例如安装软件包），需要在 playbook 脚本合适的位置添加`become: yes`，必要的话可以在`config.yaml`中要求只使用 root 用户密码。
+- 如果 ansible 脚本中涉及文件拷贝、修改、删除、新建等操作，必须在此之前，在目标节点上安装软件包`python3-libselinux`。依据经验，这个包几乎是必须的。
+- 为了避免因为严格的 HostKey 校验而导致部署中断，建议在`config.yaml`中的`vars`字段增加配置项`ansible_ssh_common_args: '-o StrictHostKeyChecking=no'`。
+- 用`msg`模块打印提示信息，传统换行会输出`\n`，影响可读性，因此需要采用字符串队列的形式（例如下）。
+```yaml
+- name: Print already installed message
+  debug:
+    msg:
+      - "========================================"
+      - "CANN Toolkit 开发套件包已经安装"
+      - "======================================="
+```
+
+## 8 性能调优Tips
+
+- 开通 ssh 连接复用，降低每个操作的时间延迟，在 ssh 连接延迟高的环境中性能优化显著（一般情况可以不开启，仅在性能敏感场景下使用）。在`config.yaml`中的`vars`字段增加类似如下配置项：
+
+```yaml
+# SSH连接复用参数，ControlMaster=auto启用连接复用，ControlPersist=60s保持连接60秒，ConnectTimeout=30设置连接超时30秒
+ansible_ssh_args: '-o ControlMaster=auto -o ControlPersist=60s -o ConnectTimeout=30'
+# 启用Ansible管道加速，减少SSH连接次数
+ansible_pipelining: True
+# 启用SSH管道加速，提升文件传输效率
+ansible_ssh_pipelining: True
+# 设置并行执行的任务数
+ansible_forks: 10
+```
+
+- 在 playbook 脚本合适的位置添加`gather_facts: false`，从而关闭执行命令之前的信息收集操作（一般情况下不建议修改，仅在性能敏感场景下使用）
+- 用 synchronize 替代 copy 模块，需要预装 rsync 软件包（可以避免重复拷贝，按需使用）：
+
+```yaml
+- name: install python3-libselinux and rsync
+  yum:
+    name: 
+      - python3-libselinux
+      - rsync
+    state: present
+
+- name: Sync prepare.sh to hosts using rsync
+  synchronize:
+    src: prepare.sh
+    dest: "{{ dir_path }}"
+    rsync_opts: "--chmod=755"
+```
