@@ -1,0 +1,86 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Load version mapping configuration
+      include_vars: version_mapping.yaml
+
+    - name: Get system architecture
+      set_fact:
+        system_arch: "{{ 'x86-64' if ansible_architecture == 'x86_64' else 'aarch64' }}"
+
+    - name: Set driver package name
+      set_fact:
+        driver_package: "{{ version_mapping[chip_type][version]['driver'][system_arch] }}"
+
+    - name: Check if driver is already installed
+      stat:
+        path: /usr/local/Ascend/driver/script/uninstall.sh
+      register: driver_installed
+
+    - name: Skip driver installation if already installed
+      debug:
+        msg:
+          - "=========================================="
+          - "Ascend 驱动已经安装，跳过安装步骤"
+          - "=========================================="
+      when: driver_installed.stat.exists
+
+    - name: Install Ascend driver
+      block:
+        - name: Download driver package
+          script: >
+            download.sh 
+            "{{ file_server_url }}{{ driver_package }}"
+            "{{ download_path }}"
+            "{{ download_checksum | int }}"
+            "{{ download_timeout }}"
+            "{{ download_retry }}"
+          register: download_result
+
+        - name: Display download result
+          debug:
+            msg: "{{ download_result.stdout_lines }}"
+
+        - name: Fail if download failed
+          fail:
+            msg: "Failed to download driver package"
+          when: download_result.rc != 0
+
+        - name: Make driver package executable
+          file:
+            path: "{{ download_path }}/{{ driver_package }}"
+            mode: '0755'
+
+        - name: Install Ascend driver
+          shell: |
+            cd {{ download_path }}
+            ./{{ driver_package }} --full --install-for-all
+          register: install_result
+          ignore_errors: yes
+
+        - name: Display driver installation result
+          debug:
+            msg:
+              - "=========================================="
+              - "Ascend 驱动安装结果"
+              - "=========================================="
+              - "{{ install_result.stdout_lines | default([]) }}"
+              - "{{ install_result.stderr_lines | default([]) }}"
+              - "返回码: {{ install_result.rc }}"
+              - "=========================================="
+
+        - name: Check driver installation status
+          stat:
+            path: /usr/local/Ascend/driver/script/uninstall.sh
+          register: driver_check
+
+        - name: Driver installation status
+          debug:
+            msg:
+              - "=========================================="
+              - "驱动安装状态: {{ '成功' if driver_check.stat.exists else '失败' }}"
+              - "=========================================="
+
+      when: not driver_installed.stat.exists

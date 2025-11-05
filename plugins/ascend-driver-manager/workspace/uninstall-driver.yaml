@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Check if driver is installed
+      stat:
+        path: /usr/local/Ascend/driver/script/uninstall.sh
+      register: driver_installed
+
+    - name: Skip driver uninstallation if not installed
+      debug:
+        msg:
+          - "=========================================="
+          - "Ascend 驱动未安装，跳过卸载步骤"
+          - "=========================================="
+      when: not driver_installed.stat.exists
+
+    - name: Uninstall Ascend driver
+      block:
+        - name: Execute driver uninstall script
+          shell: /usr/local/Ascend/driver/script/uninstall.sh
+          register: uninstall_result
+          ignore_errors: yes
+
+        - name: Display driver uninstallation result
+          debug:
+            msg:
+              - "=========================================="
+              - "Ascend 驱动卸载结果"
+              - "=========================================="
+              - "{{ uninstall_result.stdout_lines | default([]) }}"
+              - "{{ uninstall_result.stderr_lines | default([]) }}"
+              - "返回码: {{ uninstall_result.rc }}"
+              - "=========================================="
+
+        - name: Check driver uninstallation status
+          stat:
+            path: /usr/local/Ascend/driver/script/uninstall.sh
+          register: driver_check
+
+        - name: Driver uninstallation status
+          debug:
+            msg:
+              - "=========================================="
+              - "驱动卸载状态: {{ '成功' if not driver_check.stat.exists else '失败' }}"
+              - "=========================================="
+
+      when: driver_installed.stat.exists

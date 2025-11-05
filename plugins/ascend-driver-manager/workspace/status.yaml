@@ -1,0 +1,85 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Check DKMS status
+      shell: dkms status
+      register: dkms_status
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Check NPU-SMI info
+      shell: npu-smi info
+      register: npu_smi_info
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Check driver installation status
+      stat:
+        path: /usr/local/Ascend/driver/script/uninstall.sh
+      register: driver_installed
+
+    - name: Check firmware installation status
+      stat:
+        path: /usr/local/Ascend/firmware/script/uninstall.sh
+      register: firmware_installed
+
+    - name: Check Ascend user and group
+      block:
+        - name: Check if HwHiAiUser user exists
+          getent:
+            database: passwd
+            key: HwHiAiUser
+          register: user_exists
+          ignore_errors: yes
+
+        - name: Check if HwHiAiUser group exists
+          getent:
+            database: group
+            key: HwHiAiUser
+          register: group_exists
+          ignore_errors: yes
+
+    - name: Display comprehensive status
+      debug:
+        msg:
+          - "=========================================="
+          - "Ascend NPU 状态信息"
+          - "=========================================="
+          - "驱动状态: {{ '已安装' if driver_installed.stat.exists else '未安装' }}"
+          - "固件状态: {{ '已安装' if firmware_installed.stat.exists else '未安装' }}"
+          - "用户 HwHiAiUser: {{ '存在' if user_exists is succeeded else '不存在' }}"
+          - "组 HwHiAiUser: {{ '存在' if group_exists is succeeded else '不存在' }}"
+          - "=========================================="
+
+    - name: Display DKMS status
+      debug:
+        msg:
+          - "=========================================="
+          - "DKMS 状态"
+          - "=========================================="
+          - "{{ dkms_status.stdout_lines | default(['DKMS命令执行失败']) }}"
+          - "返回码: {{ dkms_status.rc }}"
+          - "=========================================="
+
+    - name: Display NPU-SMI info
+      debug:
+        msg:
+          - "=========================================="
+          - "NPU-SMI 信息"
+          - "=========================================="
+          - "{{ npu_smi_info.stdout_lines | default(['NPU-SMI命令执行失败']) }}"
+          - "返回码: {{ npu_smi_info.rc }}"
+          - "=========================================="
+
+    - name: Display error information if commands failed
+      debug:
+        msg:
+          - "=========================================="
+          - "错误信息"
+          - "=========================================="
+          - "DKMS错误: {{ dkms_status.stderr_lines | default(['无']) }}"
+          - "NPU-SMI错误: {{ npu_smi_info.stderr_lines | default(['无']) }}"
+          - "=========================================="
+      when: dkms_status.rc != 0 or npu_smi_info.rc != 0

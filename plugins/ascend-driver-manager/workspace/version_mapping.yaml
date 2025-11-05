@@ -1,0 +1,31 @@
+# Ascend硬件型号、版本号与run包对应关系配置文件
+# 用于管理不同硬件型号和版本的驱动、固件包名称
+
+version_mapping:
+  310p:
+    25.0.rc1.1:
+      driver:
+        aarch64: Ascend-hdk-310p-npu-driver_25.0.rc1.1_linux-aarch64.run
+        x86-64: Ascend-hdk-310p-npu-driver_25.0.rc1.1_linux-x86-64.run
+      firmware: Ascend-hdk-310p-npu-firmware_7.7.0.1.231.run
+    25.2.0:
+      driver:
+        aarch64: Ascend-hdk-310p-npu-driver_25.2.0_linux-aarch64.run
+        x86-64: Ascend-hdk-310p-npu-driver_25.2.0_linux-x86-64.run
+      firmware: Ascend-hdk-310p-npu-firmware_7.7.0.6.236.run
+  910b:
+    25.0.rc1.1:
+      driver:
+        aarch64: Ascend-hdk-910b-npu-driver_25.0.rc1.1_linux-aarch64.run
+        x86-64: Ascend-hdk-910b-npu-driver_25.0.rc1.1_linux-x86-64.run
+      firmware: Ascend-hdk-910b-npu-firmware_7.7.0.1.231.run
+    25.2.0:
+      driver:
+        aarch64: Ascend-hdk-910b-npu-driver_25.2.0_linux-aarch64.run
+        x86-64: Ascend-hdk-910b-npu-driver_25.2.0_linux-x86-64.run
+      firmware: Ascend-hdk-910b-npu-firmware_7.7.0.6.236.run
+    25.3.rc1:
+      driver:
+        aarch64: Ascend-hdk-910b-npu-driver_25.3.rc1_linux-aarch64.run
+        x86-64: Ascend-hdk-910b-npu-driver_25.3.rc1_linux-x86-64.run
+      firmware: Ascend-hdk-910b-npu-firmware_7.8.0.2.212.run
