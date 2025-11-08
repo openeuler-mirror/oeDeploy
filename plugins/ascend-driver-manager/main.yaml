@@ -1,0 +1,38 @@
+name: ascend-driver-manager
+version: 1.0.0
+description: Ascend NPU driver and firmware management plugin
+description_zh: 昇腾NPU驱动和固件管理插件，支持310p和910b芯片的驱动和固件安装、卸载及状态查询
+description_en: Ascend NPU driver and firmware management plugin, supports installation, uninstallation and status query for 310p and 910b chips
+type: app
+localhost_available: true
+action:
+  install:
+    description: Install Ascend NPU driver and firmware
+    tasks:
+      - name: Validate configuration and prepare environment
+        playbook: prepare.yaml
+        scope: all
+      - name: Install Ascend NPU driver
+        playbook: install-driver.yaml
+        scope: all
+      - name: Install Ascend NPU firmware
+        playbook: install-firmware.yaml
+        scope: all
+  uninstall:
+    description: Uninstall Ascend NPU driver and firmware
+    tasks:
+      - name: Uninstall Ascend NPU firmware
+        playbook: uninstall-firmware.yaml
+        scope: all
+      - name: Uninstall Ascend NPU driver
+        playbook: uninstall-driver.yaml
+        scope: all
+      - name: Clean up environment
+        playbook: cleanup.yaml
+        scope: all
+  status:
+    description: Check Ascend NPU driver and firmware status
+    tasks:
+      - name: Check driver and firmware status
+        playbook: status.yaml
+        scope: all

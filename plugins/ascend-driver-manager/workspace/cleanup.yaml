@@ -1,0 +1,57 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Check if HwHiAiUser user exists
+      getent:
+        database: passwd
+        key: HwHiAiUser
+      register: user_exists
+      ignore_errors: yes
+
+    - name: Check if HwHiAiUser group exists
+      getent:
+        database: group
+        key: HwHiAiUser
+      register: group_exists
+      ignore_errors: yes
+
+    - name: Remove HwHiAiUser user
+      user:
+        name: HwHiAiUser
+        state: absent
+        remove: yes
+      when: user_exists is succeeded
+      register: user_removal
+
+    - name: Remove HwHiAiUser group
+      group:
+        name: HwHiAiUser
+        state: absent
+      when: group_exists is succeeded
+      register: group_removal
+
+    - name: Display cleanup result
+      debug:
+        msg:
+          - "=========================================="
+          - "环境清理结果"
+          - "=========================================="
+          - "用户 HwHiAiUser: {{ '已删除' if (user_exists is succeeded and user_removal is succeeded) else '不存在或删除失败' }}"
+          - "组 HwHiAiUser: {{ '已删除' if (group_exists is succeeded and group_removal is succeeded) else '不存在或删除失败' }}"
+          - "=========================================="
+
+    - name: Clean up download directory
+      file:
+        path: "{{ download_path }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Display final cleanup status
+      debug:
+        msg:
+          - "=========================================="
+          - "清理完成"
+          - "下载目录 {{ download_path }} 已清理"
+          - "=========================================="

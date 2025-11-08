@@ -1,0 +1,119 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Load version mapping configuration
+      include_vars: version_mapping.yaml
+
+    - name: Set firmware package name
+      set_fact:
+        firmware_package: "{{ version_mapping[chip_type][version]['firmware'] }}"
+
+    - name: Check if running on physical machine
+      shell: |
+        if [ -d /sys/firmware/efi ] || [ -d /sys/firmware/acpi ]; then
+          # Check for virtualization
+          if command -v systemd-detect-virt >/dev/null 2>&1; then
+            if systemd-detect-virt -q; then
+              echo "virtual"
+            else
+              echo "physical"
+            fi
+          elif [ -f /proc/cpuinfo ]; then
+            if grep -q "hypervisor\|QEMU\|VMware\|VirtualBox\|Xen" /proc/cpuinfo; then
+              echo "virtual"
+            else
+              echo "physical"
+            fi
+          else
+            echo "physical"
+          fi
+        else
+          echo "physical"
+        fi
+      register: machine_type
+      changed_when: false
+
+    - name: Skip firmware installation on virtual machine
+      debug:
+        msg:
+          - "=========================================="
+          - "检测到虚拟机环境，跳过固件安装"
+          - "=========================================="
+      when: machine_type.stdout == "virtual"
+
+    - name: Install firmware on physical machine
+      block:
+        - name: Check if firmware is already installed
+          stat:
+            path: /usr/local/Ascend/firmware/script/uninstall.sh
+          register: firmware_installed
+
+        - name: Skip firmware installation if already installed
+          debug:
+            msg:
+              - "=========================================="
+              - "Ascend 固件已经安装，跳过安装步骤"
+              - "=========================================="
+          when: firmware_installed.stat.exists
+
+        - name: Install Ascend firmware
+          block:
+            - name: Download firmware package
+              script: >
+                download.sh 
+                "{{ file_server_url }}{{ firmware_package }}"
+                "{{ download_path }}"
+                "{{ download_checksum | int }}"
+                "{{ download_timeout }}"
+                "{{ download_retry }}"
+              register: download_result
+
+            - name: Display download result
+              debug:
+                msg: "{{ download_result.stdout_lines }}"
+
+            - name: Fail if download failed
+              fail:
+                msg: "Failed to download firmware package"
+              when: download_result.rc != 0
+
+            - name: Make firmware package executable
+              file:
+                path: "{{ download_path }}/{{ firmware_package }}"
+                mode: '0755'
+
+            - name: Install Ascend firmware
+              shell: |
+                cd {{ download_path }}
+                ./{{ firmware_package }} --full
+              register: install_result
+              ignore_errors: yes
+
+            - name: Display firmware installation result
+              debug:
+                msg:
+                  - "=========================================="
+                  - "Ascend 固件安装结果"
+                  - "=========================================="
+                  - "{{ install_result.stdout_lines | default([]) }}"
+                  - "{{ install_result.stderr_lines | default([]) }}"
+                  - "返回码: {{ install_result.rc }}"
+                  - "=========================================="
+
+            - name: Check firmware installation status
+              stat:
+                path: /usr/local/Ascend/firmware/script/uninstall.sh
+              register: firmware_check
+
+            - name: Firmware installation status
+              debug:
+                msg:
+                  - "=========================================="
+                  - "固件安装状态: {{ '成功' if firmware_check.stat.exists else '失败' }}"
+                  - "=========================================="
+
+          when: not firmware_installed.stat.exists
+
+      when: machine_type.stdout == "physical"

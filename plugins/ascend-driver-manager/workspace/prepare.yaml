@@ -1,0 +1,73 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Load version mapping configuration
+      include_vars: version_mapping.yaml
+
+    - name: Validate chip type
+      fail:
+        msg: "Unsupported chip type: {{ chip_type }}. Supported types: 310p, 910b"
+      when: chip_type not in version_mapping
+
+    - name: Validate version for chip type
+      fail:
+        msg: "Unsupported version {{ version }} for chip type {{ chip_type }}. Supported versions: {{ version_mapping[chip_type].keys() | list }}"
+      when: version not in version_mapping[chip_type]
+
+    - name: Get system architecture
+      set_fact:
+        system_arch: "{{ 'x86-64' if ansible_architecture == 'x86_64' else 'aarch64' }}"
+
+    - name: Set driver and firmware package names
+      set_fact:
+        driver_package: "{{ version_mapping[chip_type][version]['driver'][system_arch] }}"
+        firmware_package: "{{ version_mapping[chip_type][version]['firmware'] }}"
+
+    - name: Display configuration information
+      debug:
+        msg:
+          - "=========================================="
+          - "Ascend Driver Manager 配置信息"
+          - "=========================================="
+          - "硬件型号: {{ chip_type }}"
+          - "版本号: {{ version }}"
+          - "系统架构: {{ system_arch }}"
+          - "驱动包: {{ driver_package }}"
+          - "固件包: {{ firmware_package }}"
+          - "文件服务器: {{ file_server_url }}"
+          - "下载路径: {{ download_path }}"
+          - "=========================================="
+
+    - name: Install required packages
+      yum:
+        name:
+          - make
+          - dkms
+          - gcc
+          - "kernel-headers-{{ ansible_kernel }}"
+          - "kernel-devel-{{ ansible_kernel }}"
+          - net-tools
+          - python3-libselinux
+        state: present
+
+    - name: Create download directory
+      file:
+        path: "{{ download_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Check if HwHiAiUser group exists
+      group:
+        name: HwHiAiUser
+        state: present
+
+    - name: Check if HwHiAiUser user exists
+      user:
+        name: HwHiAiUser
+        group: HwHiAiUser
+        home: /home/HwHiAiUser
+        shell: /bin/bash
+        create_home: yes
+        state: present

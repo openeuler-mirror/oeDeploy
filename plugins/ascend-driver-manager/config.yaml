@@ -1,0 +1,22 @@
+all:
+  hosts:
+    target-host:
+      ansible_host: 127.0.0.1      # 目标主机IP
+      ansible_port: 22             # SSH端口号
+      ansible_user: root           # 必须使用root用户
+      ansible_password: ""         # root用户密码
+  vars:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # Ascend硬件配置
+    chip_type: 310p                # 硬件型号，支持: 310p, 910b
+    version: 25.2.0                # 版本号，310p支持: 25.0.rc1.1/25.2.0, 910b支持: 25.0.rc1.1/25.2.0/25.3.rc1
+    
+    # 文件服务器配置
+    file_server_url: https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/files/Ascend/
+    
+    # 下载配置
+    download_path: /tmp/ascend      # 下载文件存储路径
+    download_checksum: false        # 是否启用SHA256校验(需要文件服务器支持)
+    download_timeout: 600           # 下载超时时间(秒)
+    download_retry: 3               # 下载重试次数
