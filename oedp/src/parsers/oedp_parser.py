@@ -297,6 +297,49 @@ class OeDeployParser:
         )
         disable_parser.set_defaults(func=self._run_repo_command)
 
+        # repo make
+        make_parser = subparsers.add_parser(
+            'make',
+            help='Generate repository index file'
+        )
+        make_parser.add_argument(
+            'plugins_dir',
+            type=str,
+            help='Directory containing plugin tar.gz files'
+        )
+        make_parser.add_argument(
+            'url_prefix',
+            type=str,
+            help='URL prefix for plugin downloads'
+        )
+        make_parser.add_argument(
+            'output_dir',
+            type=str,
+            help='Directory to output index.yaml'
+        )
+        make_parser.add_argument(
+            'extra_item',
+            nargs='?',
+            default='',
+            type=str,
+            help='Path to extra items yaml file (optional)'
+        )
+        make_parser.set_defaults(func=self._run_repo_command)
+
+        # repo make-local
+        make_local_parser = subparsers.add_parser(
+            'make-local',
+            help='Generate local repository index file'
+        )
+        make_local_parser.add_argument(
+            'path',
+            nargs='?',
+            default=os.getcwd(),
+            type=str,
+            help='Plugin directory path (default: current directory)'
+        )
+        make_local_parser.set_defaults(func=self._run_repo_command)
+
     @staticmethod
     def _run_init_command(args):
         """
@@ -332,8 +375,8 @@ class OeDeployParser:
     @staticmethod
     def _run_check_command(args):
         project = args.project
-        group = args.group
-        return CheckCmd(project, group).run()
+        action = args.action
+        return CheckCmd(project, action).run()
 
     @staticmethod
     def _run_repo_command(args):

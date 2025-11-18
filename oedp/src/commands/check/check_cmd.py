@@ -15,7 +15,7 @@ from src.utils.log.logger_generator import LoggerGenerator
 
 
 class CheckCmd:
-    def __init__(self, project: str, group: str):
+    def __init__(self, project: str, action: str):
         """
         检查项目配置。
 
@@ -23,7 +23,7 @@ class CheckCmd:
         :param group: 待检查的组
         """
         self.project = project
-        self.group = group
+        self.action = action
         self.log = LoggerGenerator().get_logger('check_cmd')
 
     def run(self):

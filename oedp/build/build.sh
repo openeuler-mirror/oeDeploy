@@ -24,6 +24,7 @@ echo -e "\e[1;32m [INFO] Start to build RPM \e[0m"
 rpmdev-setuptree
 cp "${BUILD_SCRIPT_DIR}"/oedp.spec ~/rpmbuild/SPECS/
 cp "${TEMP_DIR}/${PACKING_DIR_NAME}.tar.gz" ~/rpmbuild/SOURCES/
+sed -i "s/__VERSION__/${VERSION}/g" ~/rpmbuild/SPECS/oedp.spec
 sed -i "s/release_number/$(date +'%Y%m%d')/g" ~/rpmbuild/SPECS/oedp.spec
 sed -i '/case / s/^\(.*\)$/#\1/g' ~/.rpmmacros
 # 在构建 RPM 包时，禁用编译 pyc

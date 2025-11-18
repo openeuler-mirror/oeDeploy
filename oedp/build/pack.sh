@@ -23,6 +23,11 @@ cd "${PROJECT_DIR}"
 cp -R src oedp.py build/static "${PACKING_DIR}"
 echo -e "\e[1;32m [INFO] The packing directory si ready \e[0m"
 
+# 替换版本号占位符
+echo -e "\e[1;32m [INFO] Start to replace version placeholders \e[0m"
+find "${PACKING_DIR}" -type f \( -name "*.py" -o -name "*.desktop" \) -exec sed -i "s/__VERSION__/${VERSION}/g" {} \;
+echo -e "\e[1;32m [INFO] Version placeholders replaced successfully \e[0m"
+
 echo -e "\e[1;32m [INFO] Start to convert a newline character \e[0m"
 find "${PACKING_DIR}" -type f -name "*.py" -o -name "*.sh" | xargs dos2unix
 dos2unix "${BUILD_SCRIPT_DIR}"/oedp.spec

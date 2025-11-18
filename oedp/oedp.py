@@ -14,12 +14,18 @@
 
 import sys
 
-if '/usr/lib/oedp' not in sys.path:
-    sys.path.append('/usr/lib/oedp')
-    sys.executable = '/usr/bin/python3'
-
-from src.constants.const import FAILED, OK
-from src.parsers.oedp_parser import OeDeployParser
+# 尝试导入，如果失败则添加路径后重试
+try:
+    from src.constants.const import FAILED, OK
+    from src.parsers.oedp_parser import OeDeployParser
+except ModuleNotFoundError:
+    # 如果导入失败，添加标准安装路径
+    lib_dir = '/usr/lib/oedp'
+    if lib_dir not in sys.path:
+        sys.path.insert(0, lib_dir)
+    # 重新导入
+    from src.constants.const import FAILED, OK
+    from src.parsers.oedp_parser import OeDeployParser
 
 if __name__ == '__main__':
     try:

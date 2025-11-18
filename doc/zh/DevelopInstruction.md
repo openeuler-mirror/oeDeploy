@@ -398,6 +398,7 @@ tar zcvf kubernetes-1.31.1.tar.gz kubernetes-1.31.1/
       - "CANN Toolkit 开发套件包已经安装"
       - "======================================="
 ```
+- oeDeploy 插件开发完成后，可以先用`oedp run install -lt`命令先在本地节点进行测试（不需要填写IP、用户名、密码）。
 
 ## 8 性能调优Tips
 

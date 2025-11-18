@@ -16,6 +16,10 @@ import os
 import shutil
 import tarfile
 import tempfile
+import yaml
+import hashlib
+from datetime import datetime
+from packaging import version
 from prettytable import PrettyTable
 from typing import Set
 from src.utils.command.command_executor import CommandExecutor
@@ -46,7 +50,9 @@ class RepoCmd:
             'set': self.run_set,
             'del': self.run_del,
             'enable': self.run_enable,
-            'disable': self.run_disable
+            'disable': self.run_disable,
+            'make': self.run_make,
+            'make-local': self.run_make_local
         }
         handler = command_map.get(self.args.subcommand)
         return handler() if handler else False
@@ -452,3 +458,455 @@ class RepoCmd:
                 
         self.log.error(f"failed to download index for {repo_name} after {max_retries} attempts:\n{stderr}")
         return False
+    
+    def run_make(self) -> bool:
+        """生成插件源索引文件
+        
+        Returns:
+            bool: 执行结果
+        """
+        # 转换为绝对路径
+        plugins_dir = os.path.abspath(self.args.plugins_dir)
+        url_prefix = self.args.url_prefix
+        output_dir = os.path.abspath(self.args.output_dir)
+        extra_item = os.path.abspath(self.args.extra_item) if self.args.extra_item else ''
+        
+        # 验证目录是否存在
+        if not os.path.isdir(plugins_dir):
+            self.log.error(f"Plugins directory not found: {plugins_dir}")
+            return False
+            
+        if not os.path.isdir(output_dir):
+            self.log.error(f"Output directory not found: {output_dir}")
+            return False
+        
+        return self._generate_index(plugins_dir, url_prefix, output_dir, extra_item)
+    
+    def run_make_local(self) -> bool:
+        """生成本地插件源索引文件
+        
+        Args:
+            path: 插件目录路径，默认为当前目录
+            
+        Returns:
+            bool: 执行结果
+        """
+        path = getattr(self.args, 'path', os.getcwd())
+        
+        # 转换为绝对路径
+        path = os.path.abspath(path)
+        
+        # 验证目录是否存在
+        if not os.path.isdir(path):
+            self.log.error(f"Directory not found: {path}")
+            return False
+        
+        # 等价于 make 模式的参数设置
+        plugins_dir = path
+        url_prefix = f"file://{path}"
+        output_dir = path
+        extra_item = ''
+        
+        return self._generate_index(plugins_dir, url_prefix, output_dir, extra_item)
+    
+    def _validate_and_extract_plugin_info(self, tar_path: str):
+        """验证tar.gz文件是否是合法的oeDeploy插件并提取插件信息
+        
+        Args:
+            tar_path: 插件tar.gz文件路径
+            
+        Returns:
+            tuple: (是否有效, 插件信息字典)
+        """
+        try:
+            with tarfile.open(tar_path, 'r:gz') as tar:
+                names = tar.getnames()
+                base_name = os.path.basename(tar_path)[:-7]  # 去掉'.tar.gz'后缀
+                
+                # 检查必须的文件和目录
+                required = [
+                    os.path.join(base_name, 'main.yaml'),
+                    os.path.join(base_name, 'config.yaml'),
+                    os.path.join(base_name, 'workspace')
+                ]
+                
+                # 如果缺少必需文件，立即返回
+                if not all(item in names for item in required):
+                    self.log.warning(f"Invalid plugin: missing required files in {tar_path}")
+                    return False, None
+                    
+                # 提取main.yaml内容
+                main_path = os.path.join(base_name, 'main.yaml')
+                tar_file = tar.extractfile(main_path)
+                if tar_file is None:
+                    self.log.warning(f"Failed to extract {main_path} from {tar_path}")
+                    return False, None
+                    
+                main_content = yaml.safe_load(tar_file.read())
+                
+                # 获取基本信息
+                info = {
+                    'name': base_name,  # name字段与插件文件名保持一致
+                    'version': main_content.get('version', '1.0.0'),
+                    'updated': main_content.get('updated', ''),
+                    'author': main_content.get('author', ''),
+                    'url': main_content.get('url', ''),
+                    'description': main_content.get('description', ''),
+                    'description_zh': main_content.get('description_zh', ''),
+                    'description_en': main_content.get('description_en', ''),
+                    'readme': main_content.get('readme', ''),
+                    'icon': main_content.get('icon', ''),
+                    'type': main_content.get('type', 'app'),
+                    'localhost_available': main_content.get('localhost_available', False)
+                }
+                
+                return True, info
+                
+        except Exception as e:
+            self.log.error(f"Error processing plugin {tar_path}: {e}")
+            return False, None
+    
+    def _calculate_sha256(self, file_path: str) -> str:
+        """计算文件的sha256值
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            str: sha256值
+        """
+        sha256_hash = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    
+    def _build_plugin_entry(self, tar_path: str, plugins_dir: str, url_prefix: str, plugin_info: dict) -> dict:
+        """构建插件条目字典
+        
+        Args:
+            tar_path: 插件tar.gz文件路径
+            plugins_dir: 插件目录路径
+            url_prefix: URL前缀
+            plugin_info: 插件信息字典
+            
+        Returns:
+            dict: 完整的插件条目字典
+        """
+        # 计算文件大小和sha256
+        file_size = os.path.getsize(tar_path)
+        sha256sum = self._calculate_sha256(tar_path)
+        
+        # 构建相对路径URL，处理可能的双斜杠问题
+        rel_path = os.path.relpath(tar_path, plugins_dir)
+        download_url = os.path.normpath(f"{url_prefix}/{rel_path}").replace('\\', '/')
+        
+        # 构建插件条目
+        updated_time = datetime.fromtimestamp(os.path.getmtime(tar_path)).astimezone()
+        formatted_time = updated_time.strftime('%Y-%m-%dT%H:%M:%S%z')
+        
+        return {
+            'name': plugin_info['name'],
+            'version': plugin_info['version'],
+            'updated': plugin_info['updated'] or formatted_time,
+            'author': plugin_info['author'],
+            'url': plugin_info['url'],
+            'description': plugin_info['description'],
+            'description_zh': plugin_info['description_zh'],
+            'description_en': plugin_info['description_en'],
+            'readme': plugin_info['readme'],
+            'icon': plugin_info['icon'],
+            'localhost_available': plugin_info['localhost_available'],
+            'type': plugin_info['type'],
+            'sha256sum': sha256sum,
+            'size': file_size,
+            'urls': [download_url]
+        }
+    
+    def _load_extra_items(self, extra_path: str, plugins_dict: dict) -> bool:
+        """加载并合并额外YAML文件中的插件数据
+        
+        Args:
+            extra_path: 额外YAML文件路径
+            plugins_dict: 插件字典
+            
+        Returns:
+            bool: 是否成功加载
+        """
+        if not extra_path or not os.path.exists(extra_path):
+            self.log.error(f"Extra item file not found: {extra_path}")
+            return False
+        
+        try:
+            with open(extra_path, 'r', encoding='utf-8') as f:
+                extra_data = yaml.safe_load(f)
+                if not extra_data or 'plugins' not in extra_data:
+                    return True
+                self._merge_extra_items(extra_data, plugins_dict)
+            return True
+        except Exception as e:
+            self.log.error(f"Error processing extra item file {extra_path}: {e}")
+            return False
+    
+    def _merge_extra_items(self, extra_data: dict, plugins_dict: dict):
+        """合并额外的插件数据
+        
+        Args:
+            extra_data: 额外数据
+            plugins_dict: 插件字典
+        """
+        for plugin_entry in extra_data['plugins']:
+            plugin_name, versions = next(iter(plugin_entry.items()))
+            if plugin_name not in plugins_dict:
+                plugins_dict[plugin_name] = []
+            # 过滤已存在的版本
+            existing_versions = {v['version'] for v in plugins_dict[plugin_name]}
+            new_versions = [v for v in versions if v['version'] not in existing_versions]
+            plugins_dict[plugin_name].extend(new_versions)
+    
+    def _extract_plugin_to_details(self, tar_path: str, plugin_info: dict, details_dir: str):
+        """解压插件到index-details目录并清理workspace目录
+        
+        Args:
+            tar_path: 插件tar.gz文件路径
+            plugin_info: 插件信息字典
+            details_dir: index-details目录路径
+        """
+        try:
+            # 先解压到临时目录
+            temp_dir = os.path.join(details_dir, f"temp_{os.urandom(4).hex()}")
+            os.makedirs(temp_dir, exist_ok=True)
+            
+            # 解压文件
+            with tarfile.open(tar_path, 'r:gz') as tar:
+                tar.extractall(path=temp_dir)
+                
+            # 获取解压后的顶层目录
+            extracted_dir = os.path.join(temp_dir, os.listdir(temp_dir)[0])
+            
+            # 重命名为目标目录 {name}_{version}
+            target_dir = os.path.join(details_dir, f"{plugin_info['name']}_{plugin_info['version']}")
+            os.rename(extracted_dir, target_dir)
+            
+            # 删除临时目录
+            shutil.rmtree(temp_dir)
+                
+            # 删除workspace目录
+            workspace_path = os.path.join(target_dir, 'workspace')
+            if os.path.exists(workspace_path):
+                shutil.rmtree(workspace_path)
+                
+        except Exception as e:
+            self.log.error(f"Error extracting plugin {tar_path} to details dir: {e}")
+    
+    def _compress_and_clean_details(self, output_dir: str):
+        """压缩index-details目录为tar.gz并删除原目录
+        
+        Args:
+            output_dir: 输出目录路径
+        """
+        try:
+            details_dir = os.path.join(output_dir, 'index-details')
+            if not os.path.exists(details_dir):
+                return
+                
+            # 压缩目录
+            archive_path = os.path.join(output_dir, 'index-details.tar.gz')
+            with tarfile.open(archive_path, 'w:gz') as tar:
+                tar.add(details_dir, arcname='index-details')
+            self.log.info(f"Plugin details in {archive_path}")
+                
+            # 删除原目录
+            shutil.rmtree(details_dir)
+            
+        except Exception as e:
+            self.log.error(f"Error compressing details dir: {e}")
+    
+    def _generate_index(self, plugins_dir: str, url_prefix: str, output_dir: str, extra_item: str = '') -> bool:
+        """生成index.yaml文件
+        
+        Args:
+            plugins_dir: 插件目录路径
+            url_prefix: URL前缀
+            output_dir: 输出目录路径
+            extra_item: 额外补充项的yaml文件路径
+            
+        Returns:
+            bool: 是否成功生成索引文件
+        """
+        # 验证目录
+        if not self._validate_directories(plugins_dir, output_dir):
+            return False
+        
+        # 初始化插件字典
+        plugins_dict = {}
+        if extra_item:
+            self._load_extra_items(extra_item, plugins_dict)
+        
+        # 准备details目录
+        details_dir = self._prepare_details_directory(output_dir)
+        
+        # 扫描并处理插件
+        self._scan_and_process_plugins(plugins_dir, url_prefix, plugins_dict, details_dir)
+        
+        # 构建并写入索引文件
+        output_path = os.path.join(output_dir, 'index.yaml')
+        if not self._write_index_file(plugins_dict, output_path):
+            return False
+        
+        # 压缩并清理details目录
+        self._compress_and_clean_details(output_dir)
+        
+        self.log.info(f"Index file generated at: {output_path}")
+        return True
+    
+    def _validate_directories(self, plugins_dir: str, output_dir: str) -> bool:
+        """验证目录是否存在
+        
+        Args:
+            plugins_dir: 插件目录路径
+            output_dir: 输出目录路径
+            
+        Returns:
+            bool: 验证是否通过
+        """
+        if not os.path.exists(plugins_dir):
+            self.log.error(f"Plugins directory does not exist: {plugins_dir}")
+            return False
+            
+        if not os.path.exists(output_dir):
+            self.log.error(f"Output directory does not exist: {output_dir}")
+            return False
+        
+        return True
+    
+    def _prepare_details_directory(self, output_dir: str) -> str:
+        """准备index-details目录
+        
+        Args:
+            output_dir: 输出目录路径
+            
+        Returns:
+            str: details目录路径
+        """
+        details_dir = os.path.join(output_dir, 'index-details')
+        if os.path.exists(details_dir):
+            shutil.rmtree(details_dir)
+        os.makedirs(details_dir, exist_ok=True)
+        return details_dir
+    
+    def _scan_and_process_plugins(self, plugins_dir: str, url_prefix: str, plugins_dict: dict, details_dir: str):
+        """扫描并处理所有插件
+        
+        Args:
+            plugins_dir: 插件目录路径
+            url_prefix: URL前缀
+            plugins_dict: 插件字典
+            details_dir: details目录路径
+        """
+        for root, _, files in os.walk(plugins_dir):
+            for file in files:
+                if not file.endswith('.tar.gz'):
+                    continue
+                
+                tar_path = os.path.join(root, file)
+                self._process_single_plugin(tar_path, plugins_dir, url_prefix, plugins_dict, details_dir)
+    
+    def _process_single_plugin(self, tar_path: str, plugins_dir: str, url_prefix: str, 
+                               plugins_dict: dict, details_dir: str):
+        """处理单个插件
+        
+        Args:
+            tar_path: 插件tar.gz文件路径
+            plugins_dir: 插件目录路径
+            url_prefix: URL前缀
+            plugins_dict: 插件字典
+            details_dir: details目录路径
+        """
+        self.log.info(f"Processing plugin: {tar_path}")
+        
+        # 验证并提取插件信息
+        valid, plugin_info = self._validate_and_extract_plugin_info(tar_path)
+        if not valid or plugin_info is None:
+            return
+        
+        # 构建插件条目
+        plugin_entry = self._build_plugin_entry(tar_path, plugins_dir, url_prefix, plugin_info)
+        plugin_name = plugin_info['name']
+        
+        # 添加到字典
+        if plugin_name not in plugins_dict:
+            plugins_dict[plugin_name] = []
+        plugins_dict[plugin_name].append(plugin_entry)
+        
+        # 解压插件到details目录
+        self._extract_plugin_to_details(tar_path, plugin_info, details_dir)
+    
+    def _write_index_file(self, plugins_dict: dict, output_path: str) -> bool:
+        """写入索引文件
+        
+        Args:
+            plugins_dict: 插件字典
+            output_path: 输出文件路径
+            
+        Returns:
+            bool: 是否成功写入
+        """
+        try:
+            # 构建索引数据
+            index_data = {
+                'apiversion': 'v1',
+                'plugins': self._build_sorted_plugins_list(plugins_dict)
+            }
+            
+            # 写入文件
+            fd = os.open(output_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                yaml.dump(index_data, f, allow_unicode=True, sort_keys=False)
+            
+            return True
+        except Exception as e:
+            self.log.error(f"Failed to write index file: {e}")
+            return False
+    
+    def _build_sorted_plugins_list(self, plugins_dict: dict) -> list:
+        """构建排序后的插件列表
+        
+        Args:
+            plugins_dict: 插件字典
+            
+        Returns:
+            list: 排序后的插件列表
+        """
+        plugins_list = []
+        
+        for plugin_name in sorted(plugins_dict.keys()):
+            unique_versions = self._deduplicate_versions(plugin_name, plugins_dict[plugin_name])
+            if unique_versions:
+                plugins_list.append({plugin_name: unique_versions})
+        
+        return plugins_list
+    
+    def _deduplicate_versions(self, plugin_name: str, versions: list) -> list:
+        """去重并排序插件版本
+        
+        Args:
+            plugin_name: 插件名称
+            versions: 版本列表
+            
+        Returns:
+            list: 去重并排序后的版本列表
+        """
+        seen_versions = set()
+        unique_versions = []
+        
+        # 按版本号从大到小排序
+        sorted_versions = sorted(versions, key=lambda x: version.parse(x['version']), reverse=True)
+        
+        for v in sorted_versions:
+            version_key = (plugin_name, v['version'])
+            if version_key not in seen_versions:
+                seen_versions.add(version_key)
+                unique_versions.append(v)
+        
+        return unique_versions

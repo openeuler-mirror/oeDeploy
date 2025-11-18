@@ -60,14 +60,16 @@ oedp init kubernetes-1.31.1 -d ~
 - 支持本地插件源、远端插件源。
 - 插件源不可重名。
 
-| 选项               | 功能说明               |
-| ------------------ | ---------------------- |
-| `list`             | 查询所有已配置的插件源 |
-| `update`           | 更新插件索引缓存       |
-| `set [name] [url]` | 增加/修改插件源地址    |
-| `del [name]`       | 删除插件源             |
-| `enable [name]`    | 使能插件源             |
-| `disable [name]`   | 去使能插件源           |
+| 选项                                                         | 功能说明                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `list`                                                       | 查询所有已配置的插件源                                       |
+| `update`                                                     | 更新插件索引缓存                                             |
+| `set [name] [url]`                                           | 增加/修改插件源地址                                          |
+| `del [name]`                                                 | 删除插件源                                                   |
+| `enable [name]`                                              | 使能插件源                                                   |
+| `disable [name]`                                             | 去使能插件源                                                 |
+| `make [plugins_dir] [url_prefix] [output_dir] [extra_item]` | 生成插件源索引文件，extra_item参数可选                       |
+| `make-local [path]`                                          | 生成本地插件源索引文件，path可选(默认当前目录) |
 
 插件源配置文件 `/etc/oedp/config/repo/repo.conf`示例
 
@@ -101,7 +103,7 @@ oeDeploy 支持从可访问的插件源自动获取安装部署插件，并初�
 
 插件源的根目录下必须有一个索引文件 `index.yaml`，其描述了当前插件源中所有可访问插件的具体信息，包括下载地址。
 
-oeDeploy 提供了脚本 `tools/make_repo_index/make_repo_index.py`，用于自动生成 `index.yaml`。
+oeDeploy 提供了 `oedp repo make` 和 `oedp repo make-local` 命令，用于自动生成 `index.yaml`。
 
 `index.yaml`示例如下：
 
@@ -171,13 +173,15 @@ plugins:
 
 ## 插件源构建方式
 
+### 方式1：使用 `oedp repo make` 命令
+
 执行如下命令，一键生成索引文件 `index.yaml`：
 
 ```bash
-python3 make_repo_index.py [plugins_dir] [url_prefix] [output_dir] [extra_item]
+oedp repo make [plugins_dir] [url_prefix] [output_dir] [extra_item]
 ```
 
-- `plugins_dir`表示当前 Linux 环境下的插件源根目录，脚本会自动识别目录下（包括所有子目录）所有符合条件的 oeDeploy 插件（后缀为.tar.gz的压缩包）。
+- `plugins_dir`表示当前 Linux 环境下的插件源根目录，命令会自动识别目录下（包括所有子目录）所有符合条件的 oeDeploy 插件（后缀为.tar.gz的压缩包）。
 
 - `url_prefix`表示每个插件源的 url 索引前缀，即对外暴露的插件源根目录。
 
@@ -185,17 +189,46 @@ python3 make_repo_index.py [plugins_dir] [url_prefix] [output_dir] [extra_item]
 
 - `extra_item`(可选)表示额外补充项的YAML文件路径，用于合并额外的插件版本信息到索引中。
 
-脚本会自动处理以下情况：
+命令会自动处理以下情况：
 1. 合并主目录和额外文件中的插件版本
 2. 按版本号从大到小排序
 3. 自动去重相同插件名和版本号的条目
 
-例如，当前 Linux 环境上 `/root/build_workspace/storages/plugins`目录中有多个 oeDeploy 插件，同时映射到 `http://x.x.x.x:8080/plugins`，作为文件服务器对外暴露。
+例如，假设当前 Linux 环境上 `/root/build_workspace/storages/plugins`目录中有多个 oeDeploy 插件，且该目录映射到 `http://x.x.x.x:8080/plugins`，作为文件服务器对外暴露。
 
 未存储在当前环境的oeDeploy插件信息记录在 `/root/build_workspace/storages/extra.yaml`。
 
 执行如下命令，可以在 `/root/build_workspace/storages/plugins`目录下生成一个 `index.yaml`，其中每个插件的 `urls`字段是其在文件服务器上的真实访问地址，可以直接下载。
 
 ```bash
-python3 make_repo_index.py /root/build_workspace/storages/plugins http://x.x.x.x:8080/plugins /root/build_workspace/storages/plugins /root/build_workspace/storages/extra.yaml
+oedp repo make \
+/root/build_workspace/storages/plugins \
+http://x.x.x.x:8080/plugins \
+/root/build_workspace/storages/plugins \
+/root/build_workspace/storages/extra.yaml
+```
+
+### 方式2：使用 `oedp repo make-local` 命令
+
+对于本地插件源，可以使用更简便的命令：
+
+```bash
+oedp repo make-local [path]
+```
+
+- `path`(可选)表示插件目录路径，默认为当前目录。命令会自动转换为绝对路径。
+
+此命令等价于 `oedp repo make path file://path path`，适用于本地插件源的快速构建。
+
+例如，在 `/opt/oedp/plugins` 目录下生成本地插件源索引：
+
+```bash
+cd /opt/oedp/plugins
+oedp repo make-local
+```
+
+或者：
+
+```bash
+oedp repo make-local /opt/oedp/plugins
 ```
