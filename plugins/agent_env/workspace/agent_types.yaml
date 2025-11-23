@@ -1,0 +1,56 @@
+# Agent SDK类型配置文件
+# 定义每种Agent SDK所需的pip包和对应的demo脚本
+
+agents:
+  pyautogen:
+    packages:
+      - pyautogen
+    demo: demos/demo_pyautogen.py
+    description: Microsoft AutoGen framework for building multi-agent systems
+    
+  agno:
+    packages:
+      - agno
+    demo: demos/demo_agno.py
+    description: Agno AI agent framework
+    
+  crewai:
+    packages:
+      - crewai
+      - crewai-tools
+    demo: demos/demo_crewai.py
+    description: CrewAI framework for orchestrating role-playing autonomous AI agents
+    
+  google-generativeai:
+    packages:
+      - google-generativeai
+    demo: demos/demo_google_generativeai.py
+    description: Google's Generative AI Python SDK
+    
+  haystack-ai:
+    packages:
+      - haystack-ai
+    demo: demos/demo_haystack.py
+    description: Haystack framework for building NLP applications with LLMs
+    
+  langchain:
+    packages:
+      - langchain
+      - langchain-community
+      - langchain-core
+    demo: demos/demo_langchain.py
+    description: LangChain framework for developing LLM-powered applications
+    
+  openai:
+    packages:
+      - openai
+    demo: demos/demo_openai.py
+    description: Official OpenAI Python client library
+    
+  smolagents:
+    packages:
+      - smolagents
+    demo: demos/demo_smolagents.py
+    description: HuggingFace's simple and lightweight agent framework
+
+

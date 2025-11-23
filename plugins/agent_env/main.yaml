@@ -1,0 +1,22 @@
+name: agent_env
+version: 1.0.0
+description: Install Python development environment for various Agent SDKs
+description_zh: 帮助开发者快速安装Agent开发所需的Python环境和SDK
+description_en: Help developers quickly install Python development environment and SDKs for Agent development
+type: app
+localhost_available: true
+action:
+  install:
+    description: Install Python environment and Agent SDK packages
+    tasks:
+      - name: Install Agent development environment
+        playbook: install.yaml
+        scope: all
+  uninstall:
+    description: Uninstall Agent SDK packages
+    tasks:
+      - name: Uninstall Agent SDK packages
+        playbook: uninstall.yaml
+        scope: all
+
+

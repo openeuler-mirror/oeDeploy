@@ -1,0 +1,95 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    agent_types_config: "{{ playbook_dir }}/agent_types.yaml"
+  tasks:
+    # 检查pip是否可用
+    - name: Check if pip3 is available
+      command: python3 -m pip --version
+      register: pip_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Fail if pip is not available
+      fail:
+        msg: "pip is not installed. Cannot uninstall packages."
+      when: pip_check.rc != 0
+
+    # 读取agent_types配置
+    - name: Load agent types configuration
+      include_vars:
+        file: "{{ agent_types_config }}"
+        name: agent_config
+
+    - name: Validate agent_sdk parameter
+      fail:
+        msg: "Invalid agent_sdk '{{ agent_sdk }}'. Must be one of: {{ agent_config.agents.keys() | list | join(', ') }}"
+      when: agent_sdk not in agent_config.agents
+
+    - name: Display selected Agent SDK for uninstallation
+      debug:
+        msg:
+          - "========================================"
+          - "Uninstalling Agent SDK: {{ agent_sdk }}"
+          - "Description: {{ agent_config.agents[agent_sdk].description }}"
+          - "========================================"
+
+    # 获取要卸载的包列表
+    - name: Get packages to uninstall
+      set_fact:
+        packages_to_uninstall: "{{ agent_config.agents[agent_sdk].packages }}"
+
+    - name: Display packages to uninstall
+      debug:
+        msg: "Packages: {{ packages_to_uninstall | join(', ') }}"
+
+    # 提取包名（去除版本约束）
+    - name: Extract package names
+      set_fact:
+        package_names: "{{ packages_to_uninstall | map('regex_replace', '([^>=<]+).*', '\\1') | list }}"
+
+    # 检查包是否已安装
+    - name: Check installed packages
+      command: python3 -m pip list --format=freeze
+      register: installed_packages
+      changed_when: false
+
+    - name: Filter packages that are actually installed
+      set_fact:
+        installed_to_remove: "{{ package_names | select('in', installed_packages.stdout) | list }}"
+
+    - name: Display packages that will be removed
+      debug:
+        msg: "Found installed packages: {{ installed_to_remove | join(', ') }}"
+      when: installed_to_remove | length > 0
+
+    - name: No packages to remove
+      debug:
+        msg: "No packages from {{ agent_sdk }} are currently installed."
+      when: installed_to_remove | length == 0
+
+    # 使用pip卸载包（使用command模块）
+    - name: Uninstall Agent SDK packages
+      command: python3 -m pip uninstall -y {{ installed_to_remove | join(' ') }}
+      register: pip_uninstall_result
+      when: installed_to_remove | length > 0
+      changed_when: "'Successfully uninstalled' in pip_uninstall_result.stdout"
+
+    - name: Display uninstallation result
+      debug:
+        msg: "{{ pip_uninstall_result.stdout_lines }}"
+      when: installed_to_remove | length > 0
+
+    # 最终成功消息
+    - name: Uninstallation completed successfully
+      debug:
+        msg:
+          - "========================================"
+          - "Agent SDK Uninstallation Complete!"
+          - "SDK: {{ agent_sdk }}"
+          - "Status: SUCCESS"
+          - "Note: python3 and pip were not removed"
+          - "========================================"
+
