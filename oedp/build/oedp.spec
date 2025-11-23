@@ -1,6 +1,6 @@
 %define _python_bytecompile_errors_terminate_build 0
 Name:               oedp
-Version:            1.1.4
+Version:            __VERSION__
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
@@ -33,6 +33,7 @@ mkdir -p -m 700 %{buildroot}%{_var}/oedp/python/venv
 mkdir -p -m 700 %{buildroot}%{_usr}/lib/oedp
 mkdir -p -m 700 %{buildroot}%{_usr}/share/applications
 mkdir -p -m 700 %{buildroot}%{_sysconfdir}/oedp/config
+mkdir -p -m 777 %{buildroot}/opt/oedp/plugins
 mkdir -p %{buildroot}%{_bindir}
 
 touch %{buildroot}%{_var}/oedp/log/oedp.log
@@ -45,7 +46,7 @@ install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir
 
 %postun
 if [ $1 -eq 0 ]; then
-    # 卸载时删除可能会残留的目录
+    # 卸载时删除可能会残留的目录（保留 /opt/oedp/plugins）
     rm -rf /etc/oedp
     rm -rf /var/oedp
     rm -rf /usr/lib/oedp
@@ -63,6 +64,7 @@ fi
 %attr(0777,root,root) %dir %{_sysconfdir}/oedp/config
 %attr(0777,root,root) %dir %{_sysconfdir}/oedp/config/repo
 %attr(0777,root,root) %dir %{_sysconfdir}/oedp/config/repo/cache
+%attr(0777,root,root) %dir /opt/oedp/plugins
 
 %attr(0666,root,root) %{_var}/oedp/log/oedp.log
 %attr(0555,root,root) %{_usr}/lib/oedp/src/*
@@ -73,6 +75,10 @@ fi
 
 
 %changelog
+* Tue Nov 18 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.5-0
+- Use /opt/oedp/plugins directory as the local plugin repository for oeDeploy.
+- Add plugin repository creation functionality to the oedp command.
+
 * Wed Sep 17 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.4-0
 - Add Python 3.8 compatibility
 
@@ -80,13 +86,13 @@ fi
 - Downlowd details when repo updating.
 - The operation log will be recorded in the plugin directory.
 
-* Tue Jul 5 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.2-0
+* Sat Jul 5 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.2-0
 - Add local deployment mode and runtime printing.
 
 * Tue Jun 3 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.1-0
 - Add the command 'oedp list' to support querying the plugin list.
 
-* Thur May 15 2025 Yu Diandian <yudiandian@huawei.com> - 1.1.0-3
+* Thu May 15 2025 Yu Diandian <yudiandian@huawei.com> - 1.1.0-3
 - Fix known issues with version query
 
 * Sun Apr 27 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.0-2
