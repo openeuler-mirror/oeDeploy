@@ -82,7 +82,7 @@
         pause_image: "registry.k8s.io/pause:3.10"
     ````
 
-   > 注意：须确保节点间 ssh 可联通，支持密码登录和密钥登录，如果使用密钥登录，则不需要配置密码。
+    > 注意：须确保节点间 ssh 可联通，支持密码登录和密钥登录，如果使用密钥登录，则不需要配置密码。
 
 6. 执行以下命令以开始自动化部署。
 
@@ -96,7 +96,7 @@
     oedp run uninstall -p kubernetes-1.31.1
     ```
 
-   > -p 参数表示解压后的文件目录。如果进入 kubernetes-1.31.1 插件根目录，执行 oedp 命令时无需 -p 参数。
+    > -p 参数表示解压后的文件目录。如果进入 kubernetes-1.31.1 插件根目录，执行 oedp 命令时无需 -p 参数。
 
 ## 应用案例 2：AnythingLLM 一键部署
 
@@ -119,13 +119,13 @@
 4. 一键部署：
 
     ````bash
-    oedp run install -p angthingLLM  # -p <插件目录>
+    oedp run install -p anythingLLM  # -p <插件目录>
     ````
 
 5. 一键卸载：
 
     ````bash
-    oedp run uninstall -p angthingLLM  # -p <插件目录>
+    oedp run uninstall -p anythingLLM  # -p <插件目录>
     ````
 
 ### Demo：部署并打印 AnythingLLM 信息
@@ -156,13 +156,13 @@
 
 2. 进入容器并测试 AnythingLLM 服务。
 
-    - 进入容器：
+     - 进入容器：
 
      ````bash
      docker exec -it anythinglLLM-container /bin/bash
      ````
 
-    - 测试 AnythingLLM 服务：
+     - 测试 AnythingLLM 服务：
 
      ````bash
      curl localhost:3001
@@ -280,66 +280,66 @@
 
 1. 组件介绍
 
-   | 组件                      | 端口                      | 说明         |
-       |-------------------------|-------------------------|------------|
-   | euler-copilot-framework | 8002（内部端口）             | 智能体框架服务    |
-   | euler-copilot-web       | 8080                    | 智能体前端界面    |
-   | euler-copilot-rag       | 9988（内部端口）             | 检索增强服务     |
-   | authhub-backend-service | 11120 （内部端口）            | 鉴权服务后端     |
-   | authhub-web-service     | 8000                    | 鉴权服务前端     |
-   | mysql                   | 3306（内部端口）             | MySQL数据库   |
-   | redis                   | 6379（内部端口）             | Redis数据库   |
-   | minio                   | 9000（内部端口） 9001（外部部端口） | minio数据库   |
-   | mongo                   | 27017（内部端口）            | mongo数据库   |
-   | postgres                | 5432（内部端口）             | 向量数据库      |
-   | secret_inject           | 无                       | 配置文件安全复制工具 |
+    | 组件                      | 端口                      | 说明         |
+    |-------------------------|-------------------------|------------|
+    | euler-copilot-framework | 8002（内部端口）             | 智能体框架服务    |
+    | euler-copilot-web       | 8080                    | 智能体前端界面    |
+    | euler-copilot-rag       | 9988（内部端口）             | 检索增强服务     |
+    | authhub-backend-service | 11120 （内部端口）            | 鉴权服务后端     |
+    | authhub-web-service     | 8000                    | 鉴权服务前端     |
+    | mysql                   | 3306（内部端口）             | MySQL数据库   |
+    | redis                   | 6379（内部端口）             | Redis数据库   |
+    | minio                   | 9000（内部端口） 9001（外部部端口） | minio数据库   |
+    | mongo                   | 27017（内部端口）            | mongo数据库   |
+    | postgres                | 5432（内部端口）             | 向量数据库      |
+    | secret_inject           | 无                       | 配置文件安全复制工具 |
 
 2. 软件要求
 
-   | 类型     | 版本要求                             | 说明                                                        |
-       |--------|----------------------------------|-----------------------------------------------------------|
-   | 操作系统   | openEuler 22.03 LTS 及以上版本        | 无                                                         |
-   | K3s    | >= v1.30.2，带有 Traefik Ingress 工具 | K3s 提供轻量级的 Kubernetes 集群，易于部署和管理                          |
-   | Helm   | >= v3.15.3                       | Helm 是一个 Kubernetes 的包管理工具，其目的是快速安装、升级、卸载 EulerCopilot 服务 |
-   | python | >= 3.9.9                         | python3.9.9 以上版本为模型的下载和安装提供运行环境                           |
+    | 类型     | 版本要求                             | 说明                                                        |
+    |--------|----------------------------------|-----------------------------------------------------------|
+    | 操作系统   | openEuler 22.03 LTS 及以上版本        | 无                                                         |
+    | K3s    | >= v1.30.2，带有 Traefik Ingress 工具 | K3s 提供轻量级的 Kubernetes 集群，易于部署和管理                          |
+    | Helm   | >= v3.15.3                       | Helm 是一个 Kubernetes 的包管理工具，其目的是快速安装、升级、卸载 EulerCopilot 服务 |
+    | python | >= 3.9.9                         | python3.9.9 以上版本为模型的下载和安装提供运行环境                           |
 
 3. 硬件要求
 
-   | 硬件资源     | 服务器（最小要求）                   | 服务器（推荐）                 |
-       |----------|-----------------------------|-------------------------|
-   | CPU      | 4 核心                        | 16 核心及以上                |
-   | RAM      | 4 GB                        | 64 GB                   |
-   | 存储       | 32 GB                       | 64G                     |
-   | 大模型名称    | deepseek-llm-7b-chat        | DeepSeek-R1-Llama-8B    |                          
-   | 显存（GPU） | 8 GB（NVIDIA RTX A4000, 1个） | 16 GB（NVIDIA A100, 2个） |
+    | 硬件资源     | 服务器（最小要求）                   | 服务器（推荐）                 |
+    |----------|-----------------------------|-------------------------|
+    | CPU      | 4 核心                        | 16 核心及以上                |
+    | RAM      | 4 GB                        | 64 GB                   |
+    | 存储       | 32 GB                       | 64G                     |
+    | 大模型名称    | deepseek-llm-7b-chat        | DeepSeek-R1-Llama-8B    |                          
+    | 显存（GPU） | 8 GB（NVIDIA RTX A4000, 1个） | 16 GB（NVIDIA A100, 2个） |
 
-   **注意**：
+    **注意**：
 
-    - 若无 GPU 或 NPU 资源，建议通过调用 OpenAI 接口的方式来实现功能。
-    - 调用第三方 OpenAI 接口的方式不需要安装高版本的 python (>=3.9.9)。
-    - 如有 k8s 集群环境，则不需要单独安装 k3s，要求 version >= 1.28。
+     - 若无 GPU 或 NPU 资源，建议通过调用 OpenAI 接口的方式来实现功能。
+     - 调用第三方 OpenAI 接口的方式不需要安装高版本的 python (>=3.9.9)。
+     - 如有 k8s 集群环境，则不需要单独安装 k3s，要求 version >= 1.28。
 
 4. 网络要求
 
-    - 可访问 hub.oepkgs.net
-    - 可访问 modelscope.cn
-    - 开放端口：80/443/
+     - 可访问 hub.oepkgs.net
+     - 可访问 modelscope.cn
+     - 开放端口：80/443/
 
 5. 域名要求
 
-   为确保 EulerCopilot 的正确部署和使用，请准备以下两个服务的域名：authhub、eulercopilot。这些子域名需属于同一个主域名下，例如
-   `www.eulercopilot.local`、`authhub.eulercopilot.local`。
+    为确保 EulerCopilot 的正确部署和使用，请准备以下两个服务的域名：authhub、eulercopilot。这些子域名需属于同一个主域名下，例如
+`www.eulercopilot.local`、`authhub.eulercopilot.local`。
 
-   您可以通过两种方式来完成这项准备工作：
+    您可以通过两种方式来完成这项准备工作：
 
-    - **预先申请域名**：为每个服务（AuthHub、Euler Copilot）分别注册上述格式的子域名。
-    - **本地配置**：如果是在开发或测试环境中，您可以直接在本地 Windows 主机文件中进行配置。打开位于
+     - **预先申请域名**：为每个服务（AuthHub、Euler Copilot）分别注册上述格式的子域名。
+     - **本地配置**：如果是在开发或测试环境中，您可以直接在本地 Windows 主机文件中进行配置。打开位于
       `C:\Windows\System32\drivers\etc\hosts` 的文件，并添加相应的条目以映射这些子域名到本地或特定的 IP 地址，例如：
 
-       ```bash
-       172.0.0.1 authhub.eulercopilot.local
-       172.0.0.1 www.eulercopilot.local
-       ```
+        ```bash
+        172.0.0.1 authhub.eulercopilot.local
+        172.0.0.1 www.eulercopilot.local
+        ```
 
 ### 部署过程
 
@@ -440,7 +440,7 @@
 
 5. 验证安装：
 
-   您可以参考 [此文档](https://e.gitee.com/open_euler/repos/openeuler/euler-copilot-framework/blob/master/docs/user-guide/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E7%BD%91%E7%BB%9C%E7%8E%AF%E5%A2%83%E4%B8%8B%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97.md#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85) 来验证安装是否成功。
+    您可以参考 [此文档](https://e.gitee.com/open_euler/repos/openeuler/euler-copilot-framework/blob/master/docs/user-guide/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E7%BD%91%E7%BB%9C%E7%8E%AF%E5%A2%83%E4%B8%8B%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97.md#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85) 来验证安装是否成功。
 
 6. 一键卸载：
 
@@ -454,17 +454,17 @@
 
 1. 部署 Kubernetes 集群：
 
-   在目标集群机器上部署 Kubernetes 1.31.1，此处以 1 master + 2 worker 的标准 K8S 集群为例，其中 master 节点的 IP 为 192.168.1.101。可使用`kubernetes-1.31.1`插件进行自动化部署。
+    在目标集群机器上部署 Kubernetes 1.31.1，此处以 1 master + 2 worker 的标准 K8S 集群为例，其中 master 节点的 IP 为 192.168.1.101。可使用`kubernetes-1.31.1`插件进行自动化部署。
 
 2. 安装 Helm：
 
-   在 master 节点上安装 Helm，可使用`helm-3.9.0`插件进行自动化安装。
+    在 master 节点上安装 Helm，可使用`helm-3.9.0`插件进行自动化安装。
 
 ### 部署 KubeRay
 
 1. 获取`kuberay`插件：
 
-   使用以下命令，获取并初始化`kuberay`插件。
+    使用以下命令，获取并初始化`kuberay`插件。
 
     ```shell
     oedp repo update
@@ -473,7 +473,7 @@
 
 2. 修改`config.yaml`：
 
-   以下是`kuberay/config.yaml`的示例，根据实际情况修改此文件。
+    以下是`kuberay/config.yaml`的示例，根据实际情况修改此文件。
 
     ```yaml
     all:
@@ -519,13 +519,13 @@
 
 3. 执行自动化部署：
 
-   在插件目录下执行`oedp run install`，或在任意位置执行`oedp run install -p [插件目录]`，即可完成自动化部署 KubeRay。
+    在插件目录下执行`oedp run install`，或在任意位置执行`oedp run install -p [插件目录]`，即可完成自动化部署 KubeRay。
 
 ### 查看 Dashboard
 
 1. 查询对应端口：
 
-   在 master 节点，使用`kubectl get svc -A`命令查看端口映射：
+    在 master 节点，使用`kubectl get svc -A`命令查看端口映射：
 
     ````bash
     NAMESPACE     NAME                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                                                                       AGE
@@ -535,10 +535,10 @@
     kuberay       ray-cluster-kuberay-head-svc   NodePort    10.96.168.232   <none>        10001:32414/TCP,8265:31457/TCP,8080:31582/TCP,6379:31938/TCP,8000:32102/TCP   9h
     ````
 
-   其中 8265 对应的端口，即为 Dashboard 的端口。
+    其中 8265 对应的端口，即为 Dashboard 的端口。
 
 2. 打开 Dashboard 页面：
-   使用 `http://ip:port/` 链接，即可打开 Dashboard 页面，查看 Ray Job / Serve / Cluster 及资源、日志等信息。其中 IP 为 master 节点 IP，port 为 3.1 中 8265 对应的端口。
+  使用 `http://ip:port/` 链接，即可打开 Dashboard 页面，查看 Ray Job / Serve / Cluster 及资源、日志等信息。其中 IP 为 master 节点 IP，port 为 3.1 中 8265 对应的端口。
 
 ### Demo 1：基于 FashionMNIST 数据集的 MLP 模型训练推理
 
@@ -564,7 +564,7 @@
       num: 0
     ````
 
-   然后执行：
+    然后执行：
 
     ````bash
     oedp run install -p kuberay
@@ -583,7 +583,7 @@
       memory: "10G"
     ````
 
-   然后执行：
+    然后执行：
 
     ````bash
     oedp run install -p kuberay
@@ -592,7 +592,7 @@
 
 3. 对比两者运行时间：
 
-   该条件下，单 Pod 运行时间约为 25s，多 Pod 运行时间约为 67s。
+    该条件下，单 Pod 运行时间约为 25s，多 Pod 运行时间约为 67s。
 
 ## 应用案例 6：Pytorch 一键部署
 
