@@ -44,6 +44,13 @@ install -c -m 0400 %{_builddir}/%{name}-%{version}/static/* %{buildroot}%{_usr}/
 install -c -m 0500 %{_builddir}/%{name}-%{version}/oedp.py %{buildroot}%{_bindir}/oedp
 
 
+%post
+if [ $1 -ge 1 ]; then
+    # 安装或升级时执行
+    /usr/bin/oedp repo make-local /opt/oedp/plugins/ || :
+fi
+
+
 %postun
 if [ $1 -eq 0 ]; then
     # 卸载时删除可能会残留的目录（保留 /opt/oedp/plugins）
@@ -75,6 +82,9 @@ fi
 
 
 %changelog
+* Wed Dev 3 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.6-0
+- Local plugin repository enabled by default
+
 * Tue Nov 18 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.5-0
 - Use /opt/oedp/plugins directory as the local plugin repository for oeDeploy.
 - Add plugin repository creation functionality to the oedp command.
