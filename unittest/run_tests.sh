@@ -4,9 +4,10 @@
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
 PROJECT_ROOT="$SCRIPT_DIR/../oedp"
+MCP_ROOT="$SCRIPT_DIR/../oedp-mcp"
 
 # 设置Python环境变量
-export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+export PYTHONPATH="$PROJECT_ROOT:$MCP_ROOT:$PYTHONPATH"
 
 # 执行测试用例
 python3 -m coverage run -m pytest
