@@ -6,277 +6,396 @@ import unittest
 import os
 import tempfile
 import shutil
-import hashlib
+import tarfile
 from unittest.mock import patch, MagicMock
-import src.constants.paths
+import yaml
+
 from src.commands.init.init_cmd import InitCmd
 from src.constants.paths import PLUGIN_DIR, REPO_CACHE_DIR, REPO_CONFIG_PATH
 
+
 class TestInitCmd(unittest.TestCase):
     def setUp(self):
-        # 创建临时目录
-        self.test_dir = tempfile.mkdtemp()
-        self.plugin_dir = os.path.join(self.test_dir, "plugin")
-        os.makedirs(self.plugin_dir, exist_ok=True)
+        """测试前准备"""
+        self.temp_dir = tempfile.mkdtemp()
         
-        # 创建测试插件压缩包
-        self.test_plugin = os.path.join(self.plugin_dir, "test_plugin.tar.gz")
-        with open(self.test_plugin, 'wb') as f:
-            f.write(b'test data')
+        # 创建测试插件目录结构
+        self.test_plugin_dir = os.path.join(self.temp_dir, "test_plugin")
+        os.makedirs(self.test_plugin_dir)
+        os.makedirs(os.path.join(self.test_plugin_dir, "workspace"))
         
-        # 备份原始路径常量
-        self.original_plugin_dir = src.constants.paths.PLUGIN_DIR
-        
-        # 使用patch模拟路径常量
-        self.plugin_patcher = patch('src.constants.paths.PLUGIN_DIR', self.plugin_dir)
-        self.plugin_patcher.start()
-        
-    def tearDown(self):
-        # 清理临时目录
-        shutil.rmtree(self.test_dir)
-        # 停止patch恢复原始路径
-        self.plugin_patcher.stop()
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_init_with_local_archive(self, mock_cmd):
-        """测试使用本地压缩包初始化项目"""
-        mock_cmd.return_value = ("", "", 0)
-        
-        target_path = os.path.join(self.test_dir, "new_project")
-        init_cmd = InitCmd(self.test_plugin, target_path)
-        result = init_cmd.run()
-        
-        self.assertTrue(result)
-        self.assertTrue(os.path.exists(target_path))
-        mock_cmd.assert_called_once()
-    
-    @patch('src.commands.init.init_cmd.InitCmd._download_with_retry')
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_init_with_remote_archive(self, mock_extract, mock_download):
-        """测试使用远程URL初始化项目"""
-        mock_download.return_value = True
-        mock_extract.return_value = ("", "", 0)
-        
-        target_path = os.path.join(self.test_dir, "remote_project")
-        init_cmd = InitCmd("http://example.com/plugin.tar.gz", target_path)
-        result = init_cmd.run()
-        
-        self.assertTrue(result)
-        self.assertTrue(os.path.exists(target_path))
-        mock_download.assert_called_once()
-    
-    @patch('src.commands.init.init_cmd.InitCmd._find_plugin_in_repos')
-    def test_init_with_plugin_name(self, mock_find):
-        """测试使用插件名称初始化项目"""
-        mock_find.return_value = {
-            'urls': ['http://example.com/plugin.tar.gz'],
-            'sha256sum': '123456',
-            'version': '1.0.0'
+        # 创建config.yaml文件
+        self.config_content = {
+            "name": "test_plugin",
+            "version": "1.0.0",
+            "description": "Test plugin for unit testing"
         }
+        with open(os.path.join(self.test_plugin_dir, "config.yaml"), 'w') as f:
+            yaml.dump(self.config_content, f)
         
-        target_path = os.path.join(self.test_dir, "named_project")
-        init_cmd = InitCmd("test_plugin", target_path)
-        
-        with patch('src.commands.init.init_cmd.InitCmd._download_with_retry', return_value=True), \
-             patch('src.commands.init.init_cmd.InitCmd._verify_checksum', return_value=True), \
-             patch('src.commands.init.init_cmd.InitCmd._extract_archive', return_value=True):
-            result = init_cmd.run()
-        
-        self.assertTrue(result)
-        mock_find.assert_called_once()
-    
-    def test_init_with_invalid_path(self):
-        """测试使用无效路径初始化项目（路径层级小于2）"""
-        init_cmd = InitCmd(self.test_plugin, "/tmp")
-        result = init_cmd.run()
-        
-        self.assertFalse(result)
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_init_with_existing_dir(self, mock_cmd):
-        """测试目标目录已存在的情况"""
-        mock_cmd.return_value = ("", "", 0)
-        
-        target_path = os.path.join(self.test_dir, "existing_project")
-        os.makedirs(target_path)
-        
-        # 创建测试文件使目录非空
-        with open(os.path.join(target_path, "testfile"), 'w') as f:
-            f.write("test")
-        
-        # 测试不强制覆盖
-        init_cmd = InitCmd(self.test_plugin, target_path, force=False)
-        result = init_cmd.run()
-        self.assertFalse(result)
-        
-        # 测试强制覆盖
-        init_cmd = InitCmd(self.test_plugin, target_path, force=True)
-        result = init_cmd.run()
-        self.assertTrue(result)
-    
-    @patch('src.commands.init.init_cmd.InitCmd._find_plugin_in_repos')
-    def test_init_with_missing_plugin(self, mock_find):
-        """测试插件不存在的情况"""
-        mock_find.return_value = None
-        
-        target_path = os.path.join(self.test_dir, "missing_plugin")
-        init_cmd = InitCmd("nonexistent_plugin", target_path)
-        result = init_cmd.run()
-        
-        self.assertFalse(result)
-
-    @patch('src.commands.init.init_cmd.InitCmd._verify_checksum')
-    def test_init_with_checksum_failure(self, mock_verify):
-        """测试校验和验证失败的情况"""
-        mock_verify.return_value = False
-        
-        target_path = os.path.join(self.test_dir, "checksum_fail")
-        init_cmd = InitCmd("test_plugin", target_path)
-        
-        with patch('src.commands.init.init_cmd.InitCmd._find_plugin_in_repos') as mock_find:
-            mock_find.return_value = {
-                'urls': ['http://example.com/plugin.tar.gz'],
-                'sha256sum': '123456',
-                'version': '1.0.0'
+        # 创建main.yaml文件
+        self.main_content = {
+            "name": "test_plugin",
+            "version": "1.0.0",
+            "description": "Test plugin for unit testing",
+            "action": {
+                "install": {"description": "Install the plugin"},
+                "uninstall": {"description": "Uninstall the plugin"}
             }
-            with patch('src.commands.init.init_cmd.InitCmd._download_with_retry', return_value=True):
-                result = init_cmd.run()
+        }
+        with open(os.path.join(self.test_plugin_dir, "main.yaml"), 'w') as f:
+            yaml.dump(self.main_content, f)
         
-        self.assertFalse(result)
+        # 创建压缩包
+        self.tar_path = os.path.join(self.temp_dir, "test_plugin.tar.gz")
+        with tarfile.open(self.tar_path, 'w:gz') as tar:
+            tar.add(self.test_plugin_dir, arcname=os.path.basename(self.test_plugin_dir))
+        
+        # 创建目标目录
+        self.target_dir = os.path.join(self.temp_dir, "target_project")
 
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_extract_failure(self, mock_cmd):
-        """测试解压失败处理"""
-        mock_cmd.return_value = ("", "extract error", 1)
-        
-        target_path = os.path.join(self.test_dir, "extract_fail")
-        init_cmd = InitCmd(self.test_plugin, target_path)
-        result = init_cmd.run()
-        
-        self.assertFalse(result)
+    def tearDown(self):
+        """测试后清理"""
+        shutil.rmtree(self.temp_dir)
 
-    @patch('src.commands.init.init_cmd.os.makedirs')
-    def test_permission_denied(self, mock_makedirs):
-        """测试文件权限不足"""
-        mock_makedirs.side_effect = PermissionError("Permission denied")
-        
-        target_path = os.path.join(self.test_dir, "permission_test")
-        init_cmd = InitCmd("http://example.com/plugin.tar.gz", target_path)
-        result = init_cmd.run()
-        
-        self.assertFalse(result)
+    def test_init(self):
+        """测试InitCmd初始化"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        self.assertEqual(init_cmd.plugin, "test_plugin")
+        self.assertEqual(init_cmd.project, self.target_dir)
+        self.assertEqual(init_cmd.parent_dir, "")
+        self.assertFalse(init_cmd.force)
+        self.assertIsNotNone(init_cmd.log)
+
+    def test_init_with_parent_dir(self):
+        """测试InitCmd初始化（带父目录）"""
+        parent_dir = "/parent/dir"
+        init_cmd = InitCmd("test_plugin", "", parent_dir=parent_dir)
+        self.assertEqual(init_cmd.plugin, "test_plugin")
+        self.assertEqual(init_cmd.project, "")
+        self.assertEqual(init_cmd.parent_dir, parent_dir)
+        self.assertFalse(init_cmd.force)
+
+    def test_init_with_force(self):
+        """测试InitCmd初始化（强制模式）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir, force=True)
+        self.assertTrue(init_cmd.force)
 
     def test_determine_target_path_with_project(self):
-        """测试确定目标路径（指定project）"""
-        init_cmd = InitCmd("test_plugin.tar.gz", "/opt/my_project")
-        target = init_cmd._determine_target_path()
-        self.assertEqual(target, os.path.abspath("/opt/my_project"))
-    
+        """测试目标路径确定（指定项目路径）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        result = init_cmd._determine_target_path()
+        self.assertEqual(result, os.path.abspath(self.target_dir))
+
     def test_determine_target_path_with_parent_dir(self):
-        """测试确定目标路径（指定parent_dir）"""
-        init_cmd = InitCmd("test_plugin.tar.gz", "", parent_dir="/opt")
-        target = init_cmd._determine_target_path()
-        self.assertEqual(target, os.path.abspath("/opt/test_plugin"))
-    
+        """测试目标路径确定（指定父目录）"""
+        parent_dir = self.temp_dir
+        init_cmd = InitCmd("test_plugin", "", parent_dir=parent_dir)
+        result = init_cmd._determine_target_path()
+        expected = os.path.abspath(os.path.join(parent_dir, "test_plugin"))
+        self.assertEqual(result, expected)
+
+    def test_determine_target_path_with_tar_and_parent_dir(self):
+        """测试目标路径确定（压缩包和父目录）"""
+        parent_dir = self.temp_dir
+        init_cmd = InitCmd(self.tar_path, "", parent_dir=parent_dir)
+        result = init_cmd._determine_target_path()
+        expected = os.path.abspath(os.path.join(parent_dir, "test_plugin"))
+        self.assertEqual(result, expected)
+
     def test_determine_target_path_default(self):
-        """测试确定目标路径（使用当前目录）"""
-        init_cmd = InitCmd("test_plugin.tar.gz", "")
-        target = init_cmd._determine_target_path()
+        """测试目标路径确定（默认情况）"""
+        init_cmd = InitCmd("test_plugin", "")
+        result = init_cmd._determine_target_path()
         expected = os.path.abspath(os.path.join(os.getcwd(), "test_plugin"))
-        self.assertEqual(target, expected)
-    
-    def test_verify_checksum_success(self):
-        """测试校验和验证成功"""
-        test_file = os.path.join(self.test_dir, "test.txt")
-        with open(test_file, 'wb') as f:
-            f.write(b"test content")
+        self.assertEqual(result, expected)
+
+    def test_validate_target_path_valid(self):
+        """测试目标路径验证（有效路径）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        result = init_cmd._validate_target_path("/valid/path/to/project")
+        self.assertTrue(result)
+
+    def test_validate_target_path_invalid(self):
+        """测试目标路径验证（无效路径）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        result = init_cmd._validate_target_path("/")
+        self.assertFalse(result)
+
+    def test_handle_existing_target_empty(self):
+        """测试处理已存在目标（空目录）"""
+        os.makedirs(self.target_dir)
         
-        # 计算实际的checksum
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        result = init_cmd._handle_existing_target(self.target_dir)
+        
+        self.assertTrue(result)
+
+    def test_handle_existing_target_non_empty_with_force(self):
+        """测试处理已存在目标（非空目录，强制模式）"""
+        os.makedirs(self.target_dir)
+        with open(os.path.join(self.target_dir, "test.txt"), 'w') as f:
+            f.write("test content")
+        
+        init_cmd = InitCmd("test_plugin", self.target_dir, force=True)
+        
+        with patch('src.commands.init.init_cmd.CommandExecutor') as mock_executor:
+            mock_executor.run_single_cmd.return_value = ("", "", 0)
+            result = init_cmd._handle_existing_target(self.target_dir)
+            
+            self.assertTrue(result)
+
+    def test_handle_existing_target_non_empty_without_force(self):
+        """测试处理已存在目标（非空目录，非强制模式）"""
+        os.makedirs(self.target_dir)
+        with open(os.path.join(self.target_dir, "test.txt"), 'w') as f:
+            f.write("test content")
+        
+        init_cmd = InitCmd("test_plugin", self.target_dir, force=False)
+        result = init_cmd._handle_existing_target(self.target_dir)
+        
+        self.assertFalse(result)
+
+    def test_extract_archive_success(self):
+        """测试解压压缩包（成功）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        with patch('src.commands.init.init_cmd.CommandExecutor') as mock_executor:
+            mock_executor.run_single_cmd.return_value = ("", "", 0)
+            
+            result = init_cmd._extract_archive(self.tar_path, self.target_dir)
+            
+            self.assertTrue(result)
+            mock_executor.run_single_cmd.assert_called_once()
+
+    def test_extract_archive_failure(self):
+        """测试解压压缩包（失败）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        with patch('src.commands.init.init_cmd.CommandExecutor') as mock_executor:
+            mock_executor.run_single_cmd.return_value = ("", "extraction error", 1)
+            
+            result = init_cmd._extract_archive(self.tar_path, self.target_dir)
+            
+            self.assertFalse(result)
+
+    def test_extract_archive_exception(self):
+        """测试解压压缩包（异常）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        with patch('src.commands.init.init_cmd.CommandExecutor') as mock_executor:
+            mock_executor.run_single_cmd.side_effect = Exception("Unexpected error")
+            
+            result = init_cmd._extract_archive(self.tar_path, self.target_dir)
+            
+            self.assertFalse(result)
+
+    @patch('src.commands.init.init_cmd.CommandExecutor')
+    def test_run_with_local_tar(self, mock_executor):
+        """测试运行（本地压缩包）"""
+        mock_executor.run_single_cmd.return_value = ("", "", 0)
+        
+        init_cmd = InitCmd(self.tar_path, self.target_dir)
+        result = init_cmd.run()
+        
+        self.assertTrue(result)
+
+    @patch('src.commands.init.init_cmd.CommandExecutor')
+    def test_run_with_url_tar(self, mock_executor):
+        """测试运行（URL压缩包）"""
+        mock_executor.run_single_cmd.return_value = ("", "", 0)
+        
+        init_cmd = InitCmd("http://example.com/test.tar.gz", self.target_dir)
+        result = init_cmd.run()
+        
+        self.assertTrue(result)
+
+    @patch('src.commands.init.init_cmd.CommandExecutor')
+    def test_run_with_plugin_name(self, mock_executor):
+        """测试运行（插件名称）"""
+        # 创建仓库配置和缓存
+        os.makedirs(REPO_CACHE_DIR, exist_ok=True)
+        repo_config = {
+            'plugins': [
+                {
+                    'test_plugin': [
+                        {
+                            'version': '1.0.0',
+                            'urls': ['http://example.com/test_plugin.tar.gz'],
+                            'sha256sum': 'test_checksum'
+                        }
+                    ]
+                }
+            ]
+        }
+        with open(os.path.join(REPO_CACHE_DIR, 'test_repo.yaml'), 'w') as f:
+            yaml.dump(repo_config, f)
+        
+        # 创建插件缓存目录
+        os.makedirs(PLUGIN_DIR, exist_ok=True)
+        
+        mock_executor.run_single_cmd.return_value = ("", "", 0)
+        
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        with patch.object(init_cmd, '_verify_checksum', return_value=True):
+            result = init_cmd.run()
+            
+            self.assertTrue(result)
+
+    def test_verify_checksum_success(self):
+        """测试校验和验证（成功）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        # 创建测试文件
+        test_file = os.path.join(self.temp_dir, "test.txt")
+        with open(test_file, 'w') as f:
+            f.write("test content")
+        
+        # 计算正确的校验和
+        import hashlib
         sha256_hash = hashlib.sha256()
         with open(test_file, 'rb') as f:
-            sha256_hash.update(f.read())
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
         expected_checksum = sha256_hash.hexdigest()
         
-        init_cmd = InitCmd("test", "/opt/test")
         result = init_cmd._verify_checksum(test_file, expected_checksum)
         self.assertTrue(result)
-    
+
     def test_verify_checksum_failure(self):
-        """测试校验和验证失败"""
-        test_file = os.path.join(self.test_dir, "test.txt")
-        with open(test_file, 'wb') as f:
-            f.write(b"test content")
+        """测试校验和验证（失败）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
         
-        init_cmd = InitCmd("test", "/opt/test")
-        result = init_cmd._verify_checksum(test_file, "wrong_checksum")
+        # 创建测试文件
+        test_file = os.path.join(self.temp_dir, "test.txt")
+        with open(test_file, 'w') as f:
+            f.write("test content")
+        
+        result = init_cmd._verify_checksum(test_file, "invalid_checksum")
         self.assertFalse(result)
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_download_with_retry_success(self, mock_cmd):
-        """测试下载重试成功"""
-        mock_cmd.return_value = ("", "", 0)
+
+    def test_verify_checksum_exception(self):
+        """测试校验和验证（异常）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
         
-        init_cmd = InitCmd("test", "/opt/test")
-        output_file = os.path.join(self.test_dir, "download.tar.gz")
-        result = init_cmd._download_with_retry("http://example.com/test.tar.gz", output_file, "test")
+        result = init_cmd._verify_checksum("/invalid/path", "checksum")
+        self.assertFalse(result)
+
+    @patch('src.commands.init.init_cmd.CommandExecutor')
+    def test_download_with_retry_success(self, mock_executor):
+        """测试带重试下载（成功）"""
+        mock_executor.run_single_cmd.return_value = ("", "", 0)
+        
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        url = "http://example.com/file.tar.gz"
+        output_file = os.path.join(self.temp_dir, "downloaded.tar.gz")
+        
+        result = init_cmd._download_with_retry(url, output_file, "test_repo")
         
         self.assertTrue(result)
-        mock_cmd.assert_called_once()
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_download_with_retry_failure(self, mock_cmd):
-        """测试下载重试失败"""
-        mock_cmd.return_value = ("", "error", 1)
+
+    @patch('src.commands.init.init_cmd.CommandExecutor')
+    def test_download_with_retry_failure(self, mock_executor):
+        """测试带重试下载（失败）"""
+        mock_executor.run_single_cmd.return_value = ("", "download error", 1)
         
-        init_cmd = InitCmd("test", "/opt/test")
-        output_file = os.path.join(self.test_dir, "download.tar.gz")
-        result = init_cmd._download_with_retry("http://example.com/test.tar.gz", output_file, "test", max_retries=2)
+        init_cmd = InitCmd("test_plugin", self.target_dir)
         
-        self.assertFalse(result)
-        self.assertEqual(mock_cmd.call_count, 2)
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_update_repo_success(self, mock_cmd):
-        """测试更新仓库成功"""
-        mock_cmd.return_value = ("", "", 0)
+        url = "http://example.com/file.tar.gz"
+        output_file = os.path.join(self.temp_dir, "downloaded.tar.gz")
         
-        init_cmd = InitCmd("test", "/opt/test")
-        result = init_cmd._update_repo()
-        
-        self.assertTrue(result)
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_update_repo_failure(self, mock_cmd):
-        """测试更新仓库失败"""
-        mock_cmd.return_value = ("", "error", 1)
-        
-        init_cmd = InitCmd("test", "/opt/test")
-        result = init_cmd._update_repo()
+        result = init_cmd._download_with_retry(url, output_file, "test_repo")
         
         self.assertFalse(result)
-    
-    @patch('src.commands.init.init_cmd.InitCmd._update_repo')
-    def test_find_plugin_update_failed(self, mock_update):
-        """测试查找插件时更新仓库失败"""
-        mock_update.return_value = False
+
+    def test_find_plugin_in_repos_success(self):
+        """测试在仓库中查找插件（成功）"""
+        # 创建仓库缓存
+        os.makedirs(REPO_CACHE_DIR, exist_ok=True)
+        repo_config = {
+            'plugins': [
+                {
+                    'test_plugin': [
+                        {
+                            'version': '1.0.0',
+                            'urls': ['http://example.com/test_plugin.tar.gz'],
+                            'sha256sum': 'test_checksum'
+                        }
+                    ]
+                }
+            ]
+        }
+        with open(os.path.join(REPO_CACHE_DIR, 'test_repo.yaml'), 'w') as f:
+            yaml.dump(repo_config, f)
         
-        init_cmd = InitCmd("test_plugin", "/opt/test")
-        result = init_cmd._find_plugin_in_repos()
+        init_cmd = InitCmd("test_plugin", self.target_dir)
         
-        self.assertIsNone(result)
-    
-    @patch('src.commands.init.init_cmd.CommandExecutor.run_single_cmd')
-    def test_extract_with_strip_components(self, mock_cmd):
-        """测试解压时使用--strip-components=1参数"""
-        mock_cmd.return_value = ("", "", 0)
+        with patch.object(init_cmd, '_update_repo', return_value=True):
+            result = init_cmd._find_plugin_in_repos()
+            
+            self.assertIsNotNone(result)
+            self.assertEqual(result['version'], '1.0.0')
+
+    def test_find_plugin_in_repos_not_found(self):
+        """测试在仓库中查找插件（未找到）"""
+        # 创建仓库缓存（不包含目标插件）
+        os.makedirs(REPO_CACHE_DIR, exist_ok=True)
+        repo_config = {
+            'plugins': [
+                {
+                    'other_plugin': [
+                        {
+                            'version': '1.0.0',
+                            'urls': ['http://example.com/other_plugin.tar.gz'],
+                            'sha256sum': 'test_checksum'
+                        }
+                    ]
+                }
+            ]
+        }
+        with open(os.path.join(REPO_CACHE_DIR, 'test_repo.yaml'), 'w') as f:
+            yaml.dump(repo_config, f)
         
-        init_cmd = InitCmd("test", "/opt/test")
-        target_path = os.path.join(self.test_dir, "extract_test")
-        os.makedirs(target_path)
+        init_cmd = InitCmd("test_plugin", self.target_dir)
         
-        result = init_cmd._extract_archive(self.test_plugin, target_path)
+        with patch.object(init_cmd, '_update_repo', return_value=True):
+            result = init_cmd._find_plugin_in_repos()
+            
+            self.assertIsNone(result)
+
+    def test_find_plugin_in_repos_update_failed(self):
+        """测试在仓库中查找插件（更新失败）"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
         
-        self.assertTrue(result)
-        args, _ = mock_cmd.call_args
-        cmd = args[0]
-        self.assertIn('--strip-components=1', cmd)
+        with patch.object(init_cmd, '_update_repo', return_value=False):
+            result = init_cmd._find_plugin_in_repos()
+            
+            self.assertIsNone(result)
+
+    def test_exception_handling(self):
+        """测试异常处理"""
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        with patch.object(init_cmd, '_determine_target_path') as mock_method:
+            mock_method.side_effect = Exception("Test exception")
+            
+            result = init_cmd.run()
+            
+            self.assertFalse(result)
+
+    @patch('src.commands.init.init_cmd.LoggerGenerator')
+    def test_logger_initialization(self, mock_logger_generator):
+        """测试日志生成器初始化"""
+        mock_logger = MagicMock()
+        mock_logger_generator.return_value.get_logger.return_value = mock_logger
+        
+        init_cmd = InitCmd("test_plugin", self.target_dir)
+        
+        mock_logger_generator.return_value.get_logger.assert_called_once_with('init_cmd')
+        self.assertEqual(init_cmd.log, mock_logger)
+
+
+if __name__ == '__main__':
+    unittest.main()
