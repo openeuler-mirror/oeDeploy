@@ -27,12 +27,12 @@ oeDeploy 插件目录名称，即插件名称，可以包含版本号（表示�
 - 当用户执行`oedp info`命令时，`oedp`工具会读取并解析该文件，向用户展示相关信息。
 - 当用户执行`oedp run xxxx`命令时，`oedp`工具会根据`action`字段中的内容，执行对应的自动化脚本。
 
-### 3.1 `main.yaml`格式说明
+### 3.1 `main.yaml`格式说明：
 
 - `type`表示插件类型，默认值为`app`，保留字段，暂不生效。
 - `localhost_available`表示是否支持本地部署，只要不是"多节点分组部署"的情况，都可以为`true`。
 - `action`字段中包含了一个或者多个操作。
-- 每一个具体的key是操作名称，`description` 项是该操作的介绍，`tasks`中承载该操作所需执行的具体步骤（一个列表），当该操作被用户触发，将按顺序执行每一步骤。
+- 每一个具体操的key是操作名称，`description` 项是该操作的介绍，`tasks`中承载该操作所需执行的具体步骤（一个列表），当该操作被用户触发，将按顺序执行每一步骤。
 - 每一个步骤包含如下几个字段：
   `name`：步骤名称，必填字段。
   `playbook`：表示用`ansible-playbook`执行对应的脚本，内容为 playbook 的路径（基于`workspace`目录的相对路径）。必填字段。目前仅支持`playbook`这一种模式。
@@ -45,7 +45,7 @@ oeDeploy 插件目录名称，即插件名称，可以包含版本号（表示�
 ansible-playbook <playbook>.yaml -i config.yaml -e @<vars>.yaml --limit <scope>
 ```
 
-### 3.2 `main.yaml`举例说明
+### 3.2 `main.yaml`举例说明：
 
 ```yaml
 name: kubernetes-1.31.1  # 插件名称
@@ -398,7 +398,13 @@ tar zcvf kubernetes-1.31.1.tar.gz kubernetes-1.31.1/
       - "CANN Toolkit 开发套件包已经安装"
       - "======================================="
 ```
-- oeDeploy 插件开发完成后，可以先用`oedp run install -lt`命令先在本地节点进行测试（不需要填写IP、用户名、密码）。
+- playbook 配置项的值如果是个字符串，一定要用引号。例如这两种情况的含义是不同的：
+```yaml
+# config.yaml
+vars:
+  sendfile: on   # 这个可能会被认为是布尔值True
+  sendfile: "on" # 这个是字符串on，
+```
 
 ## 8 性能调优Tips
 
