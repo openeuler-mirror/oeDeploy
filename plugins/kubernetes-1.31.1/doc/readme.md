@@ -9,7 +9,7 @@
 2. 在任意节点上，下载并安装 oeDeploy 的命令行工具`oedp (version >= 1.1.0-2)`。
     ````bash
     wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.0-2.oe2403sp2.noarch.rpm
-    yum install -y oedp-1.1.0-3.oe2403sp2.noarch.rpm
+    yum install -y oedp-1.1.0-2.oe2403sp2.noarch.rpm
     ````
 
 3. 获取并初始化`kubernetes-1.31.1`插件。
