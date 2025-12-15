@@ -88,7 +88,7 @@ enabled = false
 | 路径                              | 说明                                                         |
 | --------------------------------- | ------------------------------------------------------------ |
 | `/etc/oedp/config/`               | 配置文件路径                                                 |
-| `/etc/oedp/config/repo/cache/`    | 插件源索引文件缓存路径，每个已经生效的插件源都会生成一个`<name>.yaml`文件 |
+| `/etc/oedp/config/repo/cache/`    | 插件源索引文件缓存路径，每个已经生效的插件源都会生成一个`[name].yaml`文件 |
 | `/etc/oedp/config/repo/details`   | 插件配置信息缓存目录（每个插件删除`workspace`后的部分），用于 DevStore 读取图标与 README。 |
 | `/etc/oedp/config/repo/repo.conf` | 插件源配置文件                                               |
 | `/usr/lib/oedp/src/`              | 源码路径                                                     |
@@ -97,7 +97,7 @@ enabled = false
 
 # # oeDeploy 插件源
 
-## 插件源格式说明	
+## 插件源格式说明 
 
 oeDeploy 支持从可访问的插件源自动获取安装部署插件，并初始化到本地。
 
@@ -190,6 +190,7 @@ oedp repo make [plugins_dir] [url_prefix] [output_dir] [extra_item]
 - `extra_item`(可选)表示额外补充项的YAML文件路径，用于合并额外的插件版本信息到索引中。
 
 命令会自动处理以下情况：
+
 1. 合并主目录和额外文件中的插件版本
 2. 按版本号从大到小排序
 3. 自动去重相同插件名和版本号的条目

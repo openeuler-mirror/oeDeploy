@@ -4,11 +4,10 @@
 
 1. 准备 3 个 2U4G 的虚拟机环境（三层网络互通），使用的 OS 版本为 openEuler 24.03 或 22.03 的任意版本，目标是部署由 1 个 master、2 个 worker 构成的 k8s 集群。
 
-2. 在任意节点上，下载并安装 oeDeploy 的命令行工具 oedp。
+2. 在任意节点上，安装 oeDeploy 的命令行工具 oedp （在2025年及后续发布的openEuler软件源中默认集成）。
 
     ````bash
-    wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.1-0.oe2403sp2.noarch.rpm
-    yum install -y oedp-1.1.1-0.oe2403sp2.noarch.rpm
+    yum install -y oedp
     ````
 
 3. 执行以下命令，获取插件包，确保当前目录下出现了目录`kubernetes-1.31.1`。
@@ -100,12 +99,11 @@
 
 ## 应用案例 2：AnythingLLM 一键部署
 
-1. 下载 oedp 命令行工具，并用 yum 安装。如有更新的 oedp 版本，可以选择新版本。
+1. 安装 oeDeploy 的命令行工具 oedp （在2025年及后续发布的openEuler软件源中默认集成）。
 
-    ```bash
-    wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.1-0.oe2403sp2.noarch.rpm
-    yum install -y oedp-1.1.1-0.oe2403sp2.noarch.rpm
-    ```
+    ````bash
+    yum install -y oedp
+    ````
 
 2. 获取并初始化`AnythingLLM`插件。
 
@@ -211,12 +209,11 @@
 
 1. 准备一个 openEuler 环境（22.03-LTS-SPX、24.03-LTS-SPX），8B 模型的建议规格大于 8U16G。
 
-2. 下载 oedp 命令行工具，并用 yum 安装。
+2. 安装 oeDeploy 的命令行工具 oedp （在2025年及后续发布的openEuler软件源中默认集成）。
 
-   ````bash
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.1-0.oe2403sp2.noarch.rpm
-   yum install -y oedp-1.1.1-0.oe2403sp2.noarch.rpm
-   ````
+    ````bash
+    yum install -y oedp
+    ````
 
 3. 获取并初始化`DeepSeek-R1`插件。
 
@@ -274,181 +271,7 @@
    ollama run deepseek-r1:8b
    ````
 
-## 应用案例 4：EulerCopilot 一键部署
-
-### 前提条件
-
-1. 组件介绍
-
-    | 组件                      | 端口                      | 说明         |
-    |-------------------------|-------------------------|------------|
-    | euler-copilot-framework | 8002（内部端口）             | 智能体框架服务    |
-    | euler-copilot-web       | 8080                    | 智能体前端界面    |
-    | euler-copilot-rag       | 9988（内部端口）             | 检索增强服务     |
-    | authhub-backend-service | 11120 （内部端口）            | 鉴权服务后端     |
-    | authhub-web-service     | 8000                    | 鉴权服务前端     |
-    | mysql                   | 3306（内部端口）             | MySQL数据库   |
-    | redis                   | 6379（内部端口）             | Redis数据库   |
-    | minio                   | 9000（内部端口） 9001（外部部端口） | minio数据库   |
-    | mongo                   | 27017（内部端口）            | mongo数据库   |
-    | postgres                | 5432（内部端口）             | 向量数据库      |
-    | secret_inject           | 无                       | 配置文件安全复制工具 |
-
-2. 软件要求
-
-    | 类型     | 版本要求                             | 说明                                                        |
-    |--------|----------------------------------|-----------------------------------------------------------|
-    | 操作系统   | openEuler 22.03 LTS 及以上版本        | 无                                                         |
-    | K3s    | >= v1.30.2，带有 Traefik Ingress 工具 | K3s 提供轻量级的 Kubernetes 集群，易于部署和管理                          |
-    | Helm   | >= v3.15.3                       | Helm 是一个 Kubernetes 的包管理工具，其目的是快速安装、升级、卸载 EulerCopilot 服务 |
-    | python | >= 3.9.9                         | python3.9.9 以上版本为模型的下载和安装提供运行环境                           |
-
-3. 硬件要求
-
-    | 硬件资源     | 服务器（最小要求）                   | 服务器（推荐）                 |
-    |----------|-----------------------------|-------------------------|
-    | CPU      | 4 核心                        | 16 核心及以上                |
-    | RAM      | 4 GB                        | 64 GB                   |
-    | 存储       | 32 GB                       | 64G                     |
-    | 大模型名称    | deepseek-llm-7b-chat        | DeepSeek-R1-Llama-8B    |                          
-    | 显存（GPU） | 8 GB（NVIDIA RTX A4000, 1个） | 16 GB（NVIDIA A100, 2个） |
-
-    **注意**：
-
-     - 若无 GPU 或 NPU 资源，建议通过调用 OpenAI 接口的方式来实现功能。
-     - 调用第三方 OpenAI 接口的方式不需要安装高版本的 python (>=3.9.9)。
-     - 如有 k8s 集群环境，则不需要单独安装 k3s，要求 version >= 1.28。
-
-4. 网络要求
-
-     - 可访问 hub.oepkgs.net
-     - 可访问 modelscope.cn
-     - 开放端口：80/443/
-
-5. 域名要求
-
-    为确保 EulerCopilot 的正确部署和使用，请准备以下两个服务的域名：authhub、eulercopilot。这些子域名需属于同一个主域名下，例如
-`www.eulercopilot.local`、`authhub.eulercopilot.local`。
-
-    您可以通过两种方式来完成这项准备工作：
-
-     - **预先申请域名**：为每个服务（AuthHub、Euler Copilot）分别注册上述格式的子域名。
-     - **本地配置**：如果是在开发或测试环境中，您可以直接在本地 Windows 主机文件中进行配置。打开位于
-      `C:\Windows\System32\drivers\etc\hosts` 的文件，并添加相应的条目以映射这些子域名到本地或特定的 IP 地址，例如：
-
-        ```bash
-        172.0.0.1 authhub.eulercopilot.local
-        172.0.0.1 www.eulercopilot.local
-        ```
-
-### 部署过程
-
-1. 安装 oeDeploy 工具。
-
-    ```shell
-    wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.1-0.oe2403sp2.noarch.rpm
-    yum install -y oedp-1.1.1-0.oe2403sp2.noarch.rpm
-    ```
-
-2. 获取并初始化 EulerCopilot 插件。
-
-    ```shell
-    oedp repo update
-    oedp init euler-copilot
-    ```
-
-3. 根据实际情况修改 `config.yaml` 文件，示例如下：
-
-    ```yaml
-    all:
-      hosts:
-        host1:
-          # 节点空余内存需要大于 16G，建议规格 32G 以上
-          # 部署节点 IP
-          ansible_host: HOST_IP
-          # 部署节点 SSH 端口
-          ansible_port: 22
-          # 部署节点用户
-          ansible_user: root  # 目前仅支持 root 用户
-          # 部署节点密码
-          ansible_password: ""
-
-      vars:
-        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-
-        # 部署日志目录
-        log_dir: "/var/log/deploy-euler-copilot"
-
-        # 源码仓库配置
-        repo_config:
-          # 源码 url
-          url: "https://gitee.com/openeuler/euler-copilot-framework.git"
-          # 源码仓放置目录
-          dest_dir: "/opt/euler-copilot-framework"
-          # 指定分支、tag 和 commit
-          version: "release-0.9.5"
-          # 是否覆盖本地修改
-          force: yes
-
-        # 模型配置
-        models:
-          # 用于问答的大模型；需要为 OpenAI 兼容接口
-          answer:
-            # [必填] 接口 URL（无需带上“v1”后缀）
-            endpoint: https://api.deepseek.com
-            # [必填] 接口 API Key；默认置空
-            key: sk-xxx
-            # [必填] 模型名称
-            name: deepseek-chat
-            # [必填] 模型最大上下文数；建议 >= 8192
-            ctxLength: 8192
-            # 模型最大输出长度，建议 >= 2048
-            maxTokens: 8192
-          # 用于 Function Call 的模型；建议使用特定推理框架
-          functionCall:
-            # 推理框架类型，默认为 ollama
-            # 可用的框架类型：["vllm", "sglang", "ollama", "openai"]
-            backend: openai
-            # 模型地址；不填则与问答模型一致
-            endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
-            # API Key；不填则与问答模型一致
-            key: sk-xxx
-            # 模型名称；不填则与问答模型一致
-            name: qwen-plus
-            # 模型最大上下文数；不填则与问答模型一致
-            ctxLength:
-            # 模型最大输出长度；不填则与问答模型一致
-            maxTokens:
-          # 用于数据向量化（Embedding）的模型
-          embedding:
-            # 推理框架类型，默认为 openai
-            # [必填] Embedding 接口类型：["openai", "mindie"]
-            type: openai
-            # [必填] Embedding URL（需要带上“v1”后缀）
-            endpoint: https://api.siliconflow.cn/v1
-            # [必填] Embedding 模型 API Key
-            key: sk-xxx
-            # [必填] Embedding 模型名称
-            name: BAAI/bge-m3
-    ```
-
-4. 一键部署：
-
-    ```shell
-    oedp run install -p ./euler-copilot
-    ```
-
-5. 验证安装：
-
-    您可以参考 [此文档](https://e.gitee.com/open_euler/repos/openeuler/euler-copilot-framework/blob/master/docs/user-guide/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E7%BD%91%E7%BB%9C%E7%8E%AF%E5%A2%83%E4%B8%8B%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97.md#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85) 来验证安装是否成功。
-
-6. 一键卸载：
-
-    ```shell
-    oedp run uninstall -p ./euler-copilot
-    ```
-
-## 应用案例 5：KubeRay 一键部署
+## 应用案例 4：KubeRay 一键部署
 
 ### 环境准备
 
@@ -594,16 +417,15 @@
 
     该条件下，单 Pod 运行时间约为 25s，多 Pod 运行时间约为 67s。
 
-## 应用案例 6：Pytorch 一键部署
+## 应用案例 5：Pytorch 一键部署
 
 1. 准备一个 k8s 集群。
 
-2. 下载 oedp 命令行工具，并用 yum 安装。如有更新的 oedp 版本，可以选择新版本。
+2. 安装 oeDeploy 的命令行工具 oedp （在2025年及后续发布的openEuler软件源中默认集成）。
 
-   ````bash
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.1-0.oe2403sp2.noarch.rpm
-   yum install -y oedp-1.1.1-0.oe2403sp2.noarch.rpm
-   ````
+    ````bash
+    yum install -y oedp
+    ````
 
 3. 获取并初始化`pytorch`插件。
 
@@ -667,7 +489,7 @@
     kubectl get pods -n pytorch-namespace
     ````
 
-    ````
+    ````text
     NAME                                 READY   STATUS    RESTARTS   AGE
     pytorch-deployment-db5d59bcb-ptqnp   1/1     Running   0          15m
     ````
@@ -678,7 +500,7 @@
     kubectl get svc -n pytorch-namespace
     ````
 
-    ````
+    ````text
     NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
     pytorch-service   NodePort   10.96.50.156   <none>        80:30699/TCP   15m
     ````
@@ -737,16 +559,15 @@
     }
     ````
 
-## 应用案例 7：TensorFlow 一键部署
+## 应用案例 6：TensorFlow 一键部署
 
 1. 准备一个 k8s 集群。
 
-2. 下载 oedp 命令行工具，并用 yum 安装。如有更新的 oedp 版本，可以选择新版本。
+2. 安装 oeDeploy 的命令行工具 oedp （在2025年及后续发布的openEuler软件源中默认集成）。
 
-   ````bash
-   wget https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/noarch/oedp-1.1.1-0.oe2403sp2.noarch.rpm
-   yum install -y oedp-1.1.1-0.oe2403sp2.noarch.rpm
-   ````
+    ````bash
+    yum install -y oedp
+    ````
 
 3. 获取并初始化`tensorflow`插件。
 
@@ -802,7 +623,7 @@
     kubectl get pods -n tensorflow-namespace
     ````
 
-    ````
+    ````text
     NAME                                             READY   STATUS    RESTARTS   AGE
     tensorflow-deployment-75b85948d8-w2n7b           1/1     Running   0          4m1s
     ````
@@ -866,7 +687,7 @@
     kubectl get pods -n tensorflow-namespace
     ````
 
-    ````
+    ````text
     NAME                                 READY   STATUS    RESTARTS   AGE
     tensorflow-ps-fdddfdb5f-8fc98        1/1     Running   0          2m59s
     tensorflow-ps-fdddfdb5f-dgqm9        1/1     Running   0          2m59s
@@ -878,7 +699,7 @@
     kubectl logs tensorflow-ps-fdddfdb5f-8fc98 -n tensorflow-namespace
     ````
 
-    ````
+    ````text
     2025-02-07 09:25:24.882206: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
     2025-02-07 09:25:24.915813: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
     To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
