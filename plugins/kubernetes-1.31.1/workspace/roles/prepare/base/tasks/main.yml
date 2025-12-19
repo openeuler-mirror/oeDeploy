@@ -114,4 +114,4 @@
   ignore_errors: true
 
 - name: Setup hostname
-  shell: "hostnamectl set-hostname {{ inventory_hostname }}"
+  shell: "hostnamectl set-hostname '{{ inventory_hostname }}'"
