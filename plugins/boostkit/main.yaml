@@ -1,6 +1,6 @@
 name: boostkit
 version: 1.0.0
-url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/boostkit
+url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/boostkit
 description: oeDeploy plugin for boostkit acclib fast deployment
 description_zh: 鲲鹏BoostKit加速库提供基于ARM指令深度优化和基于鲲鹏KAE（鲲鹏硬件加速引擎）开发的加速库
 description_en: >

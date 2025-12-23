@@ -1,6 +1,6 @@
 name: kuberay
 version: 1.0.0
-url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/kuberay
+url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/kuberay
 description: oeDeploy plugin for kuberay(default kuberay-1.2.2 & ray-2.9.0) auto deployment
 description_zh: 帮助开发者在本地快速部署kuberay(默认版本 kuberay-1.2.2 & ray-2.9.0)的oeDeploy插件。请确保当前节点是kubernetes集群的master节点。
 description_en: >

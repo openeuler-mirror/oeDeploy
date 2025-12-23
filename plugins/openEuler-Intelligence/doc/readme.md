@@ -106,7 +106,7 @@ all:
     # 源码仓库配置
     repo_config:
       # 源码 url
-      url: "https://gitee.com/openeuler/euler-copilot-framework.git"
+      url: "https://atomgit.com/openeuler/euler-copilot-framework.git"
       # 源码仓放置目录
       dest_dir: "/opt/euler-copilot-framework"
       # 指定分支、tag 和 commit
@@ -164,11 +164,7 @@ oedp run install -p ./openEuler-Intelligence
 
 等待脚本执行完成即可。
 
-## 3. 验证安装
-
-您可以参考[此文档](https://e.gitee.com/open_euler/repos/openeuler/euler-copilot-framework/blob/master/docs/user-guide/%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E7%BD%91%E7%BB%9C%E7%8E%AF%E5%A2%83%E4%B8%8B%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97.md#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85)来验证安装是否成功。
-
-## 4. 一键卸载
+## 3. 一键卸载
 
 在插件目录下，执行以下命令：
 

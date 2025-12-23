@@ -1,6 +1,6 @@
 name: kubeflow-1.9.1
 version: 1.0.0
-url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/kubeflow-1.9.1
+url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/kubeflow-1.9.1
 description: oeDeploy plugin for kubeflow fast deployment
 description_zh: 帮助开发者在本地快速部署kubeflow的oeDeploy插件。请确保当前节点是kubernetes集群的master节点。
 description_en: >

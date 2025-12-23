@@ -35,7 +35,7 @@
 + 使用 openEuler 操作系统，且版本不低于 22.03-LTS-SP1；
 + yum 源可用，可以是网络源，也可以是本地源；
 + pip 源可用（仅针对在线部署方案）；
-+ 已经安装了 oeDeploy 工具（详见[此处](https://gitee.com/openeuler/oeDeploy)）；
++ 已经安装了 oeDeploy 工具（详见[此处](https://atomgit.com/openeuler/oeDeploy)）；
 + 已经获取了本插件的插件包并解压（获取[地址](https://repo.oepkgs.net/openEuler/rpm/openEuler-24.03-LTS/contrib/oedp/plugins/)
 ，根据实际需要选择在线或离线版本）
 + 多节点部署时，各个节点之间可用 ssh 连通（密码或密钥）。
@@ -382,5 +382,5 @@ C 先生是一家公司的运维工程师，负责服务器集群维护工作，
 
 ## 4. 推荐阅读
 
-+ [oeDeploy 命令行工具使用指南](https://gitee.com/openeuler/oeDeploy/blob/master/doc/Command.md)
++ [oeDeploy 命令行工具使用指南](https://atomgit.com/openeuler/oeDeploy/blob/master/doc/zh/Command.md)
 + [鲲鹏 BoostKit 加速库介绍](https://www.hikunpeng.com/developer/boostkit/library)

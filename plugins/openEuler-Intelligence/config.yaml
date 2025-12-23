@@ -20,7 +20,7 @@ all:
     # 源码仓库配置
     repo_config:
       # 源码 url
-      url: "https://gitee.com/openeuler/euler-copilot-framework.git"
+      url: "https://atomgit.com/openeuler/euler-copilot-framework.git"
       # 源码仓放置目录
       dest_dir: "/opt/euler-copilot-framework"
       # 指定分支、tag 和 commit

@@ -4,7 +4,7 @@ Version:            __VERSION__
 Release:            release_number
 Summary:            openEuler deploy tool
 License:            MulanPSL-2.0
-URL:                https://gitee.com/openeuler/oeDeploy
+URL:                https://atomgit.com/openeuler/oeDeploy
 Source0:            %{name}-%{version}.tar.gz
 
 BuildArch:  noarch

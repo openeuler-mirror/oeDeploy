@@ -7,7 +7,7 @@
 下载 oeDeploy 代码，将`oeDeploy/oedp-mcp/mcp-oedp`目录拷贝到自定义路径，例如`~/.oedp/mcp/`
 
 ```bash
-git clone https://gitee.com/openeuler/oeDeploy.git
+git clone https://atomgit.com/openeuler/oeDeploy.git
 mkdir -p ~/.oedp/mcp/
 cp -r oeDeploy/oedp-mcp/mcp-oedp ~/.oedp/mcp/
 ```

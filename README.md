@@ -14,7 +14,7 @@ oeDeploy 是一款轻量级的软件部署工具，旨在帮助开发者快速�
 
 # 文档 / Docs
 
-- [命令行工具 oedp 使用指南](https://gitee.com/openeuler/oeDeploy/tree/master/doc/zh/Command.md)
-- [oeDeploy 应用案例](https://gitee.com/openeuler/oeDeploy/tree/master/doc/zh/UseCase.md)
-- [oeDeploy 插件开发指南](https://gitee.com/openeuler/oeDeploy/tree/master/doc/zh/DevelopInstruction.md)
-- [oeDeploy MCP Server 使用说明](https://gitee.com/openeuler/oeDeploy/tree/master/doc/zh/MCPInstruction.md)
+- [命令行工具 oedp 使用指南](https://atomgit.com/openeuler/oeDeploy/tree/master/doc/zh/Command.md)
+- [oeDeploy 应用案例](https://atomgit.com/openeuler/oeDeploy/tree/master/doc/zh/UseCase.md)
+- [oeDeploy 插件开发指南](https://atomgit.com/openeuler/oeDeploy/tree/master/doc/zh/DevelopInstruction.md)
+- [oeDeploy MCP Server 使用说明](https://atomgit.com/openeuler/oeDeploy/tree/master/doc/zh/MCPInstruction.md)

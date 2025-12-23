@@ -1,6 +1,6 @@
 name: dotnet-9
 version: 1.0.0
-url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/dotnet-9
+url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/dotnet-9
 description: oeDeploy plugin for .NET 9 installation
 description_zh: 帮助开发者在本地快速安装.NET 9的oeDeploy插件。
 description_en: The oeDeploy plugin that helps developers quickly install .NET 9 locally.

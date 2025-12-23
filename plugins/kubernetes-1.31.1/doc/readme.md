@@ -1,6 +1,6 @@
 # kubernetes-1.31.1 插件使用说明
 
-**本插件的 kubernetes 部署能力由 [@Ultraji](https://gitee.com/ultraji)  提供**
+**本插件的 kubernetes 部署能力由 [@Ultraji](https://atomgit.com/ultraji)  提供**
 
 ## kubernetes-1.31.1 一键部署操作示例
 
