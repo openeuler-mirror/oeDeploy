@@ -5,4 +5,3 @@
     - name: uninstall the Pytorch using kubectl
       command:
         cmd: kubectl delete -f "/tmp/{{ kubectl_apply }}"
-        warn: false

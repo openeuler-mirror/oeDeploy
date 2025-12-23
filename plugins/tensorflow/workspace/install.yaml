@@ -16,4 +16,3 @@
     - name: Apply the Kubernetes deployment using kubectl
       command:
         cmd: kubectl apply -f "/tmp/{{ kubectl_apply }}"
-        warn: false
