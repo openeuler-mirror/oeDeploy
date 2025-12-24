@@ -88,7 +88,7 @@ dotnet --info
 
 如有问题，请参考：
 - [.NET 9 官方文档](https://learn.microsoft.com/zh-cn/dotnet/core/)
-- [OpenEuler .NET 支持](https://gitee.com/openeuler/community/tree/master/sig/Programming-language/dotnet)
+- [OpenEuler .NET 支持](https://atomgit.com/src-openeuler/dotnet)
 
 ## 版本说明
 

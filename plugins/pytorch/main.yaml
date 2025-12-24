@@ -1,6 +1,6 @@
 name: pytorch
 version: 1.0.0
-url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/pytorch
+url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/pytorch
 description: oeDeploy plugin for pytorch fast deployment
 description_zh: 帮助开发者在本地快速部署pytorch的oeDeploy插件。请确保当前节点是kubernetes集群的master节点。
 description_en: >

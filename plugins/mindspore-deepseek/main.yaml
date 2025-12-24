@@ -1,6 +1,6 @@
 name: mindspore-deepseek
 version: 1.0.0
-url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/mindspore-deepseek
+url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/mindspore-deepseek
 description: oeDeploy plugin for mindspore-deepseek fast deployment
 description_zh: 帮助开发者在本地快速部署mindspore-deepseek的oeDeploy插件。
 description_en: The oeDeploy plugin that helps developers quickly deploy mindspore-deepseek locally. 

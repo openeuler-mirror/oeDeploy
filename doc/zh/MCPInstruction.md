@@ -4,5 +4,5 @@ MCP（Model Context Protocol，模型上下文协议）是一项开放协议，�
 
 oeDeploy 当前提供两种 MCP Server：
 
-1. [oeDeploy MCP Server mcp-oedp](https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-oedp/README.md)，该 MCP Server 用于帮助用户智能调用 oeDeploy 相关能力实现软件快速部署。
-2. [oeDeploy MCP Server mcp-make-oedp-plugin](https://gitee.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plugin/README.md)，该 MCP Server 用于帮助用户快速开发自定义 oeDeploy 插件。
+1. [oeDeploy MCP Server mcp-oedp](https://atomgit.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-oedp/README.md)，该 MCP Server 用于帮助用户智能调用 oeDeploy 相关能力实现软件快速部署。
+2. [oeDeploy MCP Server mcp-make-oedp-plugin](https://atomgit.com/openeuler/oeDeploy/blob/master/oedp-mcp/mcp-make-oedp-plugin/README.md)，该 MCP Server 用于帮助用户快速开发自定义 oeDeploy 插件。

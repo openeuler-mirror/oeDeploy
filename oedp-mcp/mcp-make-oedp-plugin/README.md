@@ -8,7 +8,7 @@
 并将用户开发指南`doc/zh/DevelopInstruction.md`拷贝到`mcp-make-oedp-plugin`目录
 
 ```bash
-git clone https://gitee.com/openeuler/oeDeploy.git
+git clone https://atomgit.com/openeuler/oeDeploy.git
 mkdir -p ~/.oedp/mcp/
 cp -r oeDeploy/oedp-mcp/mcp-make-oedp-plugin ~/.oedp/mcp/
 cp oeDeploy/doc/zh/DevelopInstruction.md ~/.oedp/mcp/mcp-make-oedp-plugin

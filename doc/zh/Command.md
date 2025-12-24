@@ -115,7 +115,7 @@ plugins:
     version: 1.0.0
     updated: 2025-07-26T17:43:28+0800
     author: ''
-    url: https://gitee.com/openeuler/oeDeploy/tree/master/plugins/anythingLLM
+    url: https://atomgit.com/openeuler/oeDeploy/tree/master/plugins/anythingLLM
     description: oeDeploy plugin for anythingLLM fast deployment
     description_zh: 用于anythingLLM快速部署的oeDeploy插件
     description_en: oeDeploy plugin for anythingLLM fast deployment
