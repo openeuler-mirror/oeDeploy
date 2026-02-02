@@ -1,0 +1,53 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if running as root
+      fail:
+        msg: "This playbook must be run as root user"
+      when: ansible_user_id != 'root'
+
+    - name: Stop openclaw service
+      systemd:
+        name: openclaw
+        state: stopped
+      register: stop_result
+      failed_when: false
+      changed_when: stop_result.changed
+
+    - name: Disable openclaw service
+      systemd:
+        name: openclaw
+        enabled: no
+      failed_when: false
+
+    - name: Remove systemd service file
+      file:
+        path: /etc/systemd/system/openclaw.service
+        state: absent
+      register: service_file_removed
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      when: service_file_removed.changed
+
+    - name: Uninstall openclaw via npm
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        npm uninstall -g openclaw
+      args:
+        executable: /bin/bash
+      register: uninstall_result
+      failed_when: false
+      changed_when: uninstall_result.rc == 0
+
+    - name: Print uninstall complete message
+      debug:
+        msg:
+          - "========================================"
+          - "openclaw 已卸载"
+          - "========================================"
