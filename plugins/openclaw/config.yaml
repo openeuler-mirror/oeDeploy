@@ -1,0 +1,14 @@
+all:
+  hosts:
+    localhost:
+      ansible_host: 127.0.0.1
+      ansible_port: 22
+      ansible_user: root
+      ansible_password: ""
+  vars:
+    # openclaw 相关配置
+    openclaw_port: 18789                # openclaw 服务端口
+    npm_registry: "https://mirrors.huaweicloud.com/repository/npm/"  # npm 镜像源，留空则使用默认源
+    
+    # ansible 相关配置
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

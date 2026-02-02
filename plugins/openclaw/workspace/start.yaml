@@ -1,0 +1,93 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if running as root
+      fail:
+        msg: "This playbook must be run as root user"
+      when: ansible_user_id != 'root'
+
+    - name: Start openclaw service
+      systemd:
+        name: openclaw
+        state: started
+      register: start_result
+
+    - name: Wait for service to be ready
+      command: sleep 10
+      changed_when: false
+
+    - name: Check openclaw health
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        openclaw health
+      args:
+        executable: /bin/bash
+      register: health_result
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if openclaw health check failed
+      fail:
+        msg:
+          - "========================================"
+          - "openclaw health 检查失败！"
+          - "请先执行以下命令完成 openclaw 的初始化："
+          - "  source /root/.bashrc"
+          - "  openclaw onboard --install-daemon"
+          - "========================================"
+      when: health_result.rc != 0
+
+    - name: Print openclaw health output
+      debug:
+        msg:
+          - "========================================"
+          - "openclaw health 输出："
+          - "========================================"
+          - "{{ health_result.stdout }}"
+          - "========================================"
+      when: health_result.rc == 0
+
+    - name: Ensure AllowTcpForwarding is enabled in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*AllowTcpForwarding\s+'
+        line: 'AllowTcpForwarding yes'
+        state: present
+      register: sshd_config_changed
+
+    - name: Restart sshd service
+      systemd:
+        name: sshd
+        state: restarted
+      when: sshd_config_changed.changed
+
+    - name: Check openclaw dashboard
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        openclaw dashboard
+      args:
+        executable: /bin/bash
+      register: dashboard_result
+      changed_when: false
+      failed_when: false
+
+    - name: Print openclaw dashboard output
+      debug:
+        msg:
+          - "========================================"
+          - "请根据 openclaw dashboard 的输出，访问 openclaw 管理页面"
+          - "========================================"
+          - "{{ dashboard_result.stdout }}"
+          - "========================================"
+          - "如果您的服务部署在远端服务器，可以先在本地执行如下命令："
+          - "ssh -N -L 18789:127.0.0.1:18789 root@<远端服务器IP>"
+          - "再通过浏览器访问管理页面："
+          - "http://127.0.0.1:18789/?token=xxxxxx"
+      when: dashboard_result.rc == 0

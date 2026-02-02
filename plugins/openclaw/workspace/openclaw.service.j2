@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenClaw Gateway Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root
+{% if ansible_env.NVM_DIR is defined %}
+Environment="NVM_DIR={{ ansible_env.NVM_DIR }}"
+{% else %}
+Environment="NVM_DIR=/root/.nvm"
+{% endif %}
+ExecStartPre=/bin/bash -c 'if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; fi'
+ExecStart=/bin/bash -c 'if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; fi; {{ openclaw_executable }} gateway --port {{ openclaw_port }} --verbose'
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

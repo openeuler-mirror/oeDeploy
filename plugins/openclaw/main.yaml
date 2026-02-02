@@ -1,0 +1,32 @@
+name: openclaw
+version: 1.0.0
+description: Install and manage openclaw gateway service
+description_zh: 安装并管理 openclaw 网关服务的 oeDeploy 插件
+description_en: The oeDeploy plugin for installing and managing openclaw gateway service
+type: app
+localhost_available: true
+action:
+  install:
+    description: Install nodejs, openclaw and configure systemd service
+    tasks:
+      - name: Install and configure openclaw
+        playbook: install.yaml
+        scope: all
+  start:
+    description: Start openclaw service
+    tasks:
+      - name: Start openclaw service
+        playbook: start.yaml
+        scope: all
+  stop:
+    description: Stop openclaw service
+    tasks:
+      - name: Stop openclaw service
+        playbook: stop.yaml
+        scope: all
+  uninstall:
+    description: Uninstall openclaw
+    tasks:
+      - name: Uninstall openclaw
+        playbook: uninstall.yaml
+        scope: all

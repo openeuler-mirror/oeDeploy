@@ -1,0 +1,204 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Check if running as root
+      fail:
+        msg: "This playbook must be run as root user"
+      when: ansible_user_id != 'root'
+    
+    - name: Install required packages
+      yum:
+        name:
+          - python3-libselinux
+          - git
+          - gcc
+          - gcc-c++
+          - make
+          - cmake
+        state: present
+
+    - name: Install nodejs package
+      yum:
+        name: nodejs
+        state: present
+      register: nodejs_install_result
+      failed_when: false
+
+    - name: Get current nodejs version
+      shell: node --version 2>/dev/null | sed 's/v//' | cut -d'.' -f1
+      register: nodejs_version_check
+      changed_when: false
+      failed_when: false
+
+    - name: Set nodejs version fact
+      set_fact:
+        nodejs_major_version: "{{ nodejs_version_check.stdout | default('0') | int }}"
+
+    - name: Check if nvm is needed
+      set_fact:
+        need_nvm: "{{ nodejs_major_version | int < 22 }}"
+
+    - name: Install nvm and nodejs 22 if needed
+      block:
+        - name: Check if nvm already installed
+          stat:
+            path: /root/.nvm/nvm.sh
+          register: nvm_installed
+
+        - name: Download and install nvm
+          shell: |
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+          args:
+            executable: /bin/bash
+          when: not nvm_installed.stat.exists
+
+        - name: Source nvm and install nodejs 22
+          shell: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 22
+            nvm use 22
+            nvm alias default 22
+          args:
+            executable: /bin/bash
+          register: nvm_install_result
+
+        - name: Update profile to load nvm
+          lineinfile:
+            path: /root/.bashrc
+            line: '[ -s "$HOME/.nvm/nvm.sh" ] && \. "$HOME/.nvm/nvm.sh"'
+            create: yes
+          when: not nvm_installed.stat.exists
+
+      when: need_nvm
+
+    - name: Get npm path
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        which npm
+      args:
+        executable: /bin/bash
+      register: npm_path_result
+      changed_when: false
+
+    - name: Set npm path fact
+      set_fact:
+        npm_executable: "{{ npm_path_result.stdout }}"
+
+    - name: Check if openclaw is already installed
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        npm list -g openclaw 2>/dev/null
+      args:
+        executable: /bin/bash
+      register: openclaw_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install openclaw with registry
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        npm install -g openclaw@latest --registry={{ npm_registry }}
+      args:
+        executable: /bin/bash
+      when: 
+        - openclaw_check.rc != 0
+        - npm_registry is defined
+        - npm_registry | length > 0
+
+    - name: Install openclaw without registry
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        npm install -g openclaw@latest
+      args:
+        executable: /bin/bash
+      when: 
+        - openclaw_check.rc != 0
+        - npm_registry is not defined or npm_registry | length == 0
+
+    - name: Get openclaw binary path
+      shell: |
+        if [ -d "$HOME/.nvm" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        fi
+        which openclaw
+      args:
+        executable: /bin/bash
+      register: openclaw_path_result
+      changed_when: false
+
+    - name: Set openclaw path fact
+      set_fact:
+        openclaw_executable: "{{ openclaw_path_result.stdout }}"
+
+    - name: Ensure openclaw binary is available
+      fail:
+        msg: "openclaw 未安装或不可用，请检查 npm 安装是否成功"
+      when: openclaw_executable | length == 0
+
+    - name: Create systemd service file
+      template:
+        src: openclaw.service.j2
+        dest: /etc/systemd/system/openclaw.service
+        mode: '0644'
+      register: service_file_created
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      when: service_file_created.changed
+
+    - name: Check if firewalld is running
+      command: firewall-cmd --state
+      register: firewalld_status
+      failed_when: false
+      changed_when: false
+
+    - name: Manage firewall port
+      block:
+        - name: Check if port already allowed
+          shell: firewall-cmd --query-port={{ openclaw_port }}/tcp
+          register: port_query_before
+          failed_when: false
+          changed_when: false
+
+        - name: Add port to firewall
+          shell: |
+            firewall-cmd --add-port={{ openclaw_port }}/tcp --permanent
+            firewall-cmd --reload
+          when: port_query_before.rc != 0
+
+        - name: Verify port is allowed
+          shell: firewall-cmd --query-port={{ openclaw_port }}/tcp
+          register: port_query_after
+          changed_when: false
+
+      when:
+        - firewalld_status.rc == 0
+        - firewalld_status.stdout | trim == "running"
+
+    - name: Print installation complete message
+      debug:
+        msg:
+          - "========================================"
+          - "openclaw 安装完成"
+          - "========================================"
+          - "请在启动 openclaw 服务之前，手动执行命令行："
+          - "source /root/.bashrc; openclaw onboard --install-daemon"
+          - "根据提示信息，完成 openclaw 初始化"
+          - "========================================"

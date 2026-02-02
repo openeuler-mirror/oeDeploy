@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if running as root
+      fail:
+        msg: "This playbook must be run as root user"
+      when: ansible_user_id != 'root'
+
+    - name: Stop openclaw service
+      systemd:
+        name: openclaw
+        state: stopped
+      register: stop_result
+
+    - name: Print service stop message
+      debug:
+        msg:
+          - "========================================"
+          - "openclaw 服务已停止"
+          - "========================================"
+      when: stop_result is succeeded
