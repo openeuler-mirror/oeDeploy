@@ -1,0 +1,11 @@
+-i https://mirrors.huaweicloud.com/repository/pypi/simple
+--trusted-host mirrors.huaweicloud.com
+pyyaml>=6.0
+click>=8.0.0
+rich>=13.0.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-community>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.2.0
+tiktoken>=0.5.0
