@@ -10,7 +10,7 @@ import sys
 import click
 from colorama import Fore, Style, init as colorama_init
 
-from doc2plugin.commands import InitCommand
+from doc2plugin.commands import InitCommand, StatusCommand, CleanCommand
 from doc2plugin.utils.terminal_output import terminal
 from doc2plugin import __version__
 
@@ -181,8 +181,22 @@ def status(path, detailed):
         doc2plugin status --detailed       # 显示详细状态
         doc2plugin status --path /tmp/demo # 检查指定项目
     """
-    click.echo(f"{Fore.RED}status命令尚未实现{Style.RESET_ALL}")
-    sys.exit(1)
+    try:
+        project_path = os.path.abspath(path)
+        
+        click.echo(f"{Fore.BLUE}检查项目状态...{Style.RESET_ALL}")
+        
+        status_cmd = StatusCommand()
+        success = status_cmd.execute(project_path)
+        
+        sys.exit(0 if success else 1)
+            
+    except KeyboardInterrupt:
+        click.echo(f"\n{Fore.YELLOW}操作被用户取消{Style.RESET_ALL}")
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"{Fore.RED}状态检查失败: {e}{Style.RESET_ALL}")
+        sys.exit(1)
 
 
 @main.command()
@@ -199,8 +213,24 @@ def clean(path, force):
         doc2plugin clean --force           # 强制清理，跳过确认
         doc2plugin clean --path /tmp/demo  # 清理指定项目
     """
-    click.echo(f"{Fore.RED}clean命令尚未实现{Style.RESET_ALL}")
-    sys.exit(1)
+    try:
+        project_path = os.path.abspath(path)
+        
+        if not force:
+            if not click.confirm('确定要清理项目吗？这将删除所有生成的文件'):
+                click.echo(f"{Fore.YELLOW}操作已取消{Style.RESET_ALL}")
+                sys.exit(0)
+        
+        click.echo(f"{Fore.BLUE}正在清理项目...{Style.RESET_ALL}")
+        
+        clean_cmd = CleanCommand()
+        success = clean_cmd.execute(project_path, force=force)
+        
+        sys.exit(0 if success else 1)
+        
+    except Exception as e:
+        click.echo(f"{Fore.RED}清理失败: {e}{Style.RESET_ALL}")
+        sys.exit(1)
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):

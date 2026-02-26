@@ -1,0 +1,74 @@
+# doc2plugin 模式配置文件
+#
+# 该文件定义了不同的开发模式及其对应的操作配置
+# 每个模式支持多个操作（compose、test等），每个操作可以配置独立的文档和提示词
+# LLM将根据开发文档的指导进行项目开发和测试
+#
+# 配置结构：
+# <mode_name>:
+#   <action_name>:  # 如 compose、test
+#     doc_path: "文档路径"  # 单个文档（字符串）或多个文档（列表）
+#     prompt: []             # 可选的操作专用提示词（列表）
+#     description: "描述"    # 操作描述
+
+# oeDeploy 插件开发模式
+oedp:
+  compose:
+    doc_path:
+      - "doc/oedp/DevelopInstruction.md"
+      - "doc/oedp/Command.md"
+    prompt:
+      - "DevelopInstruction.md是oeDeploy插件开发的指导文档，你必须严格遵循其中的要求。"
+      - "Command.md是oedp命令的使用文档，你在编写文档时，需要遵循其中的要求。"
+      - "最重要的一点：你所编写的代码是一个多文件项目的一部分，一定要从项目整体的角度出发，严格遵循已经规划的文件清单，绝对禁止引用不存在的文件。"
+      - "main.yaml描述了oeDeploy插件的结构，包含了对其他脚本/代码的引用。你必须严格遵循已经规划的文件清单，绝对禁止引用不存在的文件。"
+      - "config.yaml描述了oeDeploy插件的配置，包含了所有用户可修改的配置项。你在编写脚本/代码时，绝对禁止引用不存在的配置项。"
+      - "很重要的一点：在满足开发目标的前提下，精简功能，精简代码，精简配置，降低项目复杂度（但不意味着降低代码质量与鲁棒性）。"
+    description: "oeDeploy 插件开发模式，生成符合 oeDeploy 规范的完整插件包"
+  test:
+    doc_path:
+      - "doc/oedp/TestInstruction.md"
+      - "doc/oedp/DevelopInstruction.md"
+    prompt:
+      - "TestInstruction.md是oeDeploy插件测试的指导文档，你必须严格遵循其中的要求。"
+      - "DevelopInstruction.md描述了oeDeploy插件的组成，这份文档作为测试脚本开发的背景知识。"
+      - "plugin/xxx/目录下的代码是根据文档DevelopInstruction.md生成的，是你的待测试对象，也就是oeDeploy插件的项目路径。"
+      - "请在一个测试脚本中包含对主要功能的测试，每个步骤执行后，用命令行判断执行结果是否符合预期。"
+      - "最重要的一点：必须使用oedp命令来执行测试，而不是直接执行内部的脚本。"
+      - "不同的步骤可能存在明显的前后依赖关系，请合理排布测试顺序。"
+      - "全部测试执行结束后，对环境的影响降到最低。"
+      - "测试脚本必须是可重入的，确保无论何时中断执行，都不影响重复测试的结果。"
+      - "测试过程中如果出现报错，记录必要的日志信息到cache/test.log，直接返回非零值，中断测试。"
+    description: "oeDeploy 插件测试模式，编写测试脚本并执行，输出测试结果。"
+  modify:
+    doc_path:
+      - "doc/oedp/DevelopInstruction.md"
+      - "doc/oedp/TestInstruction.md"
+    prompt:
+      - "plugin/xxx/目录下的代码是根据文档DevelopInstruction.md生成的。"
+      - "cache/test.sh是根据文档TestInstruction.md生成的，用oedp命令执行相关操作，并判断执行结果是否符合预期。"
+      - "cache/test.log是测试执行的日志文件。"
+      - "你需要做的是：依据测试结果，修改plugin/目录下的代码或者cache/test.sh，从而达到设计预期，且测试通过。"
+      - "你在修改任何文件时，需要注意这是一个多文件项目的一部分，一定要从项目整体的角度出发，绝对禁止引用不存在的文件、配置项、变量名等。"
+    description: "oeDeploy 插件修改模式，依据测试结果，修改插件代码或者测试代码。"
+
+# Shell 脚本模式
+shell:
+  compose:
+    doc_path: null
+    prompt:
+      - "很重要的一点：在满足开发目标的前提下，精简功能，精简代码，精简配置，降低项目复杂度（但不意味着降低代码质量与鲁棒性）。"
+    description: "生成传统的 Shell 部署脚本"
+  test:
+    doc_path: null
+    prompt:
+      - "全部测试执行结束后，对环境的影响降到最低。"
+      - "测试脚本必须是可重入的，确保无论何时中断执行，都不影响重复测试的结果。"
+      - "测试过程中如果出现报错，记录必要的日志信息到cache/test.log，直接返回非零值，中断测试。"
+    description: "测试 Shell 脚本"
+  modify:
+    doc_path: null
+    prompt:
+      - "你需要做的是：依据测试结果，修改plugin/目录下的代码或者cache/test.sh，从而达到设计预期，且测试通过。"
+      - "你在修改任何文件时，需要注意这是一个多文件项目的一部分，一定要从项目整体的角度出发，绝对禁止引用不存在的文件、配置项、变量名等。"
+    description: "根据测试结果，修改 Shell 脚本"
