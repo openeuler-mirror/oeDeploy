@@ -1,6 +1,8 @@
 """提示词模块 - 管理所有与LLM交互的提示词"""
 
+from doc2plugin.prompts.prompt_manager import PromptManager
 from doc2plugin.prompts.system_prompts import SystemPromptBuilder
+from doc2plugin.prompts.task_prompts import TaskPromptBuilder
 from doc2plugin.prompts.document_prompts import DocumentPromptBuilder
 from doc2plugin.prompts.agent_prompts import AgentPromptTemplates
 from doc2plugin.prompts.file_generation_prompts import FileGenerationPromptBuilder
@@ -13,7 +15,9 @@ from doc2plugin.prompts.constants import (
 )
 
 __all__ = [
+    'PromptManager',
     'SystemPromptBuilder',
+    'TaskPromptBuilder',
     'DocumentPromptBuilder',
     'AgentPromptTemplates',
     'FileGenerationPromptBuilder',
