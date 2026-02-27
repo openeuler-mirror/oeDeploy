@@ -2,6 +2,7 @@
 
 from doc2plugin.prompts.system_prompts import SystemPromptBuilder
 from doc2plugin.prompts.document_prompts import DocumentPromptBuilder
+from doc2plugin.prompts.agent_prompts import AgentPromptTemplates
 from doc2plugin.prompts.file_generation_prompts import FileGenerationPromptBuilder
 from doc2plugin.prompts.context_builder import ContextBuilder
 from doc2plugin.prompts.constants import (
@@ -14,6 +15,7 @@ from doc2plugin.prompts.constants import (
 __all__ = [
     'SystemPromptBuilder',
     'DocumentPromptBuilder',
+    'AgentPromptTemplates',
     'FileGenerationPromptBuilder',
     'ContextBuilder',
     'OutputFormat',
