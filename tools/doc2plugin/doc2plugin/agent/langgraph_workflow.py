@@ -791,8 +791,219 @@ class LangGraphWorkflowManager:
             return False
     
     def execute_test_workflow(self) -> bool:
-        """执行测试脚本生成工作流"""
-        raise NotImplementedError("execute_test_workflow 尚未实现")
+        """
+        执行测试脚本生成工作流
+        
+        生成测试脚本的流程：
+        1. 读取task.target和task.prompt
+        2. 读取已生成的plugin/*文件
+        3. 读取cache/source.md（如果存在）
+        4. 读取test操作的doc_path和prompt
+        5. 让LLM生成cache/test.sh测试脚本
+        
+        test.sh和test.log如果同时存在，则跳过生成测试脚本，从而支持测试与修改交替进行。
+        
+        Returns:
+            bool: 执行成功返回True，失败返回False
+        """
+        try:
+            terminal.info("正在生成测试脚本...", 'process')
+            self.logger.info("开始生成测试脚本")
+            
+            # 构建测试脚本生成的上下文
+            context = self._build_test_context()
+            
+            # 生成测试脚本
+            test_script = self._generate_test_script(context)
+            
+            if not test_script:
+                terminal.error("测试脚本生成失败")
+                return False
+            
+            # 写入测试脚本
+            test_script_path = os.path.join(self.project_path, 'cache', 'test.sh')
+            with open(test_script_path, 'w', encoding='utf-8') as f:
+                f.write(test_script)
+            
+            terminal.success(f"测试脚本已生成: {test_script_path}", 'check')
+            self.logger.info(f"测试脚本已生成: {test_script_path}")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"测试脚本生成失败: {e}")
+            terminal.error(f"测试脚本生成失败: {e}")
+            return False
+    
+    def _build_common_context(self, include_test_artifacts: bool = False) -> str:
+        """
+        构建通用上下文（test和modify模式共用）
+        
+        Args:
+            include_test_artifacts: 是否包含测试产物（test.sh和test.log）
+            
+        Returns:
+            构建的上下文字符串
+        """
+        self.logger.info(f"开始构建上下文（include_test_artifacts={include_test_artifacts}）")
+        context_parts = []
+        
+        # 1. 获取任务目标和约束
+        filtered_config = self.config_manager.get_filtered_config_for_mode()
+        target = filtered_config.get('target', '')
+        prompt_constraint = filtered_config.get('prompt', '')
+        mode = filtered_config['mode']
+        
+        self.logger.info(f"任务目标: {target}")
+        self.logger.info(f"环境约束: {prompt_constraint}")
+        self.logger.info(f"模式: {mode}")
+        
+        context_parts.append(f"# 任务目标\n{target}\n")
+        if prompt_constraint:
+            context_parts.append(f"# 环境约束\n{prompt_constraint}\n")
+        
+        # 2. 读取cache/source.md（如果存在）
+        source_md_path = os.path.join(self.project_path, 'cache', 'source.md')
+        if os.path.exists(source_md_path):
+            try:
+                with open(source_md_path, 'r', encoding='utf-8') as f:
+                    source_content = f.read()
+                context_parts.append("="*80 + f"\n# 提纯后的文档\n" + "="*80)
+                context_parts.append(f"{source_content}\n")
+                context_parts.append("="*80 + "\n")
+                self.logger.info(f"读取提纯文档: cache/source.md (长度: {len(source_content)} 字符)")
+            except Exception as e:
+                self.logger.warning(f"无法读取cache/source.md: {e}")
+        else:
+            self.logger.info("cache/source.md 不存在，跳过")
+        
+        # 3. 读取已生成的plugin/*文件
+        plugin_dir = os.path.join(self.project_path, 'plugin')
+        plugin_files = []
+        if os.path.exists(plugin_dir):
+            for root, dirs, files in os.walk(plugin_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, self.project_path)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        plugin_files.append((rel_path, content))
+                        self.logger.info(f"读取已生成文件: {rel_path} (长度: {len(content)} 字符)")
+                    except Exception as e:
+                        self.logger.warning(f"无法读取文件 {rel_path}: {e}")
+        
+        self.logger.info(f"共读取 {len(plugin_files)} 个已生成文件")
+        
+        if plugin_files:
+            context_parts.append("="*80 + "\n")
+            context_parts.append(f"# 已生成的代码（共{len(plugin_files)}个文件）\n")
+            context_parts.append("="*80 + "\n")
+            for i, (rel_path, content) in enumerate(plugin_files):
+                context_parts.append(f"\n## 文件: {rel_path}\n```\n{content}\n```\n")
+                # 在文件之间添加分隔符（最后一个文件除外）
+                if i < len(plugin_files) - 1:
+                    context_parts.append("=" * 60 + "\n")
+        
+        # 4. 读取测试产物（仅在modify模式中需要）
+        if include_test_artifacts:
+            # 读取cache/test.sh
+            test_script_path = os.path.join(self.project_path, 'cache', 'test.sh')
+            if os.path.exists(test_script_path):
+                try:
+                    with open(test_script_path, 'r', encoding='utf-8') as f:
+                        test_script = f.read()
+                    context_parts.append(f"\n# 测试脚本\n```bash\n{test_script}\n```\n")
+                    self.logger.info(f"读取测试脚本: cache/test.sh (长度: {len(test_script)} 字符)")
+                except Exception as e:
+                    self.logger.warning(f"无法读取cache/test.sh: {e}")
+            
+            # 读取cache/test.log
+            test_log_path = os.path.join(self.project_path, 'cache', 'test.log')
+            if os.path.exists(test_log_path):
+                try:
+                    with open(test_log_path, 'r', encoding='utf-8') as f:
+                        test_log = f.read()
+                    context_parts.append(f"\n# 测试日志\n```\n{test_log}\n```\n")
+                    self.logger.info(f"读取测试日志: cache/test.log (长度: {len(test_log)} 字符)")
+                except Exception as e:
+                    self.logger.warning(f"无法读取cache/test.log: {e}")
+        
+        context = '\n'.join(context_parts)
+        self.logger.info(f"上下文构建完成，总长度: {len(context)} 字符")
+        return context
+    
+    def _build_test_context(self) -> str:
+        """构建测试脚本生成的上下文"""
+        return self._build_common_context(include_test_artifacts=False)
+    
+    def _generate_test_script(self, context: str) -> str:
+        """
+        使用LLM生成测试脚本
+        
+        Args:
+            context: 测试脚本生成的上下文
+            
+        Returns:
+            str: 生成的测试脚本内容
+        """
+        self.logger.info("开始生成测试脚本提示词")
+        
+        # 获取任务配置
+        filtered_config = self.config_manager.get_filtered_config_for_mode()
+        mode = filtered_config['mode']
+        
+        # 构建human消息（只包含上下文和生成要求）
+        human_prompt = f"""{context}
+
+{AgentPromptTemplates.get_test_script_generation_requirements()}"""
+        
+        self.logger.info(f"测试脚本生成提示词长度: {len(human_prompt)} 字符")
+        
+        # 使用LLM生成测试脚本
+        try:
+            # 使用prompts.format_messages统一构建消息（文档和专用提示词在SystemMessage中）
+            messages = self.prompts.format_messages(mode, human_prompt)
+            
+            self.logger.info("准备调用LLM生成测试脚本")
+            # 调用LLM（使用流式输出和JSON解析）
+            terminal.info("正在调用LLM生成测试脚本...", 'process')
+            response = self.llm_client.invoke_with_streaming(
+                messages=messages,
+                stage="测试脚本生成",
+                output_parser=self.executor.json_parser
+            )
+            self.logger.info("LLM调用完成")
+            
+            # 解析JSON并提取脚本内容
+            try:
+                result = json.loads(response)
+                content = result.get('script_content', '')
+                
+                if not content:
+                    self.logger.error("JSON响应中未找到script_content字段")
+                    return None
+                
+                self.logger.info(f"从JSON中提取测试脚本，长度: {len(content)} 字符")
+                
+                # 确保脚本以#!/bin/bash开头
+                if not content.startswith('#!/bin/bash'):
+                    content = '#!/bin/bash\n\n' + content
+                    self.logger.info("添加bash脚本头")
+                
+                self.logger.info(f"测试脚本生成成功，长度: {len(content)} 字符")
+                return content
+                
+            except json.JSONDecodeError as e:
+                self.logger.error(f"测试脚本JSON解析失败: {e}")
+                self.logger.error(f"LLM响应内容: {response[:200]}...")
+                terminal.error(f"测试脚本JSON解析失败: {e}")
+                return None
+            
+        except Exception as e:
+            self.logger.error(f"LLM生成测试脚本失败: {e}")
+            terminal.error(f"LLM生成测试脚本失败: {e}")
+            return None
     
     def execute_modify_workflow(self) -> bool:
         """执行修改工作流程 - 基于测试结果修改代码"""
