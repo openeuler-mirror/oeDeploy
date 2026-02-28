@@ -1006,5 +1006,340 @@ class LangGraphWorkflowManager:
             return None
     
     def execute_modify_workflow(self) -> bool:
-        """执行修改工作流程 - 基于测试结果修改代码"""
-        raise NotImplementedError("execute_modify_workflow 尚未实现")
+        """
+        执行修改工作流程 - 基于测试结果修改代码
+        
+        修改流程：
+        1. 构建上下文（source.md、plugin/*、test.sh、test.log、task配置、文档）
+        2. LLM分析测试结果，生成修改清单（新增/修改/删除的文件/目录）
+        3. 执行修改任务
+        
+        Returns:
+            bool: 执行成功返回True，失败返回False
+        """
+        try:
+            terminal.info("正在分析测试结果...", 'process')
+            self.logger.info("开始执行代码修改流程")
+            
+            # 1. 构建修改上下文
+            context = self._build_modify_context()
+            
+            # 2. 生成修改清单
+            modification_manifest = self._generate_modification_manifest(context)
+            
+            if not modification_manifest:
+                terminal.error("修改清单生成失败")
+                return False
+            
+            # 保存修改清单
+            manifest_path = os.path.join(self.project_path, 'cache', 'modification_manifest.json')
+            with open(manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(modification_manifest, f, indent=2, ensure_ascii=False)
+            self.logger.info(f"修改清单已保存: {manifest_path}")
+            
+            # 3. 执行修改任务
+            success = self._execute_modifications(modification_manifest)
+            
+            if success:
+                terminal.success("所有修改任务执行完成", 'check')
+                self.logger.info("修改工作流执行完成")
+                return True
+            else:
+                terminal.error("部分修改任务执行失败")
+                self.logger.error("修改工作流执行失败")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"修改工作流执行失败: {e}")
+            terminal.error(f"修改工作流执行失败: {e}")
+            return False
+    
+    def _build_modify_context(self) -> str:
+        """构建修改工作流的上下文"""
+        return self._build_common_context(include_test_artifacts=True)
+    
+    def _generate_modification_manifest(self, context: str) -> Optional[Dict]:
+        """
+        使用LLM生成修改清单
+        
+        Args:
+            context: 修改上下文
+            
+        Returns:
+            修改清单（JSON格式）或None
+        """
+        self.logger.info("开始生成修改清单")
+        
+        # 获取任务配置
+        filtered_config = self.config_manager.get_filtered_config_for_mode()
+        mode = filtered_config['mode']
+        
+        # 构建human消息（只包含上下文和修改要求）
+        human_prompt = f"""{context}
+
+{AgentPromptTemplates.get_modification_requirements()}"""
+        
+        self.logger.info(f"修改清单生成提示词长度: {len(human_prompt)} 字符")
+        
+        # 使用LLM生成修改清单
+        try:
+            # 使用prompts.format_messages统一构建消息（文档和专用提示词在SystemMessage中）
+            messages = self.prompts.format_messages(mode, human_prompt)
+            
+            self.logger.info("准备调用LLM生成修改清单")
+            terminal.info("正在调用LLM分析并生成修改清单...", 'process')
+            
+            response = self.llm_client.invoke_with_streaming(
+                messages=messages,
+                stage="修改清单生成",
+                output_parser=self.executor.json_parser
+            )
+            self.logger.info("LLM调用完成")
+            
+            # 解析JSON
+            try:
+                modification_manifest = json.loads(response)
+                self.logger.info(f"修改清单生成成功: {len(modification_manifest.get('operations', []))} 个操作")
+                return modification_manifest
+            except json.JSONDecodeError as e:
+                self.logger.error(f"修改清单JSON解析失败: {e}")
+                terminal.error(f"修改清单JSON解析失败: {e}")
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"LLM生成修改清单失败: {e}")
+            terminal.error(f"LLM生成修改清单失败: {e}")
+            return None
+    
+    def _execute_modifications(self, modification_manifest: Dict) -> bool:
+        """
+        执行修改清单中的所有操作
+        
+        对于文件的create和modify操作，会调用LLM单独生成文件内容
+        
+        Args:
+            modification_manifest: 修改清单
+            
+        Returns:
+            bool: 所有操作成功返回True，否则返回False
+        """
+        operations = modification_manifest.get('operations', [])
+        analysis = modification_manifest.get('analysis', '')
+        
+        if analysis:
+            terminal.info(f"分析结果: {analysis}", 'info')
+            self.logger.info(f"测试失败分析: {analysis}")
+        
+        if not operations:
+            terminal.info("无需进行任何修改")
+            self.logger.info("修改清单为空，无需修改")
+            return True
+        
+        terminal.info(f"开始执行 {len(operations)} 个修改操作", 'process')
+        self.logger.info(f"开始执行 {len(operations)} 个修改操作")
+        
+        success_count = 0
+        failed_count = 0
+        
+        for idx, operation in enumerate(operations, 1):
+            action = operation.get('action')
+            op_type = operation.get('type')
+            path = operation.get('path')
+            description = operation.get('description', '')
+            reason = operation.get('reason', '')
+            
+            terminal.info(f"[{idx}/{len(operations)}] {action} {op_type}: {path}", 'process')
+            self.logger.info(f"执行操作 {idx}: {action} {op_type} {path}")
+            self.logger.info(f"  说明: {description}")
+            self.logger.info(f"  原因: {reason}")
+            
+            try:
+                if action == 'create' or action == 'modify':
+                    if op_type == 'file':
+                        # 对于文件的create/modify，调用LLM生成内容
+                        success = self._generate_and_write_file(path, description, reason, action)
+                    elif op_type == 'directory':
+                        success = self._create_directory(path)
+                    else:
+                        terminal.error(f"不支持的类型: {op_type}")
+                        success = False
+                        
+                elif action == 'delete':
+                    if op_type == 'file':
+                        success = self._delete_file(path)
+                    elif op_type == 'directory':
+                        success = self._delete_directory(path)
+                    else:
+                        terminal.error(f"不支持的类型: {op_type}")
+                        success = False
+                else:
+                    terminal.error(f"不支持的操作: {action}")
+                    success = False
+                
+                if success:
+                    terminal.success(f"✓ 完成", 'check')
+                    success_count += 1
+                else:
+                    terminal.error(f"✗ 失败")
+                    failed_count += 1
+                    
+            except Exception as e:
+                terminal.error(f"✗ 操作失败: {e}")
+                self.logger.error(f"操作 {idx} 失败: {e}")
+                failed_count += 1
+        
+        terminal.newline()
+        terminal.info(f"修改完成: 成功 {success_count}, 失败 {failed_count}", 'summary')
+        self.logger.info(f"修改执行完成: 成功 {success_count}, 失败 {failed_count}")
+        
+        return failed_count == 0
+    
+    def _generate_and_write_file(self, path: str, description: str, reason: str, action: str) -> bool:
+        """
+        使用LLM生成文件内容并写入
+        
+        Args:
+            path: 文件路径
+            description: 文件说明（需要做什么修改）
+            reason: 修改原因
+            action: 操作类型（create或modify）
+            
+        Returns:
+            bool: 成功返回True，失败返回False
+        """
+        self.logger.info(f"开始生成文件内容: {path}")
+        terminal.info(f"  正在生成文件内容...", 'process')
+        
+        try:
+            # 构建上下文
+            context = self._build_file_generation_context_for_modify(path, action)
+            
+            # 获取任务配置
+            filtered_config = self.config_manager.get_filtered_config_for_mode()
+            target = filtered_config.get('target', '')
+            prompt_constraint = filtered_config.get('prompt', '')
+            mode = filtered_config['mode']
+            
+            # 构建提示词
+            prompt = f"""请{'生成' if action == 'create' else '修改'}文件: {path}
+
+任务目标: {target}
+环境约束: {prompt_constraint}
+
+修改说明: {description}
+修改原因: {reason}
+
+{"=" * 80}
+参考上下文:
+{"=" * 80}
+{context}
+
+要求:
+1. 输出完整的文件内容（不要使用省略号）
+2. 确保与已生成的其他文件兼容
+3. 严格遵循开发文档的规范
+4. 以JSON格式返回: {{"file_content": "实际的文件内容"}}
+"""
+            
+            # 调用LLM生成文件内容
+            messages = self.prompts.format_messages(mode, prompt)
+            response = self.llm_client.invoke_with_streaming(
+                messages,
+                f"正在{'生成' if action == 'create' else '修改'}文件...",
+                stage=f"修改文件-{os.path.basename(path)}"
+            )
+            
+            # 提取文件内容
+            file_content = self.executor._extract_file_content(response)
+            
+            # 写入文件
+            full_path = os.path.join(self.project_path, path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            
+            with open(full_path, 'w', encoding='utf-8') as f:
+                f.write(file_content)
+            
+            self.logger.info(f"文件{'生成' if action == 'create' else '修改'}成功: {path}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"文件{'生成' if action == 'create' else '修改'}失败 {path}: {e}")
+            return False
+    
+    def _build_file_generation_context_for_modify(self, target_path: str, action: str) -> str:
+        """
+        为修改任务的文件生成构建上下文
+        
+        Args:
+            target_path: 目标文件路径
+            action: 操作类型（create或modify）
+            
+        Returns:
+            上下文字符串
+        """
+        context_parts = []
+        
+        # 1. 提纯后的文档
+        source_content = self.executor._read_source_file()
+        if source_content and source_content != "(未提供文档内容)":
+            context_parts.append(f"# 提纯后的文档\n{source_content}\n")
+        
+        # 2. 如果是修改操作，读取原文件内容
+        if action == 'modify':
+            full_path = os.path.join(self.project_path, target_path)
+            if os.path.exists(full_path):
+                try:
+                    with open(full_path, 'r', encoding='utf-8') as f:
+                        original_content = f.read()
+                    context_parts.append(f"# 原文件内容\n```\n{original_content}\n```\n")
+                    self.logger.info(f"读取原文件: {target_path} (长度: {len(original_content)} 字符)")
+                except Exception as e:
+                    self.logger.warning(f"无法读取原文件 {target_path}: {e}")
+        
+        # 3. 读取已生成的其他plugin文件
+        plugin_files_content = self.executor._read_plugin_files()
+        if plugin_files_content:
+            context_parts.append(plugin_files_content)
+        
+        return "\n\n".join(context_parts)
+    def _delete_file(self, path: str) -> bool:
+        """删除文件"""
+        full_path = os.path.join(self.project_path, path)
+        if not os.path.exists(full_path):
+            self.logger.warning(f"文件不存在，跳过删除: {path}")
+            return True
+        
+        try:
+            os.remove(full_path)
+            self.logger.info(f"文件已删除: {path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"删除文件失败 {path}: {e}")
+            return False
+    
+    def _create_directory(self, path: str) -> bool:
+        """创建目录"""
+        full_path = os.path.join(self.project_path, path)
+        try:
+            os.makedirs(full_path, exist_ok=True)
+            self.logger.info(f"目录已创建: {path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"创建目录失败 {path}: {e}")
+            return False
+    
+    def _delete_directory(self, path: str) -> bool:
+        """删除目录"""
+        full_path = os.path.join(self.project_path, path)
+        if not os.path.exists(full_path):
+            self.logger.warning(f"目录不存在，跳过删除: {path}")
+            return True
+        
+        try:
+            import shutil
+            shutil.rmtree(full_path)
+            self.logger.info(f"目录已删除: {path}")
+            return True
+        except Exception as e:
+            self.logger.error(f"删除目录失败 {path}: {e}")
+            return False

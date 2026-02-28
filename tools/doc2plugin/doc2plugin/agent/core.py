@@ -49,10 +49,13 @@ class Doc2PluginAgent:
         self.tools = None
         self.prompts = None
         self.workflow_manager = None
+        
         # 获取agent日志记录器（已在命令模块中设置）
         self.logger = get_agent_logger()
+        
         # 设置LLM专用日志记录器
         self.llm_logger = self._setup_llm_logger()
+        
         # 初始化配置管理器
         self.config_manager = ConfigManager(project_path, self.logger)
     
@@ -79,6 +82,7 @@ class Doc2PluginAgent:
         if not self.config_manager.validate_api_key():
             self.logger.error("API 密钥无效或为默认值")
             return False
+        
         if not self.config_manager.validate_task_target():
             self.logger.error("任务目标无效或为默认值")
             return False
