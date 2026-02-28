@@ -5,7 +5,7 @@
 
 from doc2plugin.utils.terminal_output import terminal
 from doc2plugin.utils.llm_client import (
-    LLMClient,
+    LLMClient, 
     CodeBlockOutputParser,
     setup_llm_logger
 )
