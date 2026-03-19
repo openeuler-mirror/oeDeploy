@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Stop RavenDB service
+      systemd:
+        name: ravendb
+        state: stopped
+    - name: Wait for RavenDB to stop
+      wait_for:
+        port: "{{ ravendb_port }}"
+        state: stopped
+        delay: 3
+        timeout: 30
+    - name: Check RavenDB service status
+      systemd:
+        name: ravendb
+        state: stopped
+      register: ravendb_status
+    - name: Print RavenDB service status
+      debug:
+        msg:
+          - "========================================"
+          - "RavenDB service stopped successfully"
+          - "Status: {{ ravendb_status.status }}"
+          - "======================================="

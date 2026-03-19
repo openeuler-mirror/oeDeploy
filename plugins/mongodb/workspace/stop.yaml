@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Stop MongoDB service
+      systemd:
+        name: mongodb
+        state: stopped
+    - name: Wait for MongoDB to stop
+      wait_for:
+        port: "{{ mongodb_port }}"
+        state: stopped
+        delay: 3
+        timeout: 30
+    - name: Check MongoDB service status
+      systemd:
+        name: mongodb
+        state: stopped
+      register: mongodb_status
+    - name: Print MongoDB service status
+      debug:
+        msg:
+          - "========================================"
+          - "MongoDB service stopped successfully"
+          - "Status: {{ mongodb_status.status }}"
+          - "======================================="

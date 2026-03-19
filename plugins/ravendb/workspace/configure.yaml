@@ -1,0 +1,41 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Create RavenDB configuration file
+      template:
+        src: ravendb-settings.json.j2
+        dest: "{{ ravendb_install_path }}/settings.json"
+        owner: "{{ ravendb_user }}"
+        group: "{{ ravendb_user }}"
+        mode: '0644'
+    - name: Create RavenDB systemd service file
+      template:
+        src: ravendb.service.j2
+        dest: /etc/systemd/system/ravendb.service
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    - name: Enable RavenDB service
+      systemd:
+        name: ravendb
+        enabled: yes
+    - name: Start RavenDB service
+      systemd:
+        name: ravendb
+        state: started
+    - name: Wait for RavenDB to start
+      wait_for:
+        port: "{{ ravendb_port }}"
+        delay: 10
+        timeout: 120
+    - name: Print RavenDB service status
+      debug:
+        msg:
+          - "========================================"
+          - "RavenDB service started successfully"
+          - "Access URL: http://{{ ravendb_bind_ip }}:{{ ravendb_port }}"
+          - "======================================="

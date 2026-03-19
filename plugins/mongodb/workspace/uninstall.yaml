@@ -1,0 +1,53 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Stop MongoDB service
+      systemd:
+        name: mongodb
+        state: stopped
+    - name: Disable MongoDB service
+      systemd:
+        name: mongodb
+        enabled: no
+    - name: Remove MongoDB packages
+      yum:
+        name:
+          - mongodb-org
+          - mongodb-org-server
+          - mongodb-org-shell
+          - mongodb-org-mongos
+          - mongodb-org-tools
+        state: absent
+    - name: Remove MongoDB repository file
+      file:
+        path: /etc/yum.repos.d/mongodb-org-{{ mongodb_version }}.repo
+        state: absent
+    - name: Remove MongoDB configuration file
+      file:
+        path: /etc/mongod.conf
+        state: absent
+    - name: Remove MongoDB systemd service file
+      file:
+        path: /etc/systemd/system/mongodb.service
+        state: absent
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    - name: Remove MongoDB data directory
+      file:
+        path: "{{ mongodb_data_path }}"
+        state: absent
+    - name: Remove MongoDB log directory
+      file:
+        path: "{{ mongodb_log_path }}"
+        state: absent
+    - name: Remove MongoDB install directory
+      file:
+        path: "{{ mongodb_install_path }}"
+        state: absent
+    - name: Remove MongoDB user
+      user:
+        name: "{{ mongodb_user }}"
+        state: absent
+        remove: yes

@@ -1,0 +1,43 @@
+# MongoDB configuration file
+# For more information see:
+# https://docs.mongodb.com/manual/reference/configuration-options/
+
+# Where and how to store data.
+storage:
+  dbPath: {{ mongodb_data_path }}
+  journal:
+    enabled: true
+
+# where to write logging data.
+systemLog:
+  destination: file
+  logAppend: true
+  path: {{ mongodb_log_path }}/mongod.log
+
+# network interfaces
+net:
+  port: {{ mongodb_port }}
+  bindIp: {{ mongodb_bind_ip }}
+
+# process management
+processManagement:
+  fork: true
+  pidFilePath: /var/run/mongodb/mongod.pid
+
+# security
+security:
+{% if enable_auth %}
+  authorization: enabled
+{% endif %}
+
+# operationProfiling:
+
+# replication:
+
+# sharding:
+
+## Enterprise-Only Options:
+
+# auditLog:
+
+# snmp:

@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Start MongoDB service
+      systemd:
+        name: mongodb
+        state: started
+    - name: Wait for MongoDB to start
+      wait_for:
+        port: "{{ mongodb_port }}"
+        delay: 3
+        timeout: 30
+    - name: Check MongoDB service status
+      systemd:
+        name: mongodb
+        state: started
+      register: mongodb_status
+    - name: Print MongoDB service status
+      debug:
+        msg:
+          - "========================================"
+          - "MongoDB service started successfully"
+          - "Status: {{ mongodb_status.status }}"
+          - "======================================="

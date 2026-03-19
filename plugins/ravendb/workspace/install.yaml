@@ -1,0 +1,41 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: true
+  tasks:
+    - name: Download RavenDB
+      get_url:
+        url: https://hibernatingrhinos.com/downloads/RavenDB/{{ ravendb_version }}/RavenDBServer-Linux-x64.zip
+        dest: /tmp/ravendb.zip
+        timeout: "{{ download_timeout }}"
+        retries: "{{ download_retry }}"
+    - name: Extract RavenDB
+      unarchive:
+        src: /tmp/ravendb.zip
+        dest: /tmp
+        remote_src: yes
+    - name: Move RavenDB to install path
+      shell: mv /tmp/RavenDBServer-Linux-x64/* {{ ravendb_install_path }}/
+    - name: Clean up temporary files
+      file:
+        path: /tmp/ravendb.zip
+        state: absent
+    - name: Clean up temporary directory
+      file:
+        path: /tmp/RavenDBServer-Linux-x64
+        state: absent
+    - name: Set permissions for RavenDB directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ ravendb_user }}"
+        group: "{{ ravendb_user }}"
+        recurse: yes
+      loop:
+        - "{{ ravendb_data_path }}"
+        - "{{ ravendb_log_path }}"
+        - "{{ ravendb_install_path }}"
+    - name: Make RavenDB executable
+      file:
+        path: "{{ ravendb_install_path }}/Raven.Server"
+        mode: '0755'

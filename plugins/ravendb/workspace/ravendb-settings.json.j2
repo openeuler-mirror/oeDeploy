@@ -1,0 +1,20 @@
+{
+  "ServerUrl": "http://{{ ravendb_bind_ip }}:{{ ravendb_port }}",
+  "ServerUrl.Tcp": "tcp://{{ ravendb_bind_ip }}:38888",
+  "DataDir": "{{ ravendb_data_path }}",
+  "Logs.Path": "{{ ravendb_log_path }}",
+  "Cluster": {
+    "NodeTag": "A",
+    "ClusterName": "{{ ravendb_cluster_name }}"
+  },
+  "Security": {
+    "Authorization": {
+      "Enabled": {{ enable_auth | lower }},
+      "Membership": {
+        "Password": "{{ ravendb_password }}"
+      }
+    }
+  },
+  "Setup.Mode": "Initial",
+  "License.Eula.Accepted": true
+}

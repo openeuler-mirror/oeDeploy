@@ -1,0 +1,18 @@
+[Unit]
+Description=MongoDB Database Server
+Documentation=https://docs.mongodb.org/manual
+After=network.target
+
+[Service]
+User={{ mongodb_user }}
+Group={{ mongodb_user }}
+Environment="OPTIONS=--quiet"
+ExecStart=/usr/bin/mongod --config /etc/mongod.conf
+ExecStartPre=/usr/bin/mkdir -p /var/run/mongodb
+ExecStartPre=/usr/bin/chown -R {{ mongodb_user }}:{{ mongodb_user }} /var/run/mongodb
+ExecStop=/usr/bin/mongod --config /etc/mongod.conf --shutdown
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

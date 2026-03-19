@@ -1,0 +1,40 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+  vars:
+    # RavenDB版本
+    ravendb_version: "6.0"
+    # RavenDB安装路径
+    ravendb_install_path: "/usr/local/ravendb"
+    # RavenDB数据目录
+    ravendb_data_path: "/var/lib/ravendb"
+    # RavenDB日志目录
+    ravendb_log_path: "/var/log/ravendb"
+    # RavenDB端口
+    ravendb_port: 8080
+    # RavenDB管理端口
+    ravendb_management_port: 38888
+    # RavenDB绑定地址
+    ravendb_bind_ip: "127.0.0.1"
+    # RavenDB用户
+    ravendb_user: "ravendb"
+    # RavenDB密码
+    ravendb_password: "***"
+    # RavenDB集群名称
+    ravendb_cluster_name: "RavenDB-Cluster"
+    # 下载超时时间(秒)
+    download_timeout: 600
+    # 下载重试次数
+    download_retry: 3
+    # 安装模式: direct(直接下载)或package(包管理)
+    install_mode: "direct"
+    # 开启认证
+    enable_auth: false
+    # SSH连接参数
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    # 性能优化参数
+    ansible_ssh_args: '-o ControlMaster=auto -o ControlPersist=60s -o ConnectTimeout=30'
+    ansible_pipelining: True
+    ansible_ssh_pipelining: True
+    ansible_forks: 10

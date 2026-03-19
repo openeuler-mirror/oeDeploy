@@ -1,0 +1,44 @@
+name: mongodb
+version: 1.0.0
+description: install and configure mongodb
+description_zh: 帮助开发者在本地快速部署MongoDB的oeDeploy插件
+description_en: The oeDeploy plugin that helps developers quickly deploy MongoDB locally.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install mongodb
+    tasks:
+      - name: prepare for install
+        playbook: prepare.yaml
+        scope: all
+      - name: install mongodb
+        playbook: install.yaml
+        scope: all
+      - name: configure mongodb
+        playbook: configure.yaml
+        scope: all
+  uninstall:
+    description: uninstall mongodb
+    tasks:
+      - name: uninstall mongodb
+        playbook: uninstall.yaml
+        scope: all
+  start:
+    description: start mongodb service
+    tasks:
+      - name: start mongodb service
+        playbook: start.yaml
+        scope: all
+  stop:
+    description: stop mongodb service
+    tasks:
+      - name: stop mongodb service
+        playbook: stop.yaml
+        scope: all
+  status:
+    description: check mongodb service status
+    tasks:
+      - name: check mongodb service status
+        playbook: status.yaml
+        scope: all

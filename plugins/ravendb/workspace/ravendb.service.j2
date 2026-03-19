@@ -1,0 +1,15 @@
+[Unit]
+Description=RavenDB Server
+Documentation=https://ravendb.net/docs
+After=network.target
+
+[Service]
+User={{ ravendb_user }}
+Group={{ ravendb_user }}
+WorkingDirectory={{ ravendb_install_path }}
+ExecStart={{ ravendb_install_path }}/Raven.Server --settings-path={{ ravendb_install_path }}/settings.json
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
