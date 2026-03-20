@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check MongoDB service status
+      systemd:
+        name: mongodb
+        state: started
+      register: mongodb_status
+      ignore_errors: yes
+    - name: Check MongoDB port
+      wait_for:
+        port: "{{ mongodb_port }}"
+        state: started
+        timeout: 5
+      register: mongodb_port_status
+      ignore_errors: yes
+    - name: Print MongoDB service status
+      debug:
+        msg:
+          - "========================================"
+          - "MongoDB Service Status"
+          - "Service status: {{ mongodb_status.status }}"
+          - "Port {{ mongodb_port }}: {{ 'Open' if mongodb_port_status is success else 'Closed' }}"
+          - "======================================="

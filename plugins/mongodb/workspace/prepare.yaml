@@ -1,0 +1,40 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Install required packages
+      yum:
+        name:
+          - python3-libselinux
+          - wget
+          - curl
+          - rsync
+        state: present
+    - name: Create mongodb user
+      user:
+        name: "{{ mongodb_user }}"
+        state: present
+        createhome: no
+        shell: /bin/false
+    - name: Create data directory
+      file:
+        path: "{{ mongodb_data_path }}"
+        state: directory
+        owner: "{{ mongodb_user }}"
+        group: "{{ mongodb_user }}"
+        mode: '0755'
+    - name: Create log directory
+      file:
+        path: "{{ mongodb_log_path }}"
+        state: directory
+        owner: "{{ mongodb_user }}"
+        group: "{{ mongodb_user }}"
+        mode: '0755'
+    - name: Create install directory
+      file:
+        path: "{{ mongodb_install_path }}"
+        state: directory
+        owner: "{{ mongodb_user }}"
+        group: "{{ mongodb_user }}"
+        mode: '0755'

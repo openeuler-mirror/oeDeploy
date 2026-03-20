@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check RavenDB service status
+      systemd:
+        name: ravendb
+        state: started
+      register: ravendb_status
+      ignore_errors: yes
+    - name: Check RavenDB port
+      wait_for:
+        port: "{{ ravendb_port }}"
+        state: started
+        timeout: 5
+      register: ravendb_port_status
+      ignore_errors: yes
+    - name: Print RavenDB service status
+      debug:
+        msg:
+          - "========================================"
+          - "RavenDB Service Status"
+          - "Service status: {{ ravendb_status.status }}"
+          - "Port {{ ravendb_port }}: {{ 'Open' if ravendb_port_status is success else 'Closed' }}"
+          - "Access URL: http://{{ ravendb_bind_ip }}:{{ ravendb_port }}"
+          - "======================================="

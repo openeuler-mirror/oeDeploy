@@ -1,0 +1,38 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+  vars:
+    # MongoDB版本
+    mongodb_version: "7.0"
+    # MongoDB安装路径
+    mongodb_install_path: "/usr/local/mongodb"
+    # MongoDB数据目录
+    mongodb_data_path: "/var/lib/mongodb"
+    # MongoDB日志目录
+    mongodb_log_path: "/var/log/mongodb"
+    # MongoDB端口
+    mongodb_port: 27017
+    # MongoDB绑定地址
+    mongodb_bind_ip: "127.0.0.1"
+    # MongoDB用户
+    mongodb_user: "mongodb"
+    # MongoDB密码
+    mongodb_password: "***"
+    # MongoDB数据库
+    mongodb_database: "admin"
+    # 下载超时时间(秒)
+    download_timeout: 600
+    # 下载重试次数
+    download_retry: 3
+    # 安装模式: repo(从软件仓库安装)或source(从源码安装)
+    install_mode: "repo"
+    # 开启认证
+    enable_auth: false
+    # SSH连接参数
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    # 性能优化参数
+    ansible_ssh_args: '-o ControlMaster=auto -o ControlPersist=60s -o ConnectTimeout=30'
+    ansible_pipelining: True
+    ansible_ssh_pipelining: True
+    ansible_forks: 10

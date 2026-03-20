@@ -1,0 +1,65 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: true
+  tasks:
+    - name: Install MongoDB from repository
+      when: install_mode == "repo"
+      block:
+        - name: Create MongoDB repository file
+          copy:
+            content: |
+              [mongodb-org-{{ mongodb_version }}]
+              name=MongoDB Repository
+              baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/{{ mongodb_version }}/x86_64/
+              gpgcheck=1
+              enabled=1
+              gpgkey=https://www.mongodb.org/static/pgp/server-{{ mongodb_version }}.asc
+            dest: /etc/yum.repos.d/mongodb-org-{{ mongodb_version }}.repo
+            owner: root
+            group: root
+            mode: '0644'
+        - name: Install MongoDB packages
+          yum:
+            name:
+              - mongodb-org
+              - mongodb-org-server
+              - mongodb-org-shell
+              - mongodb-org-mongos
+              - mongodb-org-tools
+            state: present
+    - name: Install MongoDB from source
+      when: install_mode == "source"
+      block:
+        - name: Download MongoDB source
+          get_url:
+            url: https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel70-{{ mongodb_version }}.tgz
+            dest: /tmp/mongodb.tgz
+            timeout: "{{ download_timeout }}"
+            retries: "{{ download_retry }}"
+        - name: Extract MongoDB source
+          unarchive:
+            src: /tmp/mongodb.tgz
+            dest: /tmp
+            remote_src: yes
+        - name: Move MongoDB to install path
+          shell: mv /tmp/mongodb-linux-x86_64-rhel70-{{ mongodb_version }}/* {{ mongodb_install_path }}/
+        - name: Clean up temporary files
+          file:
+            path: /tmp/mongodb.tgz
+            state: absent
+        - name: Clean up temporary directory
+          file:
+            path: /tmp/mongodb-linux-x86_64-rhel70-{{ mongodb_version }}
+            state: absent
+    - name: Set permissions for MongoDB directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ mongodb_user }}"
+        group: "{{ mongodb_user }}"
+        recurse: yes
+      loop:
+        - "{{ mongodb_data_path }}"
+        - "{{ mongodb_log_path }}"
+        - "{{ mongodb_install_path }}"

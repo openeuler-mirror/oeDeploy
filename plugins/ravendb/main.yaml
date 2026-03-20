@@ -1,0 +1,44 @@
+name: ravendb
+version: 1.0.0
+description: install and configure ravendb
+description_zh: 帮助开发者在本地快速部署RavenDB的oeDeploy插件
+description_en: The oeDeploy plugin that helps developers quickly deploy RavenDB locally.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install ravendb
+    tasks:
+      - name: prepare for install
+        playbook: prepare.yaml
+        scope: all
+      - name: install ravendb
+        playbook: install.yaml
+        scope: all
+      - name: configure ravendb
+        playbook: configure.yaml
+        scope: all
+  uninstall:
+    description: uninstall ravendb
+    tasks:
+      - name: uninstall ravendb
+        playbook: uninstall.yaml
+        scope: all
+  start:
+    description: start ravendb service
+    tasks:
+      - name: start ravendb service
+        playbook: start.yaml
+        scope: all
+  stop:
+    description: stop ravendb service
+    tasks:
+      - name: stop ravendb service
+        playbook: stop.yaml
+        scope: all
+  status:
+    description: check ravendb service status
+    tasks:
+      - name: check ravendb service status
+        playbook: status.yaml
+        scope: all

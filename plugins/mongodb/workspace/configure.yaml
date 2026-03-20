@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Create MongoDB configuration file
+      template:
+        src: mongodb.conf.j2
+        dest: /etc/mongod.conf
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Create MongoDB systemd service file
+      template:
+        src: mongodb.service.j2
+        dest: /etc/systemd/system/mongodb.service
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    - name: Enable MongoDB service
+      systemd:
+        name: mongodb
+        enabled: yes
+    - name: Start MongoDB service
+      systemd:
+        name: mongodb
+        state: started
+    - name: Wait for MongoDB to start
+      wait_for:
+        port: "{{ mongodb_port }}"
+        delay: 5
+        timeout: 60
+    - name: Create admin user if auth is enabled
+      when: enable_auth
+      block:
+        - name: Create admin user
+          shell: |
+            mongo admin --eval "db.createUser({user: '{{ mongodb_user }}', pwd: '{{ mongodb_password }}', roles: [{role: 'userAdminAnyDatabase', db: 'admin'}, {role: 'readWriteAnyDatabase', db: 'admin'}]})"
+        - name: Restart MongoDB with auth enabled
+          systemd:
+            name: mongodb
+            state: restarted
+        - name: Wait for MongoDB to restart
+          wait_for:
+            port: "{{ mongodb_port }}"
+            delay: 5
+            timeout: 60

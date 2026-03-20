@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Stop RavenDB service
+      systemd:
+        name: ravendb
+        state: stopped
+    - name: Disable RavenDB service
+      systemd:
+        name: ravendb
+        enabled: no
+    - name: Remove RavenDB systemd service file
+      file:
+        path: /etc/systemd/system/ravendb.service
+        state: absent
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    - name: Remove RavenDB data directory
+      file:
+        path: "{{ ravendb_data_path }}"
+        state: absent
+    - name: Remove RavenDB log directory
+      file:
+        path: "{{ ravendb_log_path }}"
+        state: absent
+    - name: Remove RavenDB install directory
+      file:
+        path: "{{ ravendb_install_path }}"
+        state: absent
+    - name: Remove RavenDB user
+      user:
+        name: "{{ ravendb_user }}"
+        state: absent
+        remove: yes
