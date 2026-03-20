@@ -1,0 +1,35 @@
+name: python-nlp-env
+version: 1.0.0
+description: install python NLP environment with spacy, nltk, gensim, transformers and related dependencies
+description_zh: 帮助开发者在本地快速部署Python NLP虚拟环境，包含spacy、nltk、gensim、transformers及其相关依赖
+description_en: The oeDeploy plugin that helps developers quickly deploy Python NLP virtual environment with spacy, nltk, gensim, transformers and related dependencies.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install python NLP environment
+    tasks:
+      - name: prepare for install
+        playbook: prepare.yaml
+        scope: all
+      - name: install python and NLP libraries
+        playbook: install.yaml
+        scope: all
+      - name: download NLP resources
+        playbook: download_resources.yaml
+        scope: all
+      - name: verify installation
+        playbook: verify.yaml
+        scope: all
+  uninstall:
+    description: uninstall python NLP environment
+    tasks:
+      - name: uninstall python NLP environment
+        playbook: uninstall.yaml
+        scope: all
+  status:
+    description: check python NLP environment status
+    tasks:
+      - name: check python NLP environment status
+        playbook: status.yaml
+        scope: all

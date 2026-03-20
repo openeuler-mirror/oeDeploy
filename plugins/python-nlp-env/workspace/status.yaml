@@ -1,0 +1,61 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if virtual environment exists
+      stat:
+        path: "{{ venv_path }}"
+      register: venv_stat
+    - name: Check Python version if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+      ignore_errors: yes
+    - name: Check spaCy installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import spacy; print("spacy version:", spacy.__version__)'"
+      register: spacy_result
+      ignore_errors: yes
+    - name: Check NLTK installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import nltk; print("nltk version:", nltk.__version__)'"
+      register: nltk_result
+      ignore_errors: yes
+    - name: Check Gensim installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import gensim; print("gensim version:", gensim.__version__)'"
+      register: gensim_result
+      ignore_errors: yes
+    - name: Check Transformers installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import transformers; print("transformers version:", transformers.__version__)'"
+      register: transformers_result
+      ignore_errors: yes
+    - name: Print status when virtual environment exists
+      when: venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python NLP环境状态"
+          - "状态: 已安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "Python version: {{ python_version_result.stdout | default('未检测到') }}"
+          - "spaCy: {{ spacy_result.stdout | default('未安装') }}"
+          - "NLTK: {{ nltk_result.stdout | default('未安装') }}"
+          - "Gensim: {{ gensim_result.stdout | default('未安装') }}"
+          - "Transformers: {{ transformers_result.stdout | default('未安装') }}"
+          - "======================================="
+    - name: Print status when virtual environment does not exist
+      when: not venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python NLP环境状态"
+          - "状态: 未安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "======================================="

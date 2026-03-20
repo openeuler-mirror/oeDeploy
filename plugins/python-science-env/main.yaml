@@ -1,0 +1,32 @@
+name: python-science-env
+version: 1.0.0
+description: install python science environment with essential libraries
+description_zh: 帮助开发者在本地快速部署Python基础科学虚拟环境，包含numpy、pandas、scikit-learn、matplotlib等必要的数学库
+description_en: The oeDeploy plugin that helps developers quickly deploy Python science virtual environment with essential libraries like numpy, pandas, scikit-learn, matplotlib.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install python science environment
+    tasks:
+      - name: prepare for install
+        playbook: prepare.yaml
+        scope: all
+      - name: install python and science libraries
+        playbook: install.yaml
+        scope: all
+      - name: verify installation
+        playbook: verify.yaml
+        scope: all
+  uninstall:
+    description: uninstall python science environment
+    tasks:
+      - name: uninstall python science environment
+        playbook: uninstall.yaml
+        scope: all
+  status:
+    description: check python science environment status
+    tasks:
+      - name: check python science environment status
+        playbook: status.yaml
+        scope: all

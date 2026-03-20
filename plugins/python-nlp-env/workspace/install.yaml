@@ -1,0 +1,42 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install spaCy
+      pip:
+        name: "spacy{{ '==' + spacy_version if spacy_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install NLTK
+      pip:
+        name: "nltk{{ '==' + nltk_version if nltk_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install Gensim
+      pip:
+        name: "gensim{{ '==' + gensim_version if gensim_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install Transformers
+      pip:
+        name: "transformers{{ '==' + transformers_version if transformers_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install extra packages
+      pip:
+        name: "{{ item }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+      loop: "{{ extra_packages }}"
+    - name: Print installation completed
+      debug:
+        msg:
+          - "========================================"
+          - "Python NLP库安装完成"
+          - "已安装：spacy, nltk, gensim, transformers"
+          - "======================================="

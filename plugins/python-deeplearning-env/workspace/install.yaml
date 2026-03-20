@@ -1,0 +1,42 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install PyTorch and TorchVision (CPU version)
+      when: not use_cuda
+      pip:
+        name:
+          - "torch{{ '==' + torch_version if torch_version != 'latest' else '' }}"
+          - "torchvision{{ '==' + torchvision_version if torchvision_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install PyTorch and TorchVision (CUDA version)
+      when: use_cuda
+      pip:
+        name:
+          - "torch{{ '==' + torch_version if torch_version != 'latest' else '' }}+cu{{ cuda_version | replace('.', '') }}"
+          - "torchvision{{ '==' + torchvision_version if torchvision_version != 'latest' else '' }}+cu{{ cuda_version | replace('.', '') }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ torch_mirror }}"
+    - name: Install Lightning
+      pip:
+        name: "lightning{{ '==' + lightning_version if lightning_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install extra packages
+      pip:
+        name: "{{ item }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+      loop: "{{ extra_packages }}"
+    - name: Print installation completed
+      debug:
+        msg:
+          - "========================================"
+          - "Python深度学习库安装完成"
+          - "已安装：torch, torchvision, lightning"
+          - "======================================="

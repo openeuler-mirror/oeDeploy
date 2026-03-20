@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install LangChain
+      pip:
+        name: "langchain{{ '==' + langchain_version if langchain_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install OpenAI
+      pip:
+        name: "openai{{ '==' + openai_version if openai_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install LlamaIndex
+      pip:
+        name: "llama-index{{ '==' + llama_index_version if llama_index_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install extra packages
+      pip:
+        name: "{{ item }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+      loop: "{{ extra_packages }}"
+    - name: Print installation completed
+      debug:
+        msg:
+          - "========================================"
+          - "Python LLM库安装完成"
+          - "已安装：langchain, openai, llama-index"
+          - "======================================="

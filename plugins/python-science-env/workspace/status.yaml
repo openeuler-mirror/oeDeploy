@@ -1,0 +1,61 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if virtual environment exists
+      stat:
+        path: "{{ venv_path }}"
+      register: venv_stat
+    - name: Check Python version if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+      ignore_errors: yes
+    - name: Check numpy installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import numpy; print("numpy version:", numpy.__version__)'"
+      register: numpy_result
+      ignore_errors: yes
+    - name: Check pandas installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import pandas; print("pandas version:", pandas.__version__)'"
+      register: pandas_result
+      ignore_errors: yes
+    - name: Check scikit-learn installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import sklearn; print("scikit-learn version:", sklearn.__version__)'"
+      register: sklearn_result
+      ignore_errors: yes
+    - name: Check matplotlib installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import matplotlib; print("matplotlib version:", matplotlib.__version__)'"
+      register: matplotlib_result
+      ignore_errors: yes
+    - name: Print status when virtual environment exists
+      when: venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python科学环境状态"
+          - "状态: 已安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "Python version: {{ python_version_result.stdout | default('未检测到') }}"
+          - "numpy: {{ numpy_result.stdout | default('未安装') }}"
+          - "pandas: {{ pandas_result.stdout | default('未安装') }}"
+          - "scikit-learn: {{ sklearn_result.stdout | default('未安装') }}"
+          - "matplotlib: {{ matplotlib_result.stdout | default('未安装') }}"
+          - "======================================="
+    - name: Print status when virtual environment does not exist
+      when: not venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python科学环境状态"
+          - "状态: 未安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "======================================="

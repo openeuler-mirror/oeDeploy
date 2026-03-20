@@ -1,0 +1,32 @@
+name: python-llm-env
+version: 1.0.0
+description: install python LLM application environment with langchain, openai, llama-index and related dependencies
+description_zh: 帮助开发者在本地快速部署Python LLM应用虚拟环境，包含langchain、openai、llama-index及其相关依赖
+description_en: The oeDeploy plugin that helps developers quickly deploy Python LLM application virtual environment with langchain, openai, llama-index and related dependencies.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install python LLM environment
+    tasks:
+      - name: prepare for install
+        playbook: prepare.yaml
+        scope: all
+      - name: install python and LLM libraries
+        playbook: install.yaml
+        scope: all
+      - name: verify installation
+        playbook: verify.yaml
+        scope: all
+  uninstall:
+    description: uninstall python LLM environment
+    tasks:
+      - name: uninstall python LLM environment
+        playbook: uninstall.yaml
+        scope: all
+  status:
+    description: check python LLM environment status
+    tasks:
+      - name: check python LLM environment status
+        playbook: status.yaml
+        scope: all
