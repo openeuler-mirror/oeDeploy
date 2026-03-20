@@ -1,0 +1,54 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if virtual environment exists
+      stat:
+        path: "{{ venv_path }}"
+      register: venv_stat
+    - name: Check Python version if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+      ignore_errors: yes
+    - name: Check LangChain installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import langchain; print("langchain version:", langchain.__version__)'"
+      register: langchain_result
+      ignore_errors: yes
+    - name: Check OpenAI installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import openai; print("openai version:", openai.__version__)'"
+      register: openai_result
+      ignore_errors: yes
+    - name: Check LlamaIndex installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import llama_index; print("llama_index version:", llama_index.__version__)'"
+      register: llama_index_result
+      ignore_errors: yes
+    - name: Print status when virtual environment exists
+      when: venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python LLM环境状态"
+          - "状态: 已安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "Python version: {{ python_version_result.stdout | default('未检测到') }}"
+          - "LangChain: {{ langchain_result.stdout | default('未安装') }}"
+          - "OpenAI: {{ openai_result.stdout | default('未安装') }}"
+          - "LlamaIndex: {{ llama_index_result.stdout | default('未安装') }}"
+          - "======================================="
+    - name: Print status when virtual environment does not exist
+      when: not venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python LLM环境状态"
+          - "状态: 未安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "======================================="

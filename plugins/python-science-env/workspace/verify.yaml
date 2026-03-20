@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check Python version
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+    - name: Check numpy installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import numpy; print("numpy version:", numpy.__version__)'"
+      register: numpy_result
+    - name: Check pandas installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import pandas; print("pandas version:", pandas.__version__)'"
+      register: pandas_result
+    - name: Check scikit-learn installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import sklearn; print("scikit-learn version:", sklearn.__version__)'"
+      register: sklearn_result
+    - name: Check matplotlib installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import matplotlib; print("matplotlib version:", matplotlib.__version__)'"
+      register: matplotlib_result
+    - name: Print verification results
+      debug:
+        msg:
+          - "========================================"
+          - "Python科学环境验证结果"
+          - "Python version: {{ python_version_result.stdout }}"
+          - "{{ numpy_result.stdout }}"
+          - "{{ pandas_result.stdout }}"
+          - "{{ sklearn_result.stdout }}"
+          - "{{ matplotlib_result.stdout }}"
+          - "======================================="

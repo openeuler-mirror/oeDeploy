@@ -1,0 +1,30 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check Python version
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+    - name: Check torch installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import torch; print("torch version:", torch.__version__); print("CUDA available:", torch.cuda.is_available())'"
+      register: torch_result
+    - name: Check torchvision installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import torchvision; print("torchvision version:", torchvision.__version__)'"
+      register: torchvision_result
+    - name: Check lightning installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import lightning; print("lightning version:", lightning.__version__)'"
+      register: lightning_result
+    - name: Print verification results
+      debug:
+        msg:
+          - "========================================"
+          - "Python深度学习环境验证结果"
+          - "Python version: {{ python_version_result.stdout }}"
+          - "{{ torch_result.stdout }}"
+          - "{{ torchvision_result.stdout }}"
+          - "{{ lightning_result.stdout }}"
+          - "======================================="

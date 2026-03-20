@@ -1,0 +1,32 @@
+name: python-deeplearning-env
+version: 1.0.0
+description: install python deep learning environment with torch, torchvision, and lightning
+description_zh: 帮助开发者在本地快速部署Python深度学习虚拟环境，包含torch、torchvision、lightning及其相关依赖
+description_en: The oeDeploy plugin that helps developers quickly deploy Python deep learning virtual environment with torch, torchvision, lightning and related dependencies.
+type: app
+localhost_available: true
+action:
+  install:
+    description: install python deep learning environment
+    tasks:
+      - name: prepare for install
+        playbook: prepare.yaml
+        scope: all
+      - name: install python and deep learning libraries
+        playbook: install.yaml
+        scope: all
+      - name: verify installation
+        playbook: verify.yaml
+        scope: all
+  uninstall:
+    description: uninstall python deep learning environment
+    tasks:
+      - name: uninstall python deep learning environment
+        playbook: uninstall.yaml
+        scope: all
+  status:
+    description: check python deep learning environment status
+    tasks:
+      - name: check python deep learning environment status
+        playbook: status.yaml
+        scope: all

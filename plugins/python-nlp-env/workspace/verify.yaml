@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check Python version
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+    - name: Check spaCy installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import spacy; print("spacy version:", spacy.__version__)'"
+      register: spacy_result
+    - name: Check NLTK installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import nltk; print("nltk version:", nltk.__version__)'"
+      register: nltk_result
+    - name: Check Gensim installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import gensim; print("gensim version:", gensim.__version__)'"
+      register: gensim_result
+    - name: Check Transformers installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import transformers; print("transformers version:", transformers.__version__)'"
+      register: transformers_result
+    - name: Print verification results
+      debug:
+        msg:
+          - "========================================"
+          - "Python NLP环境验证结果"
+          - "Python version: {{ python_version_result.stdout }}"
+          - "{{ spacy_result.stdout }}"
+          - "{{ nltk_result.stdout }}"
+          - "{{ gensim_result.stdout }}"
+          - "{{ transformers_result.stdout }}"
+          - "======================================="

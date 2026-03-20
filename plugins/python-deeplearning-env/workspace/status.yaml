@@ -1,0 +1,54 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check if virtual environment exists
+      stat:
+        path: "{{ venv_path }}"
+      register: venv_stat
+    - name: Check Python version if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+      ignore_errors: yes
+    - name: Check torch installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import torch; print("torch version:", torch.__version__); print("CUDA available:", torch.cuda.is_available())'"
+      register: torch_result
+      ignore_errors: yes
+    - name: Check torchvision installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import torchvision; print("torchvision version:", torchvision.__version__)'"
+      register: torchvision_result
+      ignore_errors: yes
+    - name: Check lightning installation if virtual environment exists
+      when: venv_stat.stat.exists
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import lightning; print("lightning version:", lightning.__version__)'"
+      register: lightning_result
+      ignore_errors: yes
+    - name: Print status when virtual environment exists
+      when: venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python深度学习环境状态"
+          - "状态: 已安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "Python version: {{ python_version_result.stdout | default('未检测到') }}"
+          - "torch: {{ torch_result.stdout | default('未安装') }}"
+          - "torchvision: {{ torchvision_result.stdout | default('未安装') }}"
+          - "lightning: {{ lightning_result.stdout | default('未安装') }}"
+          - "======================================="
+    - name: Print status when virtual environment does not exist
+      when: not venv_stat.stat.exists
+      debug:
+        msg:
+          - "========================================"
+          - "Python深度学习环境状态"
+          - "状态: 未安装"
+          - "虚拟环境路径: {{ venv_path }}"
+          - "======================================="

@@ -1,0 +1,60 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Install required system packages
+      yum:
+        name:
+          - python3-libselinux
+          - wget
+          - curl
+          - rsync
+          - python3
+          - python3-pip
+          - python3-devel
+          - gcc
+          - gcc-c++
+          - make
+          - openssl-devel
+          - libffi-devel
+          - bzip2-devel
+          - sqlite-devel
+          - zlib-devel
+          - libpng-devel
+          - freetype-devel
+          - libjpeg-turbo-devel
+          - libtiff-devel
+          - libwebp-devel
+        state: present
+    - name: Install CUDA dependencies (if use_cuda is true)
+      when: use_cuda
+      yum:
+        name:
+          - kernel-devel
+          - kernel-headers
+          - dkms
+          - gcc
+          - gcc-c++
+          - make
+        state: present
+    - name: Upgrade pip
+      pip:
+        name: pip
+        state: latest
+    - name: Create virtual environment directory
+      file:
+        path: "{{ venv_path }}"
+        state: directory
+        mode: '0755'
+    - name: Create virtual environment
+      when: install_mode == "venv"
+      command:
+        cmd: python3 -m venv "{{ venv_path }}"
+        creates: "{{ venv_path }}/bin/activate"
+    - name: Print preparation completed
+      debug:
+        msg:
+          - "========================================"
+          - "Python深度学习环境准备完成"
+          - "======================================="

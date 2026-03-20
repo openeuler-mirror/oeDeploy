@@ -1,0 +1,14 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Remove virtual environment
+      file:
+        path: "{{ venv_path }}"
+        state: absent
+    - name: Print uninstallation completed
+      debug:
+        msg:
+          - "========================================"
+          - "Python科学环境卸载完成"
+          - "======================================="

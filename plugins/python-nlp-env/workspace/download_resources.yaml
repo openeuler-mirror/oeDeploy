@@ -1,0 +1,32 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Download NLP resources
+      when: download_resources
+      block:
+        - name: Download spaCy English model
+          command:
+            cmd: "{{ venv_path }}/bin/python -m spacy download en_core_web_sm"
+          register: spacy_result
+          ignore_errors: yes
+        - name: Download NLTK resources
+          command:
+            cmd: "{{ venv_path }}/bin/python -c 'import nltk; nltk.download("punkt"); nltk.download("stopwords"); nltk.download("wordnet"); nltk.download("averaged_perceptron_tagger")'"
+          register: nltk_result
+          ignore_errors: yes
+        - name: Print resource download results
+          debug:
+            msg:
+              - "========================================"
+              - "NLP资源下载结果"
+              - "spaCy模型: {{ '成功' if spacy_result.rc == 0 else '失败' }}"
+              - "NLTK资源: {{ '成功' if nltk_result.rc == 0 else '失败' }}"
+              - "======================================="
+    - name: Skip resource download
+      when: not download_resources
+      debug:
+        msg:
+          - "========================================"
+          - "跳过NLP资源下载"
+          - "======================================="

@@ -1,0 +1,42 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install numpy
+      pip:
+        name: "numpy{{ '==' + numpy_version if numpy_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install pandas
+      pip:
+        name: "pandas{{ '==' + pandas_version if pandas_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install scikit-learn
+      pip:
+        name: "scikit-learn{{ '==' + scikit_learn_version if scikit_learn_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install matplotlib
+      pip:
+        name: "matplotlib{{ '==' + matplotlib_version if matplotlib_version != 'latest' else '' }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+    - name: Install extra packages
+      pip:
+        name: "{{ item }}"
+        state: present
+        virtualenv: "{{ venv_path }}"
+        extra_args: "--index-url {{ pip_mirror }}"
+      loop: "{{ extra_packages }}"
+    - name: Print installation completed
+      debug:
+        msg:
+          - "========================================"
+          - "Python科学库安装完成"
+          - "已安装：numpy, pandas, scikit-learn, matplotlib"
+          - "======================================="

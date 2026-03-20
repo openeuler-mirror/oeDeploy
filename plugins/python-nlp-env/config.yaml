@@ -1,0 +1,55 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+  vars:
+    # Python版本
+    python_version: "3.9"
+    # 虚拟环境名称
+    venv_name: "python-nlp-env"
+    # 虚拟环境路径
+    venv_path: "/opt/{{ venv_name }}"
+    # 安装模式: system(系统Python)或venv(虚拟环境)
+    install_mode: "venv"
+    # NLP库版本
+    spacy_version: "latest"
+    nltk_version: "latest"
+    gensim_version: "latest"
+    transformers_version: "latest"
+    # 下载NLP资源
+    download_resources: true
+    # 额外安装的库
+    extra_packages:
+      - numpy
+      - pandas
+      - scikit-learn
+      - matplotlib
+      - jupyter
+      - ipython
+      - seaborn
+      - scipy
+      - plotly
+      - tqdm
+      - Pillow
+      - opencv-python
+      - datasets
+      - tokenizers
+      - sentence-transformers
+      - pyarrow
+      - fasttext
+      - textblob
+      - wordcloud
+      - pattern
+    # 下载超时时间(秒)
+    download_timeout: 600
+    # 下载重试次数
+    download_retry: 3
+    # 镜像源
+    pip_mirror: "https://pypi.tuna.tsinghua.edu.cn/simple"
+    # SSH连接参数
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    # 性能优化参数
+    ansible_ssh_args: '-o ControlMaster=auto -o ControlPersist=60s -o ConnectTimeout=30'
+    ansible_pipelining: True
+    ansible_ssh_pipelining: True
+    ansible_forks: 10

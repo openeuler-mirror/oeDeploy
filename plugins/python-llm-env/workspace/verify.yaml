@@ -1,0 +1,30 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Check Python version
+      command:
+        cmd: "{{ venv_path }}/bin/python --version"
+      register: python_version_result
+    - name: Check LangChain installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import langchain; print("langchain version:", langchain.__version__)'"
+      register: langchain_result
+    - name: Check OpenAI installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import openai; print("openai version:", openai.__version__)'"
+      register: openai_result
+    - name: Check LlamaIndex installation
+      command:
+        cmd: "{{ venv_path }}/bin/python -c 'import llama_index; print("llama_index version:", llama_index.__version__)'"
+      register: llama_index_result
+    - name: Print verification results
+      debug:
+        msg:
+          - "========================================"
+          - "Python LLM环境验证结果"
+          - "Python version: {{ python_version_result.stdout }}"
+          - "{{ langchain_result.stdout }}"
+          - "{{ openai_result.stdout }}"
+          - "{{ llama_index_result.stdout }}"
+          - "======================================="
