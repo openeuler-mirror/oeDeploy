@@ -532,7 +532,6 @@ class RepoCmd:
                 
                 # 如果缺少必需文件，立即返回
                 if not all(item in names for item in required):
-                    self.log.warning(f"Invalid plugin: missing required files in {tar_path}")
                     return False, None
                     
                 # 提取main.yaml内容

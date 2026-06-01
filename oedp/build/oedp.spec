@@ -82,6 +82,9 @@ fi
 
 
 %changelog
+* Mon Jun 1 2026 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.7-0
+- Delete unneccessary warning log when making repo cache.
+
 * Wed Dev 3 2025 Ding Jiahui <dingjiahui4@huawei.com> - 1.1.6-0
 - Local plugin repository enabled by default
 
