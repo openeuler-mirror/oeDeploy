@@ -16,6 +16,6 @@ all:
     docker_download_path: /tmp
     docker_image_urls: https://docker.m.daocloud.io
 
-    container_name: "anythinglLLM-container"
+    container_name: "anythingLLM-container"
     storage_location: "{{ lookup('env', 'HOME') }}/anythingllm"
     host_port: 3001

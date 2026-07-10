@@ -50,7 +50,7 @@
     docker_download_path: /tmp
     docker_image_urls: https://docker.m.daocloud.io
 
-    container_name: "anythinglLLM-container"
+    container_name: "anythingLLM-container"
     docker_image: "mintplexlabs/anythingllm"
     storage_location: "{{ lookup('env', 'HOME') }}/anythingllm"
     host_port: 3001
@@ -60,7 +60,7 @@
     * Access the container.
 
     ```bash
-    docker exec -it anythinglLLM-container /bin/bash
+    docker exec -it anythingLLM-container /bin/bash
 
     ```
 
