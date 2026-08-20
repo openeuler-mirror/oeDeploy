@@ -1,0 +1,19 @@
+# 仓库根目录无 pyproject.toml（两个 Python 子项目在 oedp-mcp/ 下且未配置 [tool.ruff]），
+# 用根级 .ruff.toml 统一覆盖全仓 Python 文件
+target-version = "py311"   # 来自 oedp-mcp 两个 pyproject 的 requires-python >=3.11
+line-length = 100
+extend-exclude = [
+    "json_tmp/",
+    "*.egg-info/",
+    "__pycache__/",
+]
+
+[lint]
+# 存量仓库默认只开错误类规则；按基线预检结果收紧
+select = ["E", "F", "I"]
+ignore = ["E501"]
+# 中文/全角标点注释仓库：RUF001/002/003 会把「，」等判为模糊字符，属误报；
+# 后续把 "RUF" 加回 select 时必须把这三条加入 ignore
+# ignore = ["E501", "RUF001", "RUF002", "RUF003"]
+# 收紧路径：清理 PR 后按阶段加回 B → UP/SIM → RUF（规则分批启用）
+# per-file-ignores = { "legacy_*.py" = ["E402"] }   # 存量不可避免项按文件豁免并附理由
