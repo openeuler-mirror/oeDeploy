@@ -1,0 +1,6 @@
+[codespell]
+skip = .git,*.lock,node_modules,.next,coverage,build,dist,vendor,third_party,json_tmp,*.egg-info
+ignore-words-list = cann
+# cann 为华为 CANN 工具包产品名，codespell 大小写不敏感会误报 CANN/cann；
+# 其余真实拼写错误（Valume/unamed/aciton/excute 等）进清理 PR 修复，不屏蔽。
+# 注意：该值留空会导致 codespell 报 "argument -L/--ignore-words-list: expected one argument"
