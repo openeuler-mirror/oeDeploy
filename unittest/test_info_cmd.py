@@ -253,9 +253,8 @@ class TestInfoCmd(unittest.TestCase):
         
         with patch('src.commands.info.info_cmd.MainReader') as mock_main_reader:
             mock_main_reader.side_effect = Exception("Unexpected error")
-            
-        with self.assertRaises(Exception):
-            info_cmd.run()
+            with self.assertRaises(Exception):
+                info_cmd.run()
 
     def test_table_formatting(self):
         """测试表格格式化"""
