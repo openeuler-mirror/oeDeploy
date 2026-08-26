@@ -1,0 +1,13 @@
+# devcontainer 构建上下文精简：镜像构建只用 .devcontainer/Dockerfile，
+# 其余仓库内容均通过 bind mount 提供，无需进入构建上下文。
+.git
+.gitignore
+.agents
+.codex
+.coverage
+.pytest_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+# plugins/ 含业务数据/可能的凭据（config.yaml），构建不需要，避免发送到 Docker daemon
+plugins
