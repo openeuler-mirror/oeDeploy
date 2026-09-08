@@ -1,3 +1,5 @@
+简体中文 | [English](./README_EN.md) 
+
 # 简介 / Introduction
 
 oeDeploy 是一款轻量级的软件部署工具，旨在帮助开发者快速、高效地完成各类软件环境部署，对单节点与分布式场景均可适配。
