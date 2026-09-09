@@ -1,3 +1,5 @@
+English | [简体中文](./README.md)
+
 # Introduction
 
 oeDeploy is a lightweight software deployment tool designed to help developers rapidly and efficiently set up various software environments. It seamlessly adapts to both single-node and distributed scenarios.
