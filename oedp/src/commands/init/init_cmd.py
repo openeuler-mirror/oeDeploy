@@ -205,7 +205,7 @@ class InitCmd:
         
         for index_file in glob.glob(os.path.join(REPO_CACHE_DIR, '*.yaml')):
             try:
-                with open(index_file, 'r') as f:
+                with open(index_file, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
                     
                 if 'plugins' not in data:
