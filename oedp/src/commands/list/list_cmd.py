@@ -74,7 +74,7 @@ class ListCmd:
     def _process_yaml_file(self, filepath, repo_name, table):
         """处理单个yaml文件并填充表格数据"""
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
                 
             if not data or 'plugins' not in data:
